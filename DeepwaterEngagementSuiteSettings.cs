@@ -48,6 +48,7 @@ public class DeepwaterEngagementSuiteSettings : ISettings
     public RangeNode<int> WorldIconSize { get; set; } = new RangeNode<int>(50, 25, 200);
     public RangeNode<int> MapIconSize { get; set; } = new RangeNode<int>(30, 15, 200);
 
+    public CurrencyReminderSettings CurrencyReminderSettings { get; set; } = new CurrencyReminderSettings();
     public BubbleSettings BubbleSettings { get; set; } = new BubbleSettings();
 
     [Menu("Bubble planner settings")]
@@ -82,6 +83,17 @@ public class DeepwaterEngagementSuiteSettings : ISettings
         IconPickerIndex.UniqueWeaponChest or IconPickerIndex.UniqueArmourChest => UniqueItemTint,
         _ => null,
     };
+}
+
+[Submenu(CollapsedByDefault = true)]
+public class CurrencyReminderSettings
+{
+    public ToggleNode Enabled { get; set; } = new ToggleNode(true);
+    public RangeNode<int> RequiredExaltedOrbs { get; set; } = new RangeNode<int>(20, 0, 20);
+    public RangeNode<int> RequiredAlchemyOrbs { get; set; } = new RangeNode<int>(20, 0, 20);
+    public RangeNode<int> RequiredChaosOrbs { get; set; } = new RangeNode<int>(20, 0, 20);
+    public RangeNode<int> RequiredScouringOrbs { get; set; } = new RangeNode<int>(20, 0, 20);
+    public RangeNode<int> MaxInventoryItems { get; set; } = new RangeNode<int>(30, 0, 60);
 }
 
 [Submenu(CollapsedByDefault = true)]

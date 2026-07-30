@@ -6,6 +6,7 @@ using ExileCore.PoEMemory.Components;
 using ExileCore.PoEMemory.Elements;
 using ExileCore.PoEMemory.Elements.InventoryElements;
 using ExileCore.PoEMemory.MemoryObjects;
+using ExileCore.PoEMemory.Models;
 using ExileCore.Shared;
 using ExileCore.Shared.Enums;
 using ExileCore.Shared.Helpers;
@@ -331,11 +332,60 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
                _pathfindingData[(int)x.Y][(int)x.X] > 3;
     }
 
+    private int CountBaseType(BaseItemType bit)
+    {
+        var inventories = GameController.IngameState.ServerData.PlayerInventories.Where(x => x.TypeId == InventoryNameE.MainInventory1).Select(x => x.Inventory);
+        var items = inventories.SelectMany(x => x.Items);
+        return items.Where(x => x.TryGetComponent<Base>(out var @base) && bit.Equals(@base?.Info?.BaseItemTypeDat))
+            .Select(x => x.TryGetComponent<Stack>(out var stack) ? stack.Size : 0)
+            .Sum();
+    }
+
     public override void Render()
     {
         DrawVoyageHighlights();
         var largePanelsOpen = GameController.IngameState.IngameUi.FullscreenPanels.Any(x => x.IsVisible) ||
                           GameController.IngameState.IngameUi.LargePanels.Any(x => x.IsVisible);
+
+        if (!largePanelsOpen && Settings.CurrencyReminderSettings.Enabled)
+        {
+            if (GameController.EntityListWrapper.ValidEntitiesByType[EntityType.IngameIcon]
+                    .FirstOrDefault(x => x.Path == "Metadata/Terrain/Doodads/Leagues/Deepwater/ChartPortalLocator") is { } locator)
+            {
+                var bitToCount = new[]
+                {
+                    (GameController.Files.BaseItemTypes.Translate("Metadata/Items/Currency/CurrencyUpgradeToRare"), Settings.CurrencyReminderSettings.RequiredAlchemyOrbs),
+                    (GameController.Files.BaseItemTypes.Translate("Metadata/Items/Currency/CurrencyRerollRare"), Settings.CurrencyReminderSettings.RequiredChaosOrbs),
+                    (GameController.Files.BaseItemTypes.Translate("Metadata/Items/Currency/CurrencyConvertToNormal"), Settings.CurrencyReminderSettings.RequiredScouringOrbs),
+                    (GameController.Files.BaseItemTypes.Translate("Metadata/Items/Currency/CurrencyAddModToRare"), Settings.CurrencyReminderSettings.RequiredExaltedOrbs),
+                }.Select(x => (x.Item1, x.Item2.Value, CountBaseType(x.Item1)));
+
+                var missing = new List<(string, int)>();
+                foreach (var (bit, required, have) in bitToCount)
+                {
+                    if (have < required)
+                    {
+                        missing.Add((bit.BaseName, required - have));
+                    }
+                }
+
+                var entityPos = GameController.IngameState.Data.GetGridScreenPosition(locator.GridPosNum);
+                if (missing.Any())
+                {
+                    var size = Graphics.DrawTextWithBackground($"Don't forget your currency, missing:\n{string.Join("\n", missing.Select(x => $"{x.Item1}: {x.Item2}"))}", entityPos, FontAlign.Center, Color.DarkOrange);
+                    entityPos.Y += size.Y;
+                }
+
+                if (GameController.IngameState.ServerData.PlayerInventories
+                        .Where(x => x.TypeId == InventoryNameE.MainInventory1)
+                        .Select(x => x.Inventory)
+                        .SelectMany(x => x.Items).Count() is { } count &&
+                    count > Settings.CurrencyReminderSettings.MaxInventoryItems)
+                {
+                    Graphics.DrawTextWithBackground($"You have so many items in your inventory... ({count} > {Settings.CurrencyReminderSettings.MaxInventoryItems.Value})", entityPos, FontAlign.Center, Color.OrangeRed);
+                }
+            }
+        }
 
         if (Handler == null)
         {

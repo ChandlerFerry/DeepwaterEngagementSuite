@@ -198,6 +198,9 @@ public class VoyagePlannerFast
             }
         }
 
+        // Hard locks from placement rules (farm maps / Pelagic Abyss).
+        ApplyLocks(puzzle, pieces, weight, eligible);
+
         var reachable = new int[Topologies.Length][];
         var bound = new double[Topologies.Length];
 
@@ -334,5 +337,58 @@ public class VoyagePlannerFast
 
         top.Insert(at, solution);
         if (top.Count > topN) top.RemoveAt(top.Count - 1);
+    }
+
+    /// <summary>
+    /// Force locked pieces onto their cells: huge placement bonus, ineligible elsewhere,
+    /// and other pieces discouraged from stealing the locked cell.
+    /// </summary>
+    private static void ApplyLocks(
+        VoyagePuzzle puzzle,
+        List<MapPiece> pieces,
+        double[][] weight,
+        int[][] eligible)
+    {
+        if (puzzle.LockedPlacements is not { Count: > 0 })
+            return;
+
+        const double LockBonus = 1e9;
+        var idToIndex = new Dictionary<int, int>(pieces.Count);
+        for (var i = 0; i < pieces.Count; i++)
+            idToIndex[pieces[i].Id] = i;
+
+        foreach (var lp in puzzle.LockedPlacements)
+        {
+            if (!idToIndex.TryGetValue(lp.PieceId, out var pieceIdx))
+                continue;
+
+            var cell = lp.Row * GridSize + lp.Col;
+            if (cell is < 0 or >= Cells)
+                continue;
+
+            // Only this cell is allowed for the locked piece.
+            for (var c = 0; c < Cells; c++)
+            {
+                if (c == cell) continue;
+                eligible[pieceIdx][c] = 0;
+                weight[pieceIdx][c] = double.NegativeInfinity;
+            }
+
+            if (eligible[pieceIdx][cell] == 0)
+            {
+                // No topology-legal arm set at this cell for any rotation — leave unsolvable
+                // rather than silently ignore the lock.
+                continue;
+            }
+
+            weight[pieceIdx][cell] += LockBonus;
+
+            // Soft-block others from the locked cell so assignment prefers the lock.
+            for (var i = 0; i < pieces.Count; i++)
+            {
+                if (i == pieceIdx) continue;
+                weight[i][cell] -= LockBonus;
+            }
+        }
     }
 }

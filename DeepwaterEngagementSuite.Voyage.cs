@@ -26,7 +26,7 @@ public partial class DeepwaterEngagementSuite
     private VoyageSolutionResult _result;
     private Task _run;
     private SyncTask<bool> _voyagePlaceTask;
-    private VoyagePlanner _voyagePlanner;
+    private VoyageSolve _voyageSolve;
     private VoyageScorer _uiScorer;
     private int _selectedSolutionIndex = 0;
     private bool _voyageSolving;
@@ -35,6 +35,33 @@ public partial class DeepwaterEngagementSuite
     private long _voyageNodesPruned;
     private double _voyageElapsed;
     private System.Diagnostics.Stopwatch _voyageStopwatch;
+
+    // Only these borders are drawn on the voyage board. Everything else is noise.
+    // Source: WIP Default profile — non-blacked-out (HighlightColor alpha != 0) entries.
+    private static readonly HashSet<string> GoodBorderModifiers = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "DeepwaterBorderChanceToNotConsumeChart1",
+        "DeepwaterBorderChanceToNotConsumeChart2",
+        "DeepwaterBorderRareMonsterAncient",
+        "DeepwaterBorderRareMonsterDivine",
+        "DeepwaterBorderRareMonsterExalted",
+        "DeepwaterBorderRareMonsterAnnulment",
+        "DeepwaterBorderRareMonsterChaos",
+        "DeepwaterBorderRareMonsterVaal",
+        "DeepwaterBorderRareMonsterGemcutters",
+        "DeepwaterBorderRareMonsterChromatic",
+        "DeepwaterBorderRareMonsterRegret",
+        "DeepwaterBorderRareMonsterBlessed",
+        "DeepwaterBorderRareMonsterRegal",
+        "DeepwaterBorderRandomDucatChest",
+        "DeepwaterBorderPiratePack",
+        "DeepwaterBorderCurrencyToStackedDecks",
+        "DeepwaterBorderMoreScarabs3",
+        "DeepwaterBorderCrabMiniboss",
+        "DeepwaterBorderTreasureAnchors1",
+        "DeepwaterBorderTreasureAnchors2",
+        "DeepwaterBorderSulphurDrops",
+    };
 
     public List<NormalInventoryItem> GetAvailableCharts()
     {
@@ -193,22 +220,22 @@ public partial class DeepwaterEngagementSuite
                     }
                 }
             }
-            // Border mods below center
+            // Border mods below center — good ones only (bad/blacked-out never drawn)
             tileCenter = tileCenter + new Vector2(0, 10);
             foreach (var itemMod in mods)
             {
-                var matchingSetting = Settings.VoyageSettings.BorderModifiers.Content.FirstOrDefault(c => c.Id.Value.Equals(itemMod.RawName, StringComparison.OrdinalIgnoreCase));
+                if (!GoodBorderModifiers.Contains(itemMod.RawName))
+                    continue;
+
+                var matchingSetting = Settings.VoyageSettings.BorderModifiers.Content
+                    .FirstOrDefault(c => c.Id.Value.Equals(itemMod.RawName, StringComparison.OrdinalIgnoreCase));
                 var text = matchingSetting?.Abbreviation.Value is { Length: > 0 } abbv
                     ? abbv
-                    : itemMod.RawName switch
-                    {
-                        var r when r.StartsWith("DeepwaterBorder", StringComparison.Ordinal) => r["DeepwaterBorder".Length..],
-                        var r => r
-                    };
-                var size = Graphics.DrawTextWithBackground(text, tileCenter,
-                    matchingSetting != null && matchingSetting.ValueMultiplier > Settings.VoyageSettings.BorderHighlightThreshold
-                        ? matchingSetting.HighlightColor
-                        : Color.Orange, FontAlign.Center, Color.Black);
+                    : itemMod.RawName.StartsWith("DeepwaterBorder", StringComparison.Ordinal)
+                        ? itemMod.RawName["DeepwaterBorder".Length..]
+                        : itemMod.RawName;
+                var color = matchingSetting?.HighlightColor.Value is { A: > 0 } c ? c : Color.Cyan;
+                var size = Graphics.DrawTextWithBackground(text, tileCenter, color, FontAlign.Center, Color.Black);
                 tileCenter.Y += size.Y;
             }
         }
@@ -276,7 +303,7 @@ public partial class DeepwaterEngagementSuite
         
         if (ImGui.Button("Solve"))
         {
-            _voyagePlanner?.Cancel();
+            _voyageSolve?.Cancel();
             _result = null;
             _selectedSolutionIndex = 0;
             _voyageNodesExplored = 0;
@@ -286,82 +313,28 @@ public partial class DeepwaterEngagementSuite
             _voyageStopwatch = System.Diagnostics.Stopwatch.StartNew();
             _run = Task.Run(() =>
             {
-                var i = 0;
-                var pieces = new List<MapPiece>();
-                foreach (var chart in GetAvailableCharts())
-                {
-                    if (chart.Item.TryGetComponent(out DeepwaterChart c))
-                    {
-                        var rotation = ((Direction)c.Room.Path);
-                        var mp = new MapPiece(i,
-                            int.PopCount((int)rotation) switch
-                            {
-                                4 => PieceType.Cross,
-                                3 => PieceType.Tee,
-                                1 => PieceType.Single,
-                                2 => rotation.HasFlag(Direction.Left) == rotation.HasFlag(Direction.Right)
-                                    ? PieceType.Straight
-                                    : PieceType.Corner
-                            }, rotation, [
-                                new Modifier("Default", 1), ..chart.Item.GetComponent<Mods>()?.ImplicitMods.Select(im =>
-                            {
-                                var chartMod = Settings.VoyageSettings.ChartModifiers.Content
-                                    .FirstOrDefault(cm => cm.Id.Value.Equals(im.RawName, StringComparison.OrdinalIgnoreCase));
-                                var configuredWeight = chartMod?.Weight.Value;
-                                return new Modifier(im.RawName, configuredWeight ?? 0, chartMod?.IsGlobal.Value ?? false,
-                                    ModifierTagParser.Parse(chartMod?.Tags.Value, ModifierTag.None));
-                            }) ?? []
-                            ]);
-                        pieces.Add(mp);
-                    }
-
-                    i++;
-                }
-
-                var modsPerTileIndex = GetTileMods(tree);
-                var tileBorders = new IReadOnlyList<BorderEffect>[3, 3];
-                for (var tileIndex = 0; tileIndex < 9; tileIndex++)
-                {
-                    var borderMods = modsPerTileIndex.GetValueOrDefault(tileIndex) ?? [];
-                    tileBorders[tileIndex / 3, tileIndex % 3] = borderMods.Select(m =>
-                    {
-                        var setting = Settings.VoyageSettings.BorderModifiers.Content
-                            .FirstOrDefault(c => c.Id.Value.Equals(m.RawName, StringComparison.OrdinalIgnoreCase));
-                        return new BorderEffect(
-                            m.RawName,
-                            // Untagged borders match everything (legacy behavior for old profiles).
-                            ModifierTagParser.Parse(setting?.Tags.Value, ModifierTag.All),
-                            setting?.ValueMultiplier.Value ?? 1,
-                            setting?.PerConnection.Value ?? false,
-                            setting?.AffectsPlacedChart.Value ?? false);
-                    }).ToList();
-                }
-
-                var puzzle = new VoyagePuzzle(pieces, tileBorders, []);
-                _uiScorer = new VoyageScorer(puzzle);
+                var pieces = BuildMapPiecesFromAvailableCharts();
+                var tileBorders = BuildTileBorders(tree);
                 var timeLimitSetting = Settings.VoyageSettings.SolverTimeLimitSeconds.Value;
 
-                // fast solver ignores per-connection borders for now; still exact for everything else
-                IEnumerable<VoyageSolutionResult> results;
-                if (Settings.VoyageSettings.UseFastSolver.Value)
-                {
-                    _voyagePlanner = null;
-                    results = new VoyagePlannerFast().Solve(puzzle,
-                        new VoyagePlannerSettings(TimeLimitSeconds: timeLimitSetting));
-                }
-                else
-                {
-                    _voyagePlanner = new VoyagePlanner();
-                    results = _voyagePlanner.Solve(puzzle,
-                        new VoyagePlannerSettings(TimeLimitSeconds: timeLimitSetting));
-                }
+                // Single entrypoint: strategies lock/save specialty charts, planner fills the rest.
+                var session = new VoyageSolve();
+                _voyageSolve = session;
 
-                foreach (var r in results)
+                foreach (var r in session.Run(
+                             pieces,
+                             tileBorders,
+                             useFastSolver: Settings.VoyageSettings.UseFastSolver.Value,
+                             settings: new VoyagePlannerSettings(TimeLimitSeconds: timeLimitSetting)))
                 {
                     _result = r;
                     _voyageNodesExplored = r.NodesExplored;
                     _voyageNodesPruned = r.NodesPruned;
+                    _uiScorer = session.Scorer;
                 }
+
+                _uiScorer = session.Scorer;
+                LogPlacement(session.Placement);
 
                 if (_voyageStopwatch.Elapsed.TotalSeconds >= timeLimitSetting)
                     _voyageTimedOut = true;
@@ -370,13 +343,11 @@ public partial class DeepwaterEngagementSuite
             });
         }
 
-        if (_voyagePlanner != null && _voyageSolving)
+        if (_voyageSolve != null && _voyageSolving && !Settings.VoyageSettings.UseFastSolver.Value)
         {
             ImGui.SameLine();
             if (ImGui.Button("Cancel"))
-            {
-                _voyagePlanner?.Cancel();
-            }
+                _voyageSolve.Cancel();
         }
 
         if (_voyageSolving)
@@ -741,6 +712,88 @@ public partial class DeepwaterEngagementSuite
             buf[y, x1] = v;
             buf[y, x2] = v;
         }
+    }
+
+    private List<MapPiece> BuildMapPiecesFromAvailableCharts()
+    {
+        var pieces = new List<MapPiece>();
+        var i = 0;
+        foreach (var chart in GetAvailableCharts())
+        {
+            if (chart.Item.TryGetComponent(out DeepwaterChart c))
+            {
+                var rotation = (Direction)c.Room.Path;
+                var chartName = c.Room.Name ?? "";
+                pieces.Add(new MapPiece(i,
+                    int.PopCount((int)rotation) switch
+                    {
+                        4 => PieceType.Cross,
+                        3 => PieceType.Tee,
+                        1 => PieceType.Single,
+                        2 => rotation.HasFlag(Direction.Left) == rotation.HasFlag(Direction.Right)
+                            ? PieceType.Straight
+                            : PieceType.Corner,
+                        _ => PieceType.Single
+                    }, rotation, [
+                        new Modifier("Default", 1), ..chart.Item.GetComponent<Mods>()?.ImplicitMods.Select(im =>
+                        {
+                            var chartMod = Settings.VoyageSettings.ChartModifiers.Content
+                                .FirstOrDefault(cm => cm.Id.Value.Equals(im.RawName, StringComparison.OrdinalIgnoreCase));
+                            return new Modifier(im.RawName, chartMod?.Weight.Value ?? 0, chartMod?.IsGlobal.Value ?? false,
+                                ModifierTagParser.Parse(chartMod?.Tags.Value, ModifierTag.None));
+                        }) ?? []
+                    ], chartName));
+            }
+
+            i++;
+        }
+
+        return pieces;
+    }
+
+    private IReadOnlyList<BorderEffect>[,] BuildTileBorders(VoyageWindow tree)
+    {
+        var modsPerTileIndex = GetTileMods(tree);
+        var tileBorders = new IReadOnlyList<BorderEffect>[3, 3];
+        for (var tileIndex = 0; tileIndex < 9; tileIndex++)
+        {
+            var borderMods = modsPerTileIndex.GetValueOrDefault(tileIndex) ?? [];
+            tileBorders[tileIndex / 3, tileIndex % 3] = borderMods.Select(m =>
+            {
+                var setting = Settings.VoyageSettings.BorderModifiers.Content
+                    .FirstOrDefault(c => c.Id.Value.Equals(m.RawName, StringComparison.OrdinalIgnoreCase));
+                return new BorderEffect(
+                    m.RawName,
+                    ModifierTagParser.Parse(setting?.Tags.Value, ModifierTag.All),
+                    setting?.ValueMultiplier.Value ?? 1,
+                    setting?.PerConnection.Value ?? false,
+                    setting?.AffectsPlacedChart.Value ?? false);
+            }).ToList();
+        }
+
+        return tileBorders;
+    }
+
+    private static void LogPlacement(VoyagePlacementRules.Result placement)
+    {
+        if (placement == null)
+            return;
+
+        var savedBits = new List<string>();
+        if (placement.SavedPelagicCount > 0)
+            savedBits.Add($"{placement.SavedPelagicCount} Pelagic");
+        if (placement.SavedOperativeCount > 0)
+            savedBits.Add($"{placement.SavedOperativeCount} Operative box");
+        if (placement.SavedStrongboxCount > 0)
+            savedBits.Add($"{placement.SavedStrongboxCount} strongbox-count");
+        if (placement.SavedStarfishCount > 0)
+            savedBits.Add($"{placement.SavedStarfishCount} Starfish");
+        if (placement.SavedRareVoyageCount > 0)
+            savedBits.Add($"{placement.SavedRareVoyageCount} voyage rares");
+        if (savedBits.Count > 0)
+            DebugWindow.LogMsg($"Voyage: saved {string.Join(", ", savedBits)} for better borders", 5);
+        if (placement.Locks.Count > 0)
+            DebugWindow.LogMsg($"Voyage: {placement.Locks.Count} strategy lock(s), solver fills the rest", 5);
     }
 
     private static string TrimChartPrefix(string name)

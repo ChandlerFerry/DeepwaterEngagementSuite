@@ -16,7 +16,8 @@ public record MapPiece(
     int Id,
     PieceType Type,
     Direction BaseConnections,
-    List<Modifier> Modifiers)
+    List<Modifier> Modifiers,
+    string Name = "")
 {
     public readonly double GlobalModifier = Modifiers.Where(x => x.IsGlobal).Sum(x => x.Weight);
     public readonly double LocalModifier = Modifiers.Where(x => !x.IsGlobal).Sum(x => x.Weight);

@@ -339,10 +339,24 @@ public partial class DeepwaterEngagementSuite
 
                 var puzzle = new VoyagePuzzle(pieces, tileBorders, []);
                 _uiScorer = new VoyageScorer(puzzle);
-                _voyagePlanner = new VoyagePlanner();
                 var timeLimitSetting = Settings.VoyageSettings.SolverTimeLimitSeconds.Value;
-                foreach (var r in _voyagePlanner.Solve(puzzle,
-                    new VoyagePlannerSettings(TimeLimitSeconds: timeLimitSetting)))
+
+                // fast solver ignores per-connection borders for now; still exact for everything else
+                IEnumerable<VoyageSolutionResult> results;
+                if (Settings.VoyageSettings.UseFastSolver.Value)
+                {
+                    _voyagePlanner = null;
+                    results = new VoyagePlannerFast().Solve(puzzle,
+                        new VoyagePlannerSettings(TimeLimitSeconds: timeLimitSetting));
+                }
+                else
+                {
+                    _voyagePlanner = new VoyagePlanner();
+                    results = _voyagePlanner.Solve(puzzle,
+                        new VoyagePlannerSettings(TimeLimitSeconds: timeLimitSetting));
+                }
+
+                foreach (var r in results)
                 {
                     _result = r;
                     _voyageNodesExplored = r.NodesExplored;
@@ -402,7 +416,7 @@ public partial class DeepwaterEngagementSuite
             }
             else if (_voyageTimedOut)
             {
-                ImGui.TextColored(Color.Orange.ToImguiVec4(), "Time limit reached — no valid solution found.");
+                ImGui.TextColored(Color.Orange.ToImguiVec4(), "Time limit reached - no valid solution found.");
             }
             else
             {
@@ -415,7 +429,7 @@ public partial class DeepwaterEngagementSuite
 
         if (_voyageTimedOut)
         {
-            ImGui.TextColored(Color.Orange.ToImguiVec4(), $"Time limit reached — showing best solutions found so far (may not be optimal).");
+            ImGui.TextColored(Color.Orange.ToImguiVec4(), $"Time limit reached - showing best solutions found so far (may not be optimal).");
         }
 
         _selectedSolutionIndex = Math.Clamp(_selectedSolutionIndex, 0, _result.Solutions.Count - 1);

@@ -206,6 +206,10 @@ public class VoyageSettings
 
     [Menu("Solver time limit (seconds)", "Max time the solver runs before returning the best solution found so far. 0 = no limit.")]
     public RangeNode<int> SolverTimeLimitSeconds { get; set; } = new RangeNode<int>(5, 1, 120);
+
+    // exact second solver, opt-in until it's proven in game; ignores per-connection borders for now
+    [Menu("Use fast solver (exact, experimental)", "Exact branch-and-bound solver. Ignores the time limit. Per-connection border mods are ignored for now, so scores on those boards are approximate.")]
+    public ToggleNode UseFastSolver { get; set; } = new ToggleNode(false);
     public RangeNode<float> BorderHighlightThreshold { get; set; } = new RangeNode<float>(1.01f, 0, 10);
     public RangeNode<float> ChartHighlightThreshold { get; set; } = new RangeNode<float>(1.0f, 0, 10);
     public ListNode ProfileSelector { get; set; } = new ListNode();

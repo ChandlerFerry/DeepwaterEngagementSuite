@@ -762,18 +762,16 @@ public partial class DeepwaterEngagementSuite
             savedBits.Add($"{placement.SavedKisharaCount} Kishara (place boss yourself)");
         if (placement.SavedPelagicCount > 0)
             savedBits.Add($"{placement.SavedPelagicCount} Pelagic");
-        if (placement.SavedOperativeCount > 0)
-            savedBits.Add($"{placement.SavedOperativeCount} Operative box");
         if (placement.SavedStrongboxCount > 0)
-            savedBits.Add($"{placement.SavedStrongboxCount} strongbox-count");
+            savedBits.Add($"{placement.SavedStrongboxCount} strongboxes");
         if (placement.SavedStarfishCount > 0)
             savedBits.Add($"{placement.SavedStarfishCount} Starfish");
         if (placement.SavedAdjacentRareCount > 0)
             savedBits.Add($"{placement.SavedAdjacentRareCount} adj. rares");
         if (placement.SavedRareVoyageCount > 0)
             savedBits.Add($"{placement.SavedRareVoyageCount} voyage rares");
-        if (placement.SavedRareFractureCount > 0)
-            savedBits.Add($"{placement.SavedRareFractureCount} rare fracture");
+        if (placement.SavedAdjacentFracturedCount > 0)
+            savedBits.Add($"{placement.SavedAdjacentFracturedCount} adj. fractured");
         if (savedBits.Count > 0)
             DebugWindow.LogMsg($"Voyage: saved {string.Join(", ", savedBits)} for better borders", 5);
         if (placement.Locks.Count > 0)

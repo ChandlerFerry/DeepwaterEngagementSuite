@@ -21,9 +21,10 @@ public static class VoyagePlacementRules
     public const string MoreScarabs3 = "DeepwaterBorderMoreScarabs3";
 
     // DeepwaterChart.Room.Name values
-    private const string PelagicRoomName = "Pelagic Abyss";
-    private const string ClamRoomName = "Clam-infested Shelf";
-    private const string AnchorfieldRoomName = "Anchorfield";
+    public const string PelagicRoomName = "Pelagic Abyss";
+    public const string ClamRoomName = "Clam-infested Shelf";
+    public const string AnchorfieldRoomName = "Anchorfield";
+    public const string KisharaRoomName = "Kishara's Rest";
 
     private static readonly (int Dr, int Dc)[] Ortho = [(1, 0), (-1, 0), (0, 1), (0, -1)];
 
@@ -34,7 +35,10 @@ public static class VoyagePlacementRules
         int SavedOperativeCount,
         int SavedStrongboxCount,
         int SavedStarfishCount,
-        int SavedRareVoyageCount);
+        int SavedRareVoyageCount,
+        int SavedAdjacentRareCount,
+        int SavedRareFractureCount,
+        int SavedKisharaCount);
 
     public static Result Apply(
         IReadOnlyList<MapPiece> pieces,
@@ -54,6 +58,14 @@ public static class VoyagePlacementRules
         }
 
         bool CellFree(int row, int col) => !lockedCells.Contains((row, col));
+
+        // --- 0. Boss chart: always hold for human placement (never auto-lock / solve) ---
+        var savedKishara = 0;
+        foreach (var boss in working.Where(IsKishara).Select(p => p.Id).ToList())
+        {
+            working.RemoveAll(p => p.Id == boss);
+            savedKishara++;
+        }
 
         // --- Identify centers ---
         var divineCenters = EnumerateCells()
@@ -103,38 +115,39 @@ public static class VoyagePlacementRules
             }
         }
 
-        // --- 2. Divine surrounds: strongbox > starfish > adjacent rares ---
+        // --- 2. Divine surrounds: strongbox > starfish > orb rare combo ---
         foreach (var center in divineCenters)
         {
             foreach (var n in FreeNeighbors(center.Row, center.Col, CellFree))
             {
                 var support = TakeBest(working, usedPieceIds, IsStrongboxCountChart, StrongboxCountScore)
                               ?? TakeBest(working, usedPieceIds, IsStarfishChart, StarfishScore)
-                              ?? TakeBest(working, usedPieceIds, IsAdjacentRareChart, AdjacentRareScore);
+                              ?? TakeBest(working, usedPieceIds, IsOrbRareComboChart, OrbRareComboScore);
                 if (support == null) break;
                 LockCell(n.Row, n.Col, support);
             }
         }
 
-        // --- 3. Divine free tiles: voyage increased rares > solver ---
+        // --- 3. Divine free tiles: voyage rare / rare fracture > solver ---
         if (divineCenters.Count > 0)
         {
             foreach (var cell in EnumerateCells().Where(c => CellFree(c.Row, c.Col)))
             {
-                var rare = TakeBest(working, usedPieceIds, IsRareVoyageChart, RareVoyageScore);
+                // Globals only — adjacent rares need a neighbor seat on the orb.
+                var rare = TakeBest(working, usedPieceIds, IsOrbRareGlobalChart, OrbRareComboScore);
                 if (rare == null)
                     break; // remaining free cells → solver
                 LockCell(cell.Row, cell.Col, rare);
             }
         }
 
-        // --- 4. Annul surrounds (above scarab): starfish > adjacent rares ---
+        // --- 4. Annul surrounds (above scarab): starfish > orb rare combo ---
         foreach (var center in annulCenters)
         {
             foreach (var n in FreeNeighbors(center.Row, center.Col, CellFree))
             {
                 var support = TakeBest(working, usedPieceIds, IsStarfishChart, StarfishScore)
-                              ?? TakeBest(working, usedPieceIds, IsAdjacentRareChart, AdjacentRareScore);
+                              ?? TakeBest(working, usedPieceIds, IsOrbRareComboChart, OrbRareComboScore);
                 if (support == null) break;
                 LockCell(n.Row, n.Col, support);
             }
@@ -196,13 +209,13 @@ public static class VoyagePlacementRules
             }
         }
 
-        // --- 6. Ancient surrounds (below scarab): starfish > adjacent rares ---
+        // --- 6. Ancient surrounds (below scarab): starfish > orb rare combo ---
         foreach (var center in ancientCenters)
         {
             foreach (var n in FreeNeighbors(center.Row, center.Col, CellFree))
             {
                 var support = TakeBest(working, usedPieceIds, IsStarfishChart, StarfishScore)
-                              ?? TakeBest(working, usedPieceIds, IsAdjacentRareChart, AdjacentRareScore);
+                              ?? TakeBest(working, usedPieceIds, IsOrbRareComboChart, OrbRareComboScore);
                 if (support == null) break;
                 LockCell(n.Row, n.Col, support);
             }
@@ -219,14 +232,19 @@ public static class VoyagePlacementRules
         }
 
         // --- 8. Save leftovers (never drop below 9 pieces for the solver) ---
+        // Combo pieces for orb / scarab boards: hold off the pool so the solver cannot
+        // waste them on filler tiles (or on boards with no matching border).
         var savedOperative = RemoveUnused(working, usedPieceIds, IsOperativeChart);
         var savedStrongbox = RemoveUnused(working, usedPieceIds, IsStrongboxCountChart);
         var savedStarfish = RemoveUnused(working, usedPieceIds, IsStarfishChart);
+        var savedAdjacentRare = RemoveUnused(working, usedPieceIds, IsAdjacentRareChart);
         var savedRareVoyage = RemoveUnused(working, usedPieceIds, IsRareVoyageChart);
+        var savedRareFracture = RemoveUnused(working, usedPieceIds, IsRareFractureChart);
 
         return new Result(
             working, locks,
-            savedPelagic, savedOperative, savedStrongbox, savedStarfish, savedRareVoyage);
+            savedPelagic, savedOperative, savedStrongbox, savedStarfish, savedRareVoyage,
+            savedAdjacentRare, savedRareFracture, savedKishara);
     }
 
     // --- Chart classification (Room.Name / mod ids) ---
@@ -237,6 +255,9 @@ public static class VoyagePlacementRules
 
     public static bool IsPelagic(MapPiece piece) =>
         piece.Name.Contains(PelagicRoomName, StringComparison.OrdinalIgnoreCase);
+
+    public static bool IsKishara(MapPiece piece) =>
+        piece.Name.Contains(KisharaRoomName, StringComparison.OrdinalIgnoreCase);
 
     public static bool IsOperativeChart(MapPiece piece) =>
         piece.Modifiers.Any(m =>
@@ -260,6 +281,90 @@ public static class VoyagePlacementRules
     public static bool IsRareVoyageChart(MapPiece piece) =>
         piece.Modifiers.Any(m =>
             m.Name.Equals("MapDeepwaterChartVoyageIncreasedRareMonsters", StringComparison.OrdinalIgnoreCase));
+
+    public static bool IsRareFractureChart(MapPiece piece) =>
+        piece.Modifiers.Any(m =>
+            m.Name.Contains("VoyageRareFracture", StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>Globals that boost rare density on orb boards (any seat).</summary>
+    public static bool IsOrbRareGlobalChart(MapPiece piece) =>
+        IsRareVoyageChart(piece) || IsRareFractureChart(piece);
+
+    /// <summary>Adjacent rares + globals — last-pick support next to Divine/Annul/Ancient.</summary>
+    public static bool IsOrbRareComboChart(MapPiece piece) =>
+        IsAdjacentRareChart(piece) || IsOrbRareGlobalChart(piece);
+
+    /// <summary>
+    /// Chart mods we lock/reserve (operatives, strongbox, starfish, adj/voyage rares, rare fracture).
+    /// Used by UI draw so only these combo pieces get the specialty highlight.
+    /// </summary>
+    public static bool IsSpecialtyComboModifier(string rawName)
+    {
+        if (string.IsNullOrEmpty(rawName))
+            return false;
+        return rawName.Contains("OperativeBox", StringComparison.OrdinalIgnoreCase)
+               || rawName.Contains("AdjacentStrongboxes", StringComparison.OrdinalIgnoreCase)
+               || rawName.Contains("DivinerBox", StringComparison.OrdinalIgnoreCase)
+               || rawName.Contains("ArcanistBox", StringComparison.OrdinalIgnoreCase)
+               || rawName.Contains("AdjacentStarfish", StringComparison.OrdinalIgnoreCase)
+               || rawName.Contains("AdjacentIncreasedRareMonsters", StringComparison.OrdinalIgnoreCase)
+               || rawName.Equals("MapDeepwaterChartVoyageIncreasedRareMonsters", StringComparison.OrdinalIgnoreCase)
+               || rawName.Contains("VoyageRareFracture", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>Room names we lock/save (Pelagic, boss, Clam farm, Anchorfield farm).</summary>
+    public static bool TrySpecialtyRoomLabel(string roomName, out string label)
+    {
+        label = null;
+        if (string.IsNullOrEmpty(roomName))
+            return false;
+        if (roomName.Contains(PelagicRoomName, StringComparison.OrdinalIgnoreCase))
+        {
+            label = "Pelagic";
+            return true;
+        }
+
+        if (roomName.Contains(KisharaRoomName, StringComparison.OrdinalIgnoreCase))
+        {
+            label = "Kishara";
+            return true;
+        }
+
+        if (roomName.Contains(AnchorfieldRoomName, StringComparison.OrdinalIgnoreCase))
+        {
+            label = "Anchorfield";
+            return true;
+        }
+
+        if (roomName.Contains(ClamRoomName, StringComparison.OrdinalIgnoreCase))
+        {
+            label = "Clam Shelf";
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Borders that drive placement strategy (orbs, scarabs, no-consume farm).
+    /// Everything else (treasure anchors, currency rares, …) is not drawn.
+    /// </summary>
+    public static bool IsStrategyBorder(string rawName)
+    {
+        if (string.IsNullOrEmpty(rawName))
+            return false;
+        return rawName.Equals(NotConsume1, StringComparison.OrdinalIgnoreCase)
+               || rawName.Equals(NotConsume2, StringComparison.OrdinalIgnoreCase)
+               || rawName.Equals(RareDivine, StringComparison.OrdinalIgnoreCase)
+               || rawName.Equals(RareAnnul, StringComparison.OrdinalIgnoreCase)
+               || rawName.Equals(RareAncient, StringComparison.OrdinalIgnoreCase)
+               || rawName.Equals(MoreScarabs1, StringComparison.OrdinalIgnoreCase)
+               || rawName.Equals(MoreScarabs2, StringComparison.OrdinalIgnoreCase)
+               || rawName.Equals(MoreScarabs3, StringComparison.OrdinalIgnoreCase)
+               || rawName.Contains("MoreScarabs1", StringComparison.OrdinalIgnoreCase)
+               || rawName.Contains("MoreScarabs2", StringComparison.OrdinalIgnoreCase)
+               || rawName.Contains("MoreScarabs3", StringComparison.OrdinalIgnoreCase);
+    }
 
     /// <summary>Anchorfield preferred over Clam-infested Shelf; then total mod weight.</summary>
     private static double FarmPriority(MapPiece p)
@@ -299,14 +404,44 @@ public static class VoyagePlacementRules
         p.Modifiers.Where(m => m.Name.Contains("AdjacentStarfish", StringComparison.OrdinalIgnoreCase))
             .Sum(m => m.Weight);
 
-    private static double AdjacentRareScore(MapPiece p) =>
-        p.Modifiers.Where(m => m.Name.Contains("AdjacentIncreasedRareMonsters", StringComparison.OrdinalIgnoreCase))
-            .Sum(m => m.Weight);
+    private static double AdjacentRareScore(MapPiece p)
+    {
+        double score = 0;
+        foreach (var m in p.Modifiers)
+        {
+            if (!m.Name.Contains("AdjacentIncreasedRareMonsters", StringComparison.OrdinalIgnoreCase))
+                continue;
+            // Prefer T2 over T1 even when profile weights are equal/zero.
+            var tier = m.Name.Contains("IncreasedRareMonsters2", StringComparison.OrdinalIgnoreCase) ? 2
+                : m.Name.Contains("IncreasedRareMonsters1", StringComparison.OrdinalIgnoreCase) ? 1
+                : 0;
+            score += tier * 1_000 + m.Weight;
+        }
+
+        return score;
+    }
 
     private static double RareVoyageScore(MapPiece p) =>
         p.Modifiers.Where(m =>
                 m.Name.Equals("MapDeepwaterChartVoyageIncreasedRareMonsters", StringComparison.OrdinalIgnoreCase))
             .Sum(m => m.Weight);
+
+    private static double RareFractureScore(MapPiece p) =>
+        p.Modifiers.Where(m => m.Name.Contains("VoyageRareFracture", StringComparison.OrdinalIgnoreCase))
+            .Sum(m => m.Weight);
+
+    /// <summary>Pick best orb rare support: adjacent T2/T1, voyage rares, or rare fracture by weight.</summary>
+    private static double OrbRareComboScore(MapPiece p)
+    {
+        double score = 0;
+        if (IsAdjacentRareChart(p))
+            score = Math.Max(score, AdjacentRareScore(p));
+        if (IsRareVoyageChart(p))
+            score = Math.Max(score, RareVoyageScore(p));
+        if (IsRareFractureChart(p))
+            score = Math.Max(score, RareFractureScore(p));
+        return score;
+    }
 
     // --- Border helpers ---
 

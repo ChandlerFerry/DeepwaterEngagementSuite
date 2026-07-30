@@ -26,14 +26,15 @@ public class VoyagePlanner
     private long _nodesPruned;
     private Stopwatch _stopwatch;
     private VoyagePuzzle _puzzle;
-    private double _maxModifierPerPiece;
+    private VoyageScorer _scorer;
     private bool _cancelled;
     private int _filledCount;
 
     // Precomputed: for each piece, all (rotation, connections) pairs.
-    private record struct PieceOption(int PieceIdx, int Rotation, Direction Connections, double LocalWeight, double GlobalWeight);
+    private record struct PieceOption(int PieceIdx, int Rotation, Direction Connections);
     private PieceOption[][] _pieceOptionsByGroup;
     private int[] _pieceToGroup;
+    private int[] _pieceScanOrder;
 
     public IEnumerable<VoyageSolutionResult> Solve(VoyagePuzzle puzzle, VoyagePlannerSettings settings = null)
     {
@@ -49,23 +50,19 @@ public class VoyagePlanner
         _stopwatch = Stopwatch.StartNew();
         _cancelled = false;
 
-        _maxModifierPerPiece = puzzle.AvailablePieces
-            .Select(p => p.LocalModifier)
-            .DefaultIfEmpty(0)
-            .Max();
+        _scorer = new VoyageScorer(puzzle);
 
-        // Group pieces by (Type, BaseConnections, GlobalWeight, LocalWeight) — pieces in the
-        // same group are interchangeable for both connectivity and scoring.
-        var groupMap = new Dictionary<(PieceType, Direction, double, double), int>();
+        // Group pieces by (Type, BaseConnections, modifier signature) — pieces in the same group
+        // are interchangeable for both connectivity and scoring. The signature must include tags,
+        // since two pieces with equal weight sums but different tags score differently.
+        var groupMap = new Dictionary<(PieceType, Direction, string), int>();
         var groups = new List<List<int>>();
         _pieceToGroup = new int[puzzle.AvailablePieces.Count];
 
         for (var i = 0; i < puzzle.AvailablePieces.Count; i++)
         {
             var p = puzzle.AvailablePieces[i];
-            var globalWeight = p.GlobalModifier;
-            var localWeight = p.LocalModifier;
-            var key = (p.Type, p.BaseConnections, globalWeight, localWeight);
+            var key = (p.Type, p.BaseConnections, GetModifierSignature(p));
             if (!groupMap.TryGetValue(key, out var g))
             {
                 g = groups.Count;
@@ -81,15 +78,19 @@ public class VoyagePlanner
         for (var g = 0; g < groups.Count; g++)
         {
             var piece = puzzle.AvailablePieces[groups[g][0]];
-            var globalWeight = piece.GlobalModifier;
-            var localWeight = piece.LocalModifier;
             var opts = new List<PieceOption>();
             for (var rot = 0; rot < piece.DistinctRotations; rot++)
             {
-                opts.Add(new PieceOption(groups[g][0], rot, piece.GetConnections(rot), localWeight, globalWeight));
+                opts.Add(new PieceOption(groups[g][0], rot, piece.GetConnections(rot)));
             }
             _pieceOptionsByGroup[g] = opts.ToArray();
         }
+
+        // Value ordering: try heavier pieces first so good solutions (and thus a high pruning
+        // threshold) are found early.
+        _pieceScanOrder = Enumerable.Range(0, puzzle.AvailablePieces.Count)
+            .OrderByDescending(i => puzzle.AvailablePieces[i].LocalModifier + puzzle.AvailablePieces[i].GlobalModifier)
+            .ToArray();
 
         // Handle locked placements
         var lockedCells = puzzle.LockedPlacements
@@ -144,7 +145,7 @@ public class VoyagePlanner
         {
             if (IsFullyConnected())
             {
-                var score = CalculateScore();
+                var score = _scorer.Score(_grid);
                 if (score >= _bestScore)
                 {
                     if (score > _bestScore)
@@ -174,7 +175,7 @@ public class VoyagePlanner
 
         // Upper-bound prune: only prune if the upper bound is strictly worse than best.
         // Use < (not <=) so equal-scoring subtrees are still explored, allowing TopN to fill.
-        if (CalculateUpperBoundScore() < _bestScore)
+        if (_scorer.UpperBound(_grid, _pieceUsed, _filledCount) < _bestScore)
         {
             _nodesPruned++;
             yield break;
@@ -251,7 +252,7 @@ public class VoyagePlanner
         var result = new List<(int, int, Direction)>();
         var triedGroups = new HashSet<int>();
 
-        for (var i = 0; i < _pieceUsed.Length; i++)
+        foreach (var i in _pieceScanOrder)
         {
             if (_pieceUsed[i]) continue;
             var g = _pieceToGroup[i];
@@ -356,7 +357,7 @@ public class VoyagePlanner
         {
             if (_pieceUsed[i]) continue;
             var maxConn = _pieceOptionsByGroup[_pieceToGroup[i]]
-                .Max(o => CountConnections(o.Connections));
+                .Max(o => o.Connections.CountConnections());
             mergeCapacities.Add(Math.Max(0, maxConn - 1));
         }
 
@@ -370,14 +371,13 @@ public class VoyagePlanner
         return true;
     }
 
-    private static int CountConnections(Direction conn)
+    private static string GetModifierSignature(MapPiece piece)
     {
-        var c = 0;
-        if (conn.HasFlag(Direction.Up)) c++;
-        if (conn.HasFlag(Direction.Down)) c++;
-        if (conn.HasFlag(Direction.Left)) c++;
-        if (conn.HasFlag(Direction.Right)) c++;
-        return c;
+        return string.Join("|", piece.Modifiers
+            .OrderBy(m => m.Tags)
+            .ThenBy(m => m.IsGlobal)
+            .ThenBy(m => m.Weight)
+            .Select(m => $"{(int)m.Tags}:{(m.IsGlobal ? 1 : 0)}:{m.Weight:R}"));
     }
 
     private int CountConnectedComponents()
@@ -422,99 +422,6 @@ public class VoyagePlanner
         }
 
         return components;
-    }
-
-    private double CalculateScore()
-    {
-        var score = 0.0;
-        var globalSum = 0.0;
-
-        for (var r = 0; r < GridSize; r++)
-            for (var c = 0; c < GridSize; c++)
-                if (_grid[r, c] != null)
-                    globalSum += _grid[r, c].Piece.GlobalModifier;
-
-        for (var r = 0; r < GridSize; r++)
-        {
-            for (var c = 0; c < GridSize; c++)
-            {
-                var cellScore = globalSum;
-
-                foreach (var (_, dr, dc) in Directions)
-                {
-                    var nr = r + dr;
-                    var nc = c + dc;
-
-                    if (nr < 0 || nr >= GridSize || nc < 0 || nc >= GridSize) continue;
-                    if (_grid[nr, nc] == null) continue;
-
-                    cellScore += _grid[nr, nc].Piece.LocalModifier;
-                }
-
-                score += cellScore * _puzzle.LocationModifiers[r, c];
-            }
-        }
-
-        return score;
-    }
-
-    private double CalculateUpperBoundScore()
-    {
-        var score = 0.0;
-        var emptyCount = 0;
-        var actualGlobalSum = 0.0;
-
-        for (var i = 0; i < GridSize; i++)
-            for (var j = 0; j < GridSize; j++)
-                if (_grid[i, j] != null)
-                    actualGlobalSum += _grid[i, j].Piece.GlobalModifier;
-
-        // Upper bound on global sum: take only the top (9 - filled) unplaced global weights
-        var unplacedGlobal = new List<double>();
-        for (var i = 0; i < _pieceUsed.Length; i++)
-        {
-            if (_pieceUsed[i]) continue;
-            unplacedGlobal.Add(_pieceOptionsByGroup[_pieceToGroup[i]][0].GlobalWeight);
-        }
-        unplacedGlobal.Sort((a, b) => b.CompareTo(a));
-        var ubGlobalSum = actualGlobalSum + unplacedGlobal.Take(GridSize * GridSize - _filledCount).Sum();
-
-        for (var i = 0; i < GridSize; i++)
-        {
-            for (var j = 0; j < GridSize; j++)
-            {
-                if (_grid[i, j] != null)
-                {
-                    var cellScore = 0.0;
-                    foreach (var (_, dr, dc) in Directions)
-                    {
-                        var nr = i + dr;
-                        var nc = j + dc;
-                        if (nr < 0 || nr >= GridSize || nc < 0 || nc >= GridSize) continue;
-
-                        cellScore += _grid[nr, nc] != null
-                            ? _grid[nr, nc].Piece.LocalModifier
-                            : _maxModifierPerPiece;
-                    }
-                    score += (cellScore + ubGlobalSum) * _puzzle.LocationModifiers[i, j];
-                }
-                else
-                {
-                    var neighborCount = 0;
-                    foreach (var (_, dr, dc) in Directions)
-                    {
-                        var nr = i + dr;
-                        var nc = j + dc;
-                        if (nr >= 0 && nr < GridSize && nc >= 0 && nc < GridSize)
-                            neighborCount++;
-                    }
-                    score += (neighborCount * _maxModifierPerPiece + ubGlobalSum) * _puzzle.LocationModifiers[i, j];
-                    emptyCount++;
-                }
-            }
-        }
-
-        return score;
     }
 
     private MapPiecePlacement[,] CloneGrid()

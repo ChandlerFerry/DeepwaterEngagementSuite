@@ -47,6 +47,16 @@ public static class DirectionExtensions
         };
     }
 
+    public static int CountConnections(this Direction d)
+    {
+        var c = 0;
+        if (d.HasFlag(Direction.Up)) c++;
+        if (d.HasFlag(Direction.Down)) c++;
+        if (d.HasFlag(Direction.Left)) c++;
+        if (d.HasFlag(Direction.Right)) c++;
+        return c;
+    }
+
     public static (int Dr, int Dc) CellNeighbor(this Direction d)
     {
         return d switch

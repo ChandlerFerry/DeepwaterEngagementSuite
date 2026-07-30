@@ -27,6 +27,7 @@ public partial class DeepwaterEngagementSuite
     private Task _run;
     private SyncTask<bool> _voyagePlaceTask;
     private VoyagePlanner _voyagePlanner;
+    private VoyageScorer _uiScorer;
     private int _selectedSolutionIndex = 0;
     private bool _voyageSolving;
     private bool _voyageTimedOut;
@@ -294,7 +295,8 @@ public partial class DeepwaterEngagementSuite
                                 var chartMod = Settings.VoyageSettings.ChartModifiers.Content
                                     .FirstOrDefault(cm => cm.Id.Value.Equals(im.RawName, StringComparison.OrdinalIgnoreCase));
                                 var configuredWeight = chartMod?.Weight.Value;
-                                return new Modifier(im.RawName, configuredWeight ?? 0, chartMod?.IsGlobal.Value ?? false);
+                                return new Modifier(im.RawName, configuredWeight ?? 0, chartMod?.IsGlobal.Value ?? false,
+                                    ModifierTagParser.Parse(chartMod?.Tags.Value, ModifierTag.None));
                             }) ?? []
                             ]);
                         pieces.Add(mp);
@@ -304,18 +306,29 @@ public partial class DeepwaterEngagementSuite
                 }
 
                 var modsPerTileIndex = GetTileMods(tree);
-                var boardMultipliers = modsPerTileIndex.Select(x => (x.Key,
-                    x.Value.Select(m => Settings.VoyageSettings.BorderModifiers.Content.FirstOrDefault(c => c.Id.Value == m.RawName)?.ValueMultiplier.Value ?? 1)
-                        .Aggregate(1f, (a, b) => a * b))).ToList();
-                var tileMultiplierArray = new double[3, 3];
-                foreach (var boardMultiplier in boardMultipliers)
+                var tileBorders = new IReadOnlyList<BorderEffect>[3, 3];
+                for (var tileIndex = 0; tileIndex < 9; tileIndex++)
                 {
-                    tileMultiplierArray[boardMultiplier.Key / 3, boardMultiplier.Key % 3] = boardMultiplier.Item2;
+                    var borderMods = modsPerTileIndex.GetValueOrDefault(tileIndex) ?? [];
+                    tileBorders[tileIndex / 3, tileIndex % 3] = borderMods.Select(m =>
+                    {
+                        var setting = Settings.VoyageSettings.BorderModifiers.Content
+                            .FirstOrDefault(c => c.Id.Value.Equals(m.RawName, StringComparison.OrdinalIgnoreCase));
+                        return new BorderEffect(
+                            m.RawName,
+                            // Untagged borders match everything (legacy behavior for old profiles).
+                            ModifierTagParser.Parse(setting?.Tags.Value, ModifierTag.All),
+                            setting?.ValueMultiplier.Value ?? 1,
+                            setting?.PerConnection.Value ?? false,
+                            setting?.AffectsPlacedChart.Value ?? false);
+                    }).ToList();
                 }
 
+                var puzzle = new VoyagePuzzle(pieces, tileBorders, []);
+                _uiScorer = new VoyageScorer(puzzle);
                 _voyagePlanner = new VoyagePlanner();
                 var timeLimitSetting = Settings.VoyageSettings.SolverTimeLimitSeconds.Value;
-                foreach (var r in _voyagePlanner.Solve(new VoyagePuzzle(pieces, tileMultiplierArray, []),
+                foreach (var r in _voyagePlanner.Solve(puzzle,
                     new VoyagePlannerSettings(TimeLimitSeconds: timeLimitSetting)))
                 {
                     _result = r;
@@ -448,11 +461,14 @@ public partial class DeepwaterEngagementSuite
             }
         }
 
-        if (ImGui.BeginTable("ScoreBreakdown", 4, ImGuiTableFlags.Borders | ImGuiTableFlags.SizingStretchSame))
+        var cellScores = _uiScorer?.CellScores(currentSolution.Grid);
+
+        if (ImGui.BeginTable("ScoreBreakdown", 5, ImGuiTableFlags.Borders | ImGuiTableFlags.SizingStretchSame))
         {
             ImGui.TableSetupColumn("Tile", ImGuiTableColumnFlags.WidthFixed, 25);
             ImGui.TableSetupColumn("Piece", ImGuiTableColumnFlags.WidthFixed, 20);
             ImGui.TableSetupColumn("Type", ImGuiTableColumnFlags.WidthFixed, 100);
+            ImGui.TableSetupColumn("Score", ImGuiTableColumnFlags.WidthFixed, 50);
             ImGui.TableSetupColumn("Mods");
             ImGui.TableHeadersRow();
 
@@ -471,6 +487,8 @@ public partial class DeepwaterEngagementSuite
                 ImGui.TableNextColumn();
                 ImGui.Text($"{placement.Piece.Type}");
                 ImGui.TableNextColumn();
+                ImGui.Text(cellScores != null ? $"{cellScores[r, c]:F1}" : "-");
+                ImGui.TableNextColumn();
                 var modText = string.Join(", ", placement.Piece.Modifiers.Where(m => m.Name != "Default").Select(m =>
                 {
                     var displayName = TrimChartPrefix(m.Name);
@@ -484,7 +502,112 @@ public partial class DeepwaterEngagementSuite
             ImGui.EndTable();
         }
 
+        DrawScoreDetails(currentSolution);
+
         ImGui.End();
+    }
+
+    /// <summary>
+    /// Per-tile justification of the selected solution's score: every contribution landing on a
+    /// tile, where it came from, and which border multipliers applied to it.
+    /// </summary>
+    private void DrawScoreDetails(VoyageSolution solution)
+    {
+        if (_uiScorer == null)
+            return;
+
+        ImGui.Spacing();
+        if (!ImGui.TreeNode("Score details"))
+            return;
+
+        var explanation = _uiScorer.Explain(solution.Grid);
+        for (int i = 0; i < 9; i++)
+        {
+            var r = i / 3;
+            var c = i % 3;
+            var placement = solution.Grid[r, c];
+            var rows = explanation[r, c];
+            var total = rows.Sum(x => x.Value);
+
+            ImGui.PushID($"detail{i}");
+            var open = ImGui.TreeNode("node", $"({r},{c}) #{placement.Piece.Id} {placement.Piece.Type} — {total:F1}");
+            if (open)
+            {
+                var borders = _uiScorer.BordersAt(r, c);
+                ImGui.TextDisabled(borders.Count > 0
+                    ? "Borders: " + string.Join(",  ", borders.Select(FormatBorderEffect))
+                    : "No borders touch this tile");
+
+                if (rows.Count == 0)
+                {
+                    ImGui.TextDisabled("No score contributions");
+                }
+                else if (ImGui.BeginTable("details", 6,
+                             ImGuiTableFlags.Borders | ImGuiTableFlags.SizingStretchProp))
+                {
+                    ImGui.TableSetupColumn("Mod");
+                    ImGui.TableSetupColumn("From", ImGuiTableColumnFlags.WidthFixed, 75);
+                    ImGui.TableSetupColumn("Weight", ImGuiTableColumnFlags.WidthFixed, 60);
+                    ImGui.TableSetupColumn("Mult", ImGuiTableColumnFlags.WidthFixed, 130);
+                    ImGui.TableSetupColumn("Value", ImGuiTableColumnFlags.WidthFixed, 65);
+                    ImGui.TableSetupColumn("Applied borders");
+                    ImGui.TableHeadersRow();
+
+                    foreach (var row in rows)
+                    {
+                        ImGui.TableNextRow();
+                        ImGui.TableNextColumn();
+                        ImGui.Text($"{(row.IsGlobal ? "[G] " : "")}{TrimChartPrefix(row.ModName)}");
+                        ImGui.TableNextColumn();
+                        ImGui.Text(row.SourcePieceId < 0
+                            ? "-"
+                            : row.IsGlobal
+                                ? "self"
+                                : $"#{row.SourcePieceId} ({row.SourceRow},{row.SourceCol})");
+                        ImGui.TableNextColumn();
+                        ImGui.Text($"{row.Weight:F1}");
+                        ImGui.TableNextColumn();
+                        // For locals: chart-side x tile-side multipliers. For globals the tile
+                        // factor is the sum of matching multipliers over all 9 tiles.
+                        ImGui.Text(row.SourcePieceId < 0
+                            ? $"x{row.TileFactor:F2}"
+                            : row.IsGlobal
+                                ? $"x{row.ChartMultiplier:F2} sum{row.TileFactor:F2}"
+                                : $"x{row.ChartMultiplier:F2} x{row.TileFactor:F2}");
+                        ImGui.TableNextColumn();
+                        ImGui.Text($"{row.Value:F1}");
+                        ImGui.TableNextColumn();
+                        var applied = row.TileBorders
+                            .Select(b => $"{TrimBorderPrefix(b.Name)} x{b.Multiplier:0.##}")
+                            .Concat(row.ChartBorders
+                                .Select(b => $"{TrimBorderPrefix(b.Name)} x{b.Multiplier:0.##} (boosts chart at ({row.SourceRow},{row.SourceCol}))"))
+                            .ToList();
+                        ImGui.Text(applied.Count > 0 ? string.Join(", ", applied) : "-");
+                    }
+
+                    ImGui.EndTable();
+                }
+
+                ImGui.TreePop();
+            }
+
+            ImGui.PopID();
+        }
+
+        ImGui.TreePop();
+    }
+
+    private string FormatBorderEffect(BorderEffect border)
+    {
+        return $"{TrimBorderPrefix(border.Name)} x{border.Multiplier:0.##}{(border.PerConnection ? "/conn" : "")}" +
+               $"{(border.AffectsPlacedChart ? " (boosts this tile's chart, value lands where its mods point)" : "")} [{border.Tags}]";
+    }
+
+    private static string TrimBorderPrefix(string name)
+    {
+        return name.StartsWith("DeepwaterBorder", StringComparison.Ordinal)
+            ? name["DeepwaterBorder".Length..]
+            : name;
     }
 
     private static string[] BuildAsciiGrid(MapPiecePlacement[,] grid, List<VoyageTileElement> tiles)

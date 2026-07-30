@@ -4,5 +4,5 @@ namespace DeepwaterEngagementSuite.VoyagePlannerData;
 
 public record VoyagePuzzle(
     List<MapPiece> AvailablePieces,
-    double[,] LocationModifiers,
+    IReadOnlyList<BorderEffect>[,] TileBorders,
     List<LockedPlacement> LockedPlacements);

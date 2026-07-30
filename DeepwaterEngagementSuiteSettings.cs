@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Windows.Forms;
+using DeepwaterEngagementSuite.VoyagePlannerData;
 using ExileCore;
 using ExileCore.PoEMemory.Elements;
 using ExileCore.PoEMemory.MemoryObjects;
@@ -302,12 +303,28 @@ public class VoyageBorderModifier
 {
     public TextNode Id { get; set; } = new TextNode("");
     public TextNode Abbreviation { get; set; } = new TextNode("");
+
+    [Menu(null, "For per-connection borders this is the multiplier per single connection: effective = 1 + (multiplier - 1) x connections")]
     public RangeNode<float> ValueMultiplier { get; set; } = new RangeNode<float>(1, 0, 10);
+
+    [Menu(null, "Comma-separated reward categories this border boosts (e.g. 'Monsters, RareMonsters'). " +
+                "'All' matches every chart modifier, 'None' makes the border inert for scoring (flat value). " +
+                "Empty = All (legacy behavior). Categories: Monsters, MagicMonsters, RareMonsters, Essences, Strongboxes, " +
+                "Uniques, Currency, Scarabs, Gold, Equipment, Experience, Resources, Lanterns, Rarity")]
+    public TextNode Tags { get; set; } = new TextNode("");
+
+    [Menu("Per connection", "Multiplier scales with the connection count of the chart placed on the affected tile ('... per Chart connection' borders)")]
+    public ToggleNode PerConnection { get; set; } = new ToggleNode(false);
+
+    [Menu("Affects placed chart", "Multiplies the modifiers of the chart placed on the adjacent tile (e.g. 'increased effect of adjacent Charts', chart refunds) instead of rewards landing on that tile")]
+    public ToggleNode AffectsPlacedChart { get; set; } = new ToggleNode(false);
+
     public ColorNode HighlightColor { get; set; } = Color.Cyan;
 
     public override string ToString()
     {
-        return $"{Id.Value} {ValueMultiplier.Value}###";
+        var tags = ModifierTagParser.Parse(Tags.Value, ModifierTag.All);
+        return $"{Id.Value} x{ValueMultiplier.Value}{(PerConnection.Value ? "/conn" : "")}{(AffectsPlacedChart.Value ? " [chart]" : "")} ({tags})###";
     }
 }
 
@@ -317,11 +334,18 @@ public class VoyageChartModifier
     public TextNode Id { get; set; } = new TextNode("");
     public RangeNode<float> Weight { get; set; } = new RangeNode<float>(0, 0, 100);
     public ToggleNode IsGlobal { get; set; } = new ToggleNode(false);
+
+    [Menu(null, "Comma-separated reward categories this modifier's reward belongs to. Empty/'None' = " +
+                "not boosted by any category-specific border (only by 'All' borders). Categories: Monsters, MagicMonsters, " +
+                "RareMonsters, Essences, Strongboxes, Uniques, Currency, Scarabs, Gold, Equipment, Experience, Resources, Lanterns, Rarity")]
+    public TextNode Tags { get; set; } = new TextNode("");
+
     public ColorNode HighlightColor { get; set; } = Color.Violet;
 
     public override string ToString()
     {
-        return $"{Id.Value} {Weight.Value}###";
+        var tags = ModifierTagParser.Parse(Tags.Value, ModifierTag.None);
+        return $"{Id.Value} {Weight.Value} ({tags})###";
     }
 }
 

@@ -6,7 +6,8 @@ namespace DeepwaterEngagementSuite.VoyagePlannerData;
 
 /// <summary>
 /// Hard placement preferences for the voyage board.
-/// Priority (high → low): Divine → Annul → Scarab farm → Ancient → no-consume farm.
+/// Priority (high → low): Divine → Annul → Scarab farm → Ancient → no-consume farm →
+/// Lost Message center-only.
 /// Chart names come from DeepwaterChart.Room.Name.
 /// </summary>
 public static class VoyagePlacementRules
@@ -29,7 +30,12 @@ public static class VoyagePlacementRules
     public const string AdjacentIncreasedRarePrefix = "MapDeepwaterChartAdjacentIncreasedRareMonsters"; // 1 < 2
     public const string AdjacentDivinerBoxPrefix = "MapDeepwaterChartAdjacentDivinerBox"; // 1 < 2
     public const string AdjacentArcanistBoxPrefix = "MapDeepwaterChartAdjacentArcanistBox"; // 1 < 2
+    public const string AdjacentLostMessagePrefix = "MapDeepwaterChartAdjacentLostMessage"; // 1 < 2; center only
     public const string AdjacentFractured = "MapDeepwaterChartAdjacentFractured";
+
+    /// <summary>Board center — only valid seat for Adjacent Lost Message charts.</summary>
+    public const int CenterRow = 1;
+    public const int CenterCol = 1;
 
     // DeepwaterChart.Room.Name values
     public const string PelagicRoomName = "Pelagic Abyss";
@@ -48,6 +54,7 @@ public static class VoyagePlacementRules
         int SavedRareVoyageCount,
         int SavedAdjacentRareCount,
         int SavedAdjacentFracturedCount,
+        int SavedLostMessageCount,
         int SavedKisharaCount);
 
     public static Result Apply(
@@ -231,7 +238,7 @@ public static class VoyagePlacementRules
             }
         }
 
-        // --- 7. No-consume farm maps (lowest priority) ---
+        // --- 7. No-consume farm maps ---
         foreach (var cell in EnumerateCells().Where(c =>
                      CellFree(c.Row, c.Col) &&
                      IsStrongNoConsume(BordersAt(tileBorders, c.Row, c.Col))))
@@ -241,7 +248,16 @@ public static class VoyagePlacementRules
             LockCell(cell.Row, cell.Col, farm);
         }
 
-        // --- 8. Save leftovers (never drop below 9 pieces for the solver) ---
+        // --- 8. Lost Message (lowest priority): ONLY board center (1,1) ---
+        // Adjacent effect is wasted off-center; never lock elsewhere. Leftovers are saved.
+        if (CellFree(CenterRow, CenterCol))
+        {
+            var lost = TakeBest(working, usedPieceIds, IsLostMessageChart, LostMessageScore);
+            if (lost != null)
+                LockCell(CenterRow, CenterCol, lost);
+        }
+
+        // --- 9. Save leftovers (never drop below 9 pieces for the solver) ---
         // Combo pieces for orb / scarab boards: hold off the pool so the solver cannot
         // waste them on filler tiles (or on boards with no matching border).
         var savedStrongbox = RemoveUnused(working, usedPieceIds, IsStrongboxCountChart);
@@ -249,11 +265,12 @@ public static class VoyagePlacementRules
         var savedAdjacentRare = RemoveUnused(working, usedPieceIds, IsAdjacentRareChart);
         var savedRareVoyage = RemoveUnused(working, usedPieceIds, IsRareVoyageChart);
         var savedAdjacentFractured = RemoveUnused(working, usedPieceIds, IsAdjacentFracturedChart);
+        var savedLostMessage = RemoveUnused(working, usedPieceIds, IsLostMessageChart);
 
         return new Result(
             working, locks,
             savedPelagic, savedStrongbox, savedStarfish, savedRareVoyage,
-            savedAdjacentRare, savedAdjacentFractured, savedKishara);
+            savedAdjacentRare, savedAdjacentFractured, savedLostMessage, savedKishara);
     }
 
     // --- Chart classification (exact ids from game data) ---
@@ -295,6 +312,10 @@ public static class VoyagePlacementRules
         piece.Modifiers.Any(m =>
             m.Name.Equals(AdjacentFractured, StringComparison.OrdinalIgnoreCase));
 
+    /// <summary>Adjacent Lost Message 1/2 — strategy seat is board center only.</summary>
+    public static bool IsLostMessageChart(MapPiece piece) =>
+        piece.Modifiers.Any(m => IsFamily(m.Name, AdjacentLostMessagePrefix));
+
     /// <summary>Global only — free tiles next to divine / any orb seat.</summary>
     public static bool IsOrbRareGlobalChart(MapPiece piece) =>
         IsRareVoyageChart(piece);
@@ -313,6 +334,7 @@ public static class VoyagePlacementRules
                || IsFamily(rawName, AdjacentArcanistBoxPrefix)
                || IsFamily(rawName, AdjacentStarfishPrefix)
                || IsFamily(rawName, AdjacentIncreasedRarePrefix)
+               || IsFamily(rawName, AdjacentLostMessagePrefix)
                || rawName.Equals(VoyageIncreasedRareMonsters, StringComparison.OrdinalIgnoreCase)
                || rawName.Equals(AdjacentFractured, StringComparison.OrdinalIgnoreCase);
     }
@@ -407,6 +429,9 @@ public static class VoyagePlacementRules
         p.Modifiers.Any(m => m.Name.Equals(AdjacentFractured, StringComparison.OrdinalIgnoreCase))
             ? 1 + p.LocalModifier + p.GlobalModifier
             : 0;
+
+    private static double LostMessageScore(MapPiece p) =>
+        MaxFamilyTierScore(p, AdjacentLostMessagePrefix);
 
     /// <summary>Orb surround last-pick: adj rares (tiered), fractured, voyage global by weight.</summary>
     private static double OrbRareComboScore(MapPiece p)

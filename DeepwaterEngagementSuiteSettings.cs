@@ -217,7 +217,7 @@ public class VoyageSettings
     public ToggleNode ShowOptimizerWindow { get; set; } = new ToggleNode(true);
 
     [Menu("Draw combo labels",
-        "Overlay specialty combo pieces (Pelagic/farm rooms, starfish, rares, boxes) and strategy borders " +
+        "Overlay specialty combo pieces (Pelagic/farm rooms, starfish, rares, boxes, Lost Message) and strategy borders " +
         "(orbs, scarabs, no-consume). Turn off for a clean voyage UI.")]
     public ToggleNode DrawComboLabels { get; set; } = new ToggleNode(true);
 

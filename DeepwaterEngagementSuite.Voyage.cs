@@ -850,6 +850,8 @@ public partial class DeepwaterEngagementSuite
             savedBits.Add($"{placement.SavedRareVoyageCount} voyage rares");
         if (placement.SavedAdjacentFracturedCount > 0)
             savedBits.Add($"{placement.SavedAdjacentFracturedCount} adj. fractured");
+        if (placement.SavedLostMessageCount > 0)
+            savedBits.Add($"{placement.SavedLostMessageCount} Lost Message");
         if (savedBits.Count > 0)
             DebugWindow.LogMsg($"Voyage: saved {string.Join(", ", savedBits)} for better borders", 5);
         if (placement.Locks.Count > 0)

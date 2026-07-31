@@ -224,6 +224,11 @@ public partial class DeepwaterEngagementSuite
 
         foreach (var marker in markers)
         {
+            if (!IsTrailTypeEnabled(marker.Type))
+            {
+                continue;
+            }
+
             var delta = marker.GridPos - _playerGridPos;
             if (delta.LengthSquared() > maxDistanceSquared)
             {
@@ -273,6 +278,13 @@ public partial class DeepwaterEngagementSuite
         return Settings.TrailSettings.Colors.Get(type, fallback);
     }
 
+    private bool IsTrailTypeEnabled(IconPickerIndex type)
+    {
+        return type == IconPickerIndex.PointerTarget
+            ? Settings.TrailSettings.ShowUndiscoveredTargets.Value
+            : Settings.TrailSettings.Colors.IsEnabled(type);
+    }
+
     private bool IsTrailTargetReachable(Vector2 gridPos)
     {
         var target = gridPos.TruncateToVector2I();
@@ -305,6 +317,7 @@ public partial class DeepwaterEngagementSuite
                 Type: IconPickerIndex.PointerTarget,
                 Distance: Vector2.Distance(x, _playerGridPos),
                 Reachable: IsTrailTargetReachable(x))))
+            .Where(x => IsTrailTypeEnabled(x.Type))
             .Where(x => x.Distance <= Settings.TrailSettings.MaxDistance.Value)
             .ToList();
 
@@ -373,6 +386,7 @@ public partial class DeepwaterEngagementSuite
         IconPickerIndex.GoldTreasureChest => "Gold Treasure",
         IconPickerIndex.ClamTreasureChest => "Clam Treasure",
         IconPickerIndex.CurrencyTreasureChest => "Currency",
+        IconPickerIndex.CurrencyTreasureChestOpulent => "Opulent Currency",
         IconPickerIndex.UniqueWeaponChest => "Unique Weapon",
         IconPickerIndex.UniqueArmourChest => "Unique Armour",
         IconPickerIndex.ScarabChest => "Scarabs",

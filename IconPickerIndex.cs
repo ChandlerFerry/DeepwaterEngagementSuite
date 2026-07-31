@@ -11,6 +11,7 @@ public enum IconPickerIndex
     GoldTreasureChest,
     ClamTreasureChest,
     CurrencyTreasureChest,
+    CurrencyTreasureChestOpulent,
     UniqueWeaponChest,
     UniqueArmourChest,
     ScarabChest,

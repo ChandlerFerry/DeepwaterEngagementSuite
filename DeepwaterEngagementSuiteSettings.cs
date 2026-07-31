@@ -25,6 +25,7 @@ public class DeepwaterEngagementSuiteSettings : ISettings
     public const MapIconsIndex DefaultGoldTreasureChestIcon = MapIconsIndex.LootFilterSmallYellowCircle;
     public const MapIconsIndex DefaultClamTreasureChestIcon = MapIconsIndex.LootFilterLargeYellowStar;
     public const MapIconsIndex DefaultCurrencyTreasureChestIcon = MapIconsIndex.RewardCurrency;
+    public const MapIconsIndex DefaultCurrencyTreasureChestOpulentIcon = MapIconsIndex.LootFilterLargeYellowStar;
     public const MapIconsIndex DefaultUniqueWeaponChestIcon = MapIconsIndex.RewardWeapons;
     public const MapIconsIndex DefaultUniqueArmourChestIcon = MapIconsIndex.RewardArmour;
     public static readonly Color UniqueItemTint = new Color(175, 96, 37); // PoE unique orange
@@ -62,6 +63,7 @@ public class DeepwaterEngagementSuiteSettings : ISettings
         IconPickerIndex.GoldTreasureChest => DefaultGoldTreasureChestIcon,
         IconPickerIndex.ClamTreasureChest => DefaultClamTreasureChestIcon,
         IconPickerIndex.CurrencyTreasureChest => DefaultCurrencyTreasureChestIcon,
+        IconPickerIndex.CurrencyTreasureChestOpulent => DefaultCurrencyTreasureChestOpulentIcon,
         IconPickerIndex.UniqueWeaponChest => DefaultUniqueWeaponChestIcon,
         IconPickerIndex.UniqueArmourChest => DefaultUniqueArmourChestIcon,
         IconPickerIndex.ScarabChest => DefaultScarabChestIcon,
@@ -104,6 +106,7 @@ public class TrailSettings
     public RangeNode<int> WorldLineWidth { get; set; } = new RangeNode<int>(5, 1, 20);
     public ColorNode DefaultMapColor { get; set; } = new Color(255, 140, 0, 200);
     public ColorNode DefaultWorldColor { get; set; } = new Color(255, 140, 0, 200);
+    public ToggleNode ShowUndiscoveredTargets { get; set; } = new ToggleNode(true);
     public ColorNode UndiscoveredColor { get; set; } = new Color(255, 255, 255, 220);
     public TrailColorSettings Colors { get; set; } = new TrailColorSettings();
 }
@@ -111,26 +114,74 @@ public class TrailSettings
 [Submenu(CollapsedByDefault = true)]
 public class TrailColorSettings
 {
+    public ToggleNode ShowBottledItem { get; set; } = new ToggleNode(true);
     public ColorNode BottledItem { get; set; } = new Color(255, 215, 0, 255);
+    public ToggleNode ShowGoldTreasure { get; set; } = new ToggleNode(true);
     public ColorNode GoldTreasure { get; set; } = new Color(255, 215, 0, 255);
+    public ToggleNode ShowClamTreasure { get; set; } = new ToggleNode(true);
     public ColorNode ClamTreasure { get; set; } = new Color(255, 255, 100, 255);
+    public ToggleNode ShowCurrency { get; set; } = new ToggleNode(true);
     public ColorNode Currency { get; set; } = new Color(255, 255, 255, 255);
+    public ToggleNode ShowOpulentCurrency { get; set; } = new ToggleNode(true);
+    public ColorNode OpulentCurrency { get; set; } = new Color(255, 170, 0, 255);
+    public ToggleNode ShowUniqueWeapon { get; set; } = new ToggleNode(true);
     public ColorNode UniqueWeapon { get; set; } = new Color(175, 96, 37, 255);
+    public ToggleNode ShowUniqueArmour { get; set; } = new ToggleNode(true);
     public ColorNode UniqueArmour { get; set; } = new Color(175, 96, 37, 255);
+    public ToggleNode ShowScarabs { get; set; } = new ToggleNode(true);
     public ColorNode Scarabs { get; set; } = new Color(200, 150, 255, 255);
+    public ToggleNode ShowStackedDecks { get; set; } = new ToggleNode(true);
     public ColorNode StackedDecks { get; set; } = new Color(100, 200, 255, 255);
+    public ToggleNode ShowMaps { get; set; } = new ToggleNode(true);
     public ColorNode Maps { get; set; } = new Color(200, 200, 200, 255);
+    public ToggleNode ShowAllflameEmbers { get; set; } = new ToggleNode(true);
     public ColorNode AllflameEmbers { get; set; } = new Color(255, 100, 50, 255);
+    public ToggleNode ShowCursedDucat { get; set; } = new ToggleNode(true);
     public ColorNode CursedDucat { get; set; } = new Color(255, 200, 50, 255);
+    public ToggleNode ShowRandomDucat { get; set; } = new ToggleNode(true);
     public ColorNode RandomDucat { get; set; } = new Color(255, 200, 50, 255);
+    public ToggleNode ShowIzaro { get; set; } = new ToggleNode(true);
     public ColorNode Izaro { get; set; } = new Color(255, 255, 0, 255);
+    public ToggleNode ShowAltarCrab { get; set; } = new ToggleNode(true);
     public ColorNode AltarCrab { get; set; } = new Color(50, 200, 50, 255);
+    public ToggleNode ShowAltarOctopus { get; set; } = new ToggleNode(true);
     public ColorNode AltarOctopus { get; set; } = new Color(150, 50, 255, 255);
+    public ToggleNode ShowTormentedSpirit { get; set; } = new ToggleNode(true);
     public ColorNode TormentedSpirit { get; set; } = new Color(0, 255, 100, 255);
+    public ToggleNode ShowLanternReplenish { get; set; } = new ToggleNode(true);
     public ColorNode LanternReplenish { get; set; } = new Color(100, 200, 255, 255);
+    public ToggleNode ShowGoldenLantern { get; set; } = new ToggleNode(true);
     public ColorNode GoldenLantern { get; set; } = new Color(255, 215, 0, 255);
+    public ToggleNode ShowInfusedCoral { get; set; } = new ToggleNode(true);
     public ColorNode InfusedCoral { get; set; } = new Color(255, 90, 180, 255);
+    public ToggleNode ShowOther { get; set; } = new ToggleNode(true);
     public ColorNode Other { get; set; } = new Color(180, 180, 180, 255);
+
+    public bool IsEnabled(IconPickerIndex type) => type switch
+    {
+        IconPickerIndex.BottledItemChest => ShowBottledItem.Value,
+        IconPickerIndex.GoldTreasureChest => ShowGoldTreasure.Value,
+        IconPickerIndex.ClamTreasureChest => ShowClamTreasure.Value,
+        IconPickerIndex.CurrencyTreasureChest => ShowCurrency.Value,
+        IconPickerIndex.CurrencyTreasureChestOpulent => ShowOpulentCurrency.Value,
+        IconPickerIndex.UniqueWeaponChest => ShowUniqueWeapon.Value,
+        IconPickerIndex.UniqueArmourChest => ShowUniqueArmour.Value,
+        IconPickerIndex.ScarabChest => ShowScarabs.Value,
+        IconPickerIndex.StackedDecksChest => ShowStackedDecks.Value,
+        IconPickerIndex.MapsChest => ShowMaps.Value,
+        IconPickerIndex.AllflameEmbersChest => ShowAllflameEmbers.Value,
+        IconPickerIndex.CursedDucatDrop => ShowCursedDucat.Value,
+        IconPickerIndex.RandomDucatChest => ShowRandomDucat.Value,
+        IconPickerIndex.IzaroObject => ShowIzaro.Value,
+        IconPickerIndex.AltarCrab => ShowAltarCrab.Value,
+        IconPickerIndex.AltarOctopus => ShowAltarOctopus.Value,
+        IconPickerIndex.TormentedSpiritEncounter => ShowTormentedSpirit.Value,
+        IconPickerIndex.LanternReplenishEncounter => ShowLanternReplenish.Value,
+        IconPickerIndex.GoldenLanternEncounter => ShowGoldenLantern.Value,
+        IconPickerIndex.InfusedCoralEncounter => ShowInfusedCoral.Value,
+        IconPickerIndex.OtherChests => ShowOther.Value,
+        _ => true,
+    };
 
     public Color Get(IconPickerIndex type, Color fallback) => type switch
     {
@@ -138,6 +189,7 @@ public class TrailColorSettings
         IconPickerIndex.GoldTreasureChest => GoldTreasure.Value,
         IconPickerIndex.ClamTreasureChest => ClamTreasure.Value,
         IconPickerIndex.CurrencyTreasureChest => Currency.Value,
+        IconPickerIndex.CurrencyTreasureChestOpulent => OpulentCurrency.Value,
         IconPickerIndex.UniqueWeaponChest => UniqueWeapon.Value,
         IconPickerIndex.UniqueArmourChest => UniqueArmour.Value,
         IconPickerIndex.ScarabChest => Scarabs.Value,

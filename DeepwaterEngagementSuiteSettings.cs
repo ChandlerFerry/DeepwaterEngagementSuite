@@ -50,6 +50,7 @@ public class DeepwaterEngagementSuiteSettings : ISettings
 
     public CurrencyReminderSettings CurrencyReminderSettings { get; set; } = new CurrencyReminderSettings();
     public BubbleSettings BubbleSettings { get; set; } = new BubbleSettings();
+    public TrailSettings TrailSettings { get; set; } = new TrailSettings();
 
     [Menu("Bubble planner settings")]
     public PlannerSettings PlannerSettings { get; set; } = new PlannerSettings();
@@ -75,14 +76,35 @@ public class DeepwaterEngagementSuiteSettings : ISettings
         IconPickerIndex.TormentedSpiritEncounter => DefaultTormentedSpiritEncounterIcon,
         IconPickerIndex.LanternReplenishEncounter => DefaultLanternReplenishEncounterIcon,
         IconPickerIndex.GoldenLanternEncounter => MapIconsIndex.LabyrinthGoldKey,
+        IconPickerIndex.InfusedCoralEncounter => MapIconsIndex.RewardBreach,
+        IconPickerIndex.PointerTarget => MapIconsIndex.AncestralEnemyTotem,
         _ => DefaultOtherChestIcon,
     };
 
     public static Color? GetDefaultTint(IconPickerIndex index) => index switch
     {
         IconPickerIndex.UniqueWeaponChest or IconPickerIndex.UniqueArmourChest => UniqueItemTint,
+        IconPickerIndex.InfusedCoralEncounter => new Color(255, 90, 180),
+        IconPickerIndex.PointerTarget => Color.White,
         _ => null,
     };
+}
+
+[Submenu(CollapsedByDefault = false)]
+public class TrailSettings
+{
+    public ToggleNode Enabled { get; set; } = new ToggleNode(true);
+    public ToggleNode DrawOnLargeMap { get; set; } = new ToggleNode(true);
+    public ToggleNode DrawInWorld { get; set; } = new ToggleNode(false);
+    public ToggleNode OnlyUnreachable { get; set; } = new ToggleNode(false);
+    public ToggleNode ShowLabels { get; set; } = new ToggleNode(true);
+    public ToggleNode ShowLootWindow { get; set; } = new ToggleNode(true);
+    public RangeNode<int> MaxDistance { get; set; } = new RangeNode<int>(500, 10, 1000);
+    public RangeNode<int> MapLineWidth { get; set; } = new RangeNode<int>(3, 1, 20);
+    public RangeNode<int> WorldLineWidth { get; set; } = new RangeNode<int>(5, 1, 20);
+    public ColorNode DefaultMapColor { get; set; } = new Color(255, 140, 0, 200);
+    public ColorNode DefaultWorldColor { get; set; } = new Color(255, 140, 0, 200);
+    public ColorNode UndiscoveredColor { get; set; } = new Color(255, 255, 255, 220);
 }
 
 [Submenu(CollapsedByDefault = true)]

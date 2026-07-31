@@ -1,4 +1,9 @@
-# ExpeditionIcons
+# DeepwaterEngagementSuite
+
+In addition to the existing Deepwater planner and encounter icons, the plugin can
+draw persistent trails to discovered rewards and pointer targets. The optional
+loot window summarizes reachable and unreachable rewards, remaining lanterns,
+and the nearest target of each type.
 
 If you like it, you can donate via:
 

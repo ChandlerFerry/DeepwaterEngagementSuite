@@ -152,6 +152,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
         _editedIndex = null;
         _editedPathEval = null;
         _cachedEntities.Clear();
+        ResetTrailTracking();
         _zoneCleared = false;
         _pathfindingData = GameController.IngameState.Data.RawPathfindingData;
         _areaDimensions = GameController.IngameState.Data.AreaDimensions;
@@ -170,6 +171,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
             var a when a.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterCursedDucatDrop", StringComparison.Ordinal) => ExpeditionEntityType.Marker,
             var a when a.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterLanternReplenishEncounter", StringComparison.Ordinal) => ExpeditionEntityType.Marker,
             var a when a.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterGoldenLantern", StringComparison.Ordinal) => ExpeditionEntityType.Marker,
+            var a when a.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterBrineCoralEncounter", StringComparison.Ordinal) => ExpeditionEntityType.Marker,
             _ => ExpeditionEntityType.None,
         });
     }
@@ -194,6 +196,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
         var p when p.Contains("DeepwaterTormentedSpiritEncounter", StringComparison.Ordinal) => IconPickerIndex.TormentedSpiritEncounter,
         var p when p.Contains("DeepwaterLanternReplenishEncounter", StringComparison.Ordinal) => IconPickerIndex.LanternReplenishEncounter,
         var p when p.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterGoldenLantern", StringComparison.Ordinal) => IconPickerIndex.GoldenLanternEncounter,
+        var p when p.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterBrineCoralEncounter", StringComparison.Ordinal) => IconPickerIndex.InfusedCoralEncounter,
         _ => IconPickerIndex.OtherChests,
     };
 
@@ -293,6 +296,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
                 : newValue;
         }
 
+        UpdateTrailTracking();
         return null;
     }
 
@@ -391,6 +395,8 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
         {
             return;
         }
+
+        RenderTrailOverlay(largePanelsOpen);
 
         if (!largePanelsOpen && (Settings.BubbleSettings.ShowBubblesOnMap ||
                                  Settings.BubbleSettings.ShowBubblesInWorld))
@@ -907,6 +913,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
             && !entity.IsOpened)
         {
             _cachedEntities[entity.Id] = BuildCacheItem(entity);
+            TrackTrailEntity(entity);
         }
     }
 

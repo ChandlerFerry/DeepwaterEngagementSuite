@@ -31,11 +31,15 @@ public static class VoyagePlacementRules
     public const string AdjacentDivinerBoxPrefix = "MapDeepwaterChartAdjacentDivinerBox"; // 1 < 2
     public const string AdjacentArcanistBoxPrefix = "MapDeepwaterChartAdjacentArcanistBox"; // 1 < 2
     public const string AdjacentLostMessagePrefix = "MapDeepwaterChartAdjacentLostMessage"; // 1 < 2; center only
-    public const string AdjacentFractured = "MapDeepwaterChartAdjacentFractured";
 
     /// <summary>Board center — only valid seat for Adjacent Lost Message charts.</summary>
     public const int CenterRow = 1;
     public const int CenterCol = 1;
+
+    /// <summary>Max unused strongbox/Diviner/Arcanist charts held off the solver pool.</summary>
+    public const int MaxSavedBoxes = 6;
+    /// <summary>Max unused starfish charts held off the solver pool.</summary>
+    public const int MaxSavedStarfish = 6;
 
     // DeepwaterChart.Room.Name values
     public const string PelagicRoomName = "Pelagic Abyss";
@@ -53,7 +57,6 @@ public static class VoyagePlacementRules
         int SavedStarfishCount,
         int SavedRareVoyageCount,
         int SavedAdjacentRareCount,
-        int SavedAdjacentFracturedCount,
         int SavedLostMessageCount,
         int SavedKisharaCount);
 
@@ -145,7 +148,7 @@ public static class VoyagePlacementRules
             }
         }
 
-        // --- 3. Divine free tiles: voyage rare / rare fracture > solver ---
+        // --- 3. Divine free tiles: voyage rare global > solver ---
         if (divineCenters.Count > 0)
         {
             foreach (var cell in EnumerateCells().Where(c => CellFree(c.Row, c.Col)))
@@ -260,17 +263,20 @@ public static class VoyagePlacementRules
         // --- 9. Save leftovers (never drop below 9 pieces for the solver) ---
         // Combo pieces for orb / scarab boards: hold off the pool so the solver cannot
         // waste them on filler tiles (or on boards with no matching border).
-        var savedStrongbox = RemoveUnused(working, usedPieceIds, IsStrongboxCountChart);
-        var savedStarfish = RemoveUnused(working, usedPieceIds, IsStarfishChart);
-        var savedAdjacentRare = RemoveUnused(working, usedPieceIds, IsAdjacentRareChart);
-        var savedRareVoyage = RemoveUnused(working, usedPieceIds, IsRareVoyageChart);
-        var savedAdjacentFractured = RemoveUnused(working, usedPieceIds, IsAdjacentFracturedChart);
+        // Boxes/starfish: keep up to 6 best tiers. Voyage rare globals: save all.
+        var savedStrongbox = RemoveUnused(working, usedPieceIds, IsStrongboxCountChart,
+            StrongboxCountScore, maxSave: MaxSavedBoxes);
+        var savedStarfish = RemoveUnused(working, usedPieceIds, IsStarfishChart,
+            StarfishScore, maxSave: MaxSavedStarfish);
+        // Adj rare T2 (60%) only — T1 (30%) is never reserved.
+        var savedAdjacentRare = RemoveUnused(working, usedPieceIds, IsAdjacentRareSaveChart);
+        var savedRareVoyage = RemoveUnused(working, usedPieceIds, IsRareVoyageChart); // all
         var savedLostMessage = RemoveUnused(working, usedPieceIds, IsLostMessageChart);
 
         return new Result(
             working, locks,
             savedPelagic, savedStrongbox, savedStarfish, savedRareVoyage,
-            savedAdjacentRare, savedAdjacentFractured, savedLostMessage, savedKishara);
+            savedAdjacentRare, savedLostMessage, savedKishara);
     }
 
     // --- Chart classification (exact ids from game data) ---
@@ -303,14 +309,19 @@ public static class VoyagePlacementRules
     public static bool IsAdjacentRareChart(MapPiece piece) =>
         piece.Modifiers.Any(m => IsFamily(m.Name, AdjacentIncreasedRarePrefix));
 
+    /// <summary>
+    /// Reserved adj rare only: MapDeepwaterChartAdjacentIncreasedRareMonsters2 (60%).
+    /// T1 (30%) is never saved — left for the solver / normal placement.
+    /// </summary>
+    public static bool IsAdjacentRareSaveChart(MapPiece piece) =>
+        piece.Modifiers.Any(m =>
+            IsFamily(m.Name, AdjacentIncreasedRarePrefix) &&
+            TierFromFamily(m.Name, AdjacentIncreasedRarePrefix) >= 2);
+
     /// <summary>Only global rare combo: MapDeepwaterChartVoyageIncreasedRareMonsters.</summary>
     public static bool IsRareVoyageChart(MapPiece piece) =>
         piece.Modifiers.Any(m =>
             m.Name.Equals(VoyageIncreasedRareMonsters, StringComparison.OrdinalIgnoreCase));
-
-    public static bool IsAdjacentFracturedChart(MapPiece piece) =>
-        piece.Modifiers.Any(m =>
-            m.Name.Equals(AdjacentFractured, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>Adjacent Lost Message 1/2 — strategy seat is board center only.</summary>
     public static bool IsLostMessageChart(MapPiece piece) =>
@@ -320,9 +331,9 @@ public static class VoyagePlacementRules
     public static bool IsOrbRareGlobalChart(MapPiece piece) =>
         IsRareVoyageChart(piece);
 
-    /// <summary>Adjacent rares + fractured + voyage global on Divine/Annul/Ancient surrounds.</summary>
+    /// <summary>Adjacent rares + voyage global on Divine/Annul/Ancient surrounds.</summary>
     public static bool IsOrbRareComboChart(MapPiece piece) =>
-        IsAdjacentRareChart(piece) || IsAdjacentFracturedChart(piece) || IsRareVoyageChart(piece);
+        IsAdjacentRareChart(piece) || IsRareVoyageChart(piece);
 
     /// <summary>Chart mods we lock/reserve — exact known families only.</summary>
     public static bool IsSpecialtyComboModifier(string rawName)
@@ -335,8 +346,74 @@ public static class VoyagePlacementRules
                || IsFamily(rawName, AdjacentStarfishPrefix)
                || IsFamily(rawName, AdjacentIncreasedRarePrefix)
                || IsFamily(rawName, AdjacentLostMessagePrefix)
-               || rawName.Equals(VoyageIncreasedRareMonsters, StringComparison.OrdinalIgnoreCase)
-               || rawName.Equals(AdjacentFractured, StringComparison.OrdinalIgnoreCase);
+               || rawName.Equals(VoyageIncreasedRareMonsters, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Inventory "!" markers: specialty rooms + uncapped combo mods always;
+    /// starfish/boxes only the top <see cref="MaxSavedStarfish"/> / <see cref="MaxSavedBoxes"/>
+    /// by ItemMod.Value1 (spawn/count magnitude).
+    /// </summary>
+    public static HashSet<int> SelectInventorySpecialtyIndices(
+        IReadOnlyList<string> roomNames,
+        IReadOnlyList<IReadOnlyList<(string RawName, int Value1)>> modsPerChart)
+    {
+        var marked = new HashSet<int>();
+        var starfish = new List<(int Index, int Value1)>();
+        var boxes = new List<(int Index, int Value1)>();
+        var count = Math.Min(roomNames.Count, modsPerChart.Count);
+
+        for (var i = 0; i < count; i++)
+        {
+            if (TrySpecialtyRoomLabel(roomNames[i], out _))
+                marked.Add(i);
+
+            var mods = modsPerChart[i];
+            if (mods == null || mods.Count == 0)
+                continue;
+
+            var always = false;
+            foreach (var (raw, _) in mods)
+            {
+                if (string.IsNullOrEmpty(raw))
+                    continue;
+                if (raw.Equals(VoyageIncreasedRareMonsters, StringComparison.OrdinalIgnoreCase) ||
+                    IsFamily(raw, AdjacentLostMessagePrefix) ||
+                    (IsFamily(raw, AdjacentIncreasedRarePrefix) &&
+                     TierFromFamily(raw, AdjacentIncreasedRarePrefix) >= 2))
+                {
+                    always = true;
+                    break;
+                }
+            }
+
+            if (always)
+                marked.Add(i);
+
+            var starfishV = MaxFamilyValue1(mods, AdjacentStarfishPrefix);
+            if (starfishV > 0)
+                starfish.Add((i, starfishV));
+
+            var boxV = Math.Max(
+                MaxFamilyValue1(mods, AdjacentStrongboxesPrefix),
+                Math.Max(
+                    MaxFamilyValue1(mods, AdjacentDivinerBoxPrefix),
+                    MaxFamilyValue1(mods, AdjacentArcanistBoxPrefix)));
+            if (boxV > 0)
+                boxes.Add((i, boxV));
+        }
+
+        foreach (var (index, _) in starfish
+                     .OrderByDescending(x => x.Value1)
+                     .Take(MaxSavedStarfish))
+            marked.Add(index);
+
+        foreach (var (index, _) in boxes
+                     .OrderByDescending(x => x.Value1)
+                     .Take(MaxSavedBoxes))
+            marked.Add(index);
+
+        return marked;
     }
 
     /// <summary>Room names we lock/save (Pelagic, boss, Clam farm, Anchorfield farm).</summary>
@@ -373,16 +450,14 @@ public static class VoyagePlacementRules
     }
 
     /// <summary>
-    /// Borders that drive placement strategy / combo draw:
-    /// orbs, no-consume, MoreScarabs2/3 only (T1 ignored for scarab combo).
+    /// Borders drawn on the voyage combo overlay: orbs + MoreScarabs2/3 only.
+    /// No-consume still drives farm placement via <see cref="IsStrongNoConsume"/> but is not labeled.
     /// </summary>
     public static bool IsStrategyBorder(string rawName)
     {
         if (string.IsNullOrEmpty(rawName))
             return false;
-        return rawName.Equals(NotConsume1, StringComparison.OrdinalIgnoreCase)
-               || rawName.Equals(NotConsume2, StringComparison.OrdinalIgnoreCase)
-               || rawName.Equals(RareDivine, StringComparison.OrdinalIgnoreCase)
+        return rawName.Equals(RareDivine, StringComparison.OrdinalIgnoreCase)
                || rawName.Equals(RareAnnul, StringComparison.OrdinalIgnoreCase)
                || rawName.Equals(RareAncient, StringComparison.OrdinalIgnoreCase)
                || rawName.Equals(MoreScarabs2, StringComparison.OrdinalIgnoreCase)
@@ -401,22 +476,23 @@ public static class VoyagePlacementRules
     }
 
     private static double AdjacentStrongboxesScore(MapPiece p) =>
-        MaxFamilyTierScore(p, AdjacentStrongboxesPrefix);
+        MaxFamilyValue1Score(p, AdjacentStrongboxesPrefix);
 
     private static double StrongboxCountScore(MapPiece p)
     {
-        // Prefer AdjacentStrongboxes 1<2<3, then Diviner/Arcanist 1<2.
+        // Rank by ItemMod.Value1 (additional boxes). Prefer AdjacentStrongboxes over premium at equal count.
         var adj = AdjacentStrongboxesScore(p);
         if (adj > 0)
             return adj + 10_000;
 
         return Math.Max(
-            MaxFamilyTierScore(p, AdjacentDivinerBoxPrefix),
-            MaxFamilyTierScore(p, AdjacentArcanistBoxPrefix));
+            MaxFamilyValue1Score(p, AdjacentDivinerBoxPrefix),
+            MaxFamilyValue1Score(p, AdjacentArcanistBoxPrefix));
     }
 
+    /// <summary>Rank starfish by ItemMod.Value1 (spawn count), not name-tier digit.</summary>
     private static double StarfishScore(MapPiece p) =>
-        MaxFamilyTierScore(p, AdjacentStarfishPrefix);
+        MaxFamilyValue1Score(p, AdjacentStarfishPrefix);
 
     private static double AdjacentRareScore(MapPiece p) =>
         MaxFamilyTierScore(p, AdjacentIncreasedRarePrefix);
@@ -425,22 +501,15 @@ public static class VoyagePlacementRules
         p.Modifiers.Where(m => m.Name.Equals(VoyageIncreasedRareMonsters, StringComparison.OrdinalIgnoreCase))
             .Sum(m => m.Weight);
 
-    private static double AdjacentFracturedScore(MapPiece p) =>
-        p.Modifiers.Any(m => m.Name.Equals(AdjacentFractured, StringComparison.OrdinalIgnoreCase))
-            ? 1 + p.LocalModifier + p.GlobalModifier
-            : 0;
-
     private static double LostMessageScore(MapPiece p) =>
         MaxFamilyTierScore(p, AdjacentLostMessagePrefix);
 
-    /// <summary>Orb surround last-pick: adj rares (tiered), fractured, voyage global by weight.</summary>
+    /// <summary>Orb surround last-pick: adj rares (tiered), then voyage global by weight.</summary>
     private static double OrbRareComboScore(MapPiece p)
     {
         double score = 0;
         if (IsAdjacentRareChart(p))
             score = Math.Max(score, AdjacentRareScore(p) + 2_000);
-        if (IsAdjacentFracturedChart(p))
-            score = Math.Max(score, AdjacentFracturedScore(p) + 1_000);
         if (IsRareVoyageChart(p))
             score = Math.Max(score, RareVoyageScore(p));
         return score;
@@ -454,6 +523,34 @@ public static class VoyagePlacementRules
             if (!IsFamily(m.Name, prefix))
                 continue;
             best = Math.Max(best, TierFromFamily(m.Name, prefix) * 1_000 + m.Weight);
+        }
+
+        return best;
+    }
+
+    /// <summary>Primary sort key = max Value1 on family mods; weight is a weak tie-break.</summary>
+    private static double MaxFamilyValue1Score(MapPiece p, string prefix)
+    {
+        double best = 0;
+        foreach (var m in p.Modifiers)
+        {
+            if (!IsFamily(m.Name, prefix))
+                continue;
+            best = Math.Max(best, m.Value1 * 1_000_000.0 + m.Weight);
+        }
+
+        return best;
+    }
+
+    private static int MaxFamilyValue1(IEnumerable<(string Name, int Value1)> mods, string prefix)
+    {
+        var best = 0;
+        foreach (var m in mods)
+        {
+            if (!IsFamily(m.Name, prefix))
+                continue;
+            if (m.Value1 > best)
+                best = m.Value1;
         }
 
         return best;
@@ -537,9 +634,30 @@ public static class VoyagePlacementRules
             .FirstOrDefault();
     }
 
-    private static int RemoveUnused(List<MapPiece> working, HashSet<int> used, Func<MapPiece, bool> pred)
+    /// <summary>
+    /// Hold unused specialty charts off the solver pool (floor: 9 pieces remain).
+    /// When <paramref name="score"/> is set, higher-scored pieces are saved first.
+    /// When <paramref name="maxSave"/> is set, only that many are saved (rest stay for the solver).
+    /// </summary>
+    private static int RemoveUnused(
+        List<MapPiece> working,
+        HashSet<int> used,
+        Func<MapPiece, bool> pred,
+        Func<MapPiece, double> score = null,
+        int? maxSave = null)
     {
-        var drop = working.Where(p => !used.Contains(p.Id) && pred(p)).Select(p => p.Id).ToList();
+        IEnumerable<MapPiece> candidates = working.Where(p => !used.Contains(p.Id) && pred(p));
+        if (score != null)
+        {
+            candidates = candidates
+                .OrderByDescending(score)
+                .ThenByDescending(p => p.LocalModifier + p.GlobalModifier);
+        }
+
+        var drop = candidates.Select(p => p.Id).ToList();
+        if (maxSave is int cap && drop.Count > cap)
+            drop = drop.Take(cap).ToList();
+
         var removed = 0;
         foreach (var id in drop)
         {

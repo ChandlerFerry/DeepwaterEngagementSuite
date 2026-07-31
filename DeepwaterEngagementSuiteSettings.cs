@@ -218,7 +218,7 @@ public class VoyageSettings
 
     [Menu("Draw combo labels",
         "Overlay specialty combo pieces (Pelagic/farm rooms, starfish, rares, boxes, Lost Message) and strategy borders " +
-        "(orbs, scarabs, no-consume). Turn off for a clean voyage UI.")]
+        "(orbs, scarabs). No-consume borders are used for strategy but not labeled. Turn off for a clean voyage UI.")]
     public ToggleNode DrawComboLabels { get; set; } = new ToggleNode(true);
 
     [Menu("Solver time limit (seconds)", "Max time the solver runs before returning the best solution found so far. 0 = no limit.")]

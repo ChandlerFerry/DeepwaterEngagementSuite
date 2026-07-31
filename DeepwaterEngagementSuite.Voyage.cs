@@ -283,7 +283,7 @@ public partial class DeepwaterEngagementSuite
                     }
                 }
 
-                // Strategy borders only (orbs / scarabs / no-consume) — not treasure anchors etc.
+                // Strategy borders only (orbs / scarabs) — no-consume is strategy-only, not labeled.
                 tileCenter = tileCenter + new Vector2(0, 10);
                 foreach (var itemMod in mods)
                 {
@@ -304,12 +304,13 @@ public partial class DeepwaterEngagementSuite
             }
 
             // Inventory: compact "!" only on saved combo charts (no slot index labels).
+            // Starfish/boxes: top 6 by ItemMod.Value1 only — not every specialty-named chart.
             var charts = GetAvailableCharts();
-            for (var i = 0; i < charts.Count; i++)
+            var specialtyIndices = GetInventorySpecialtyIndices(charts);
+            foreach (var i in specialtyIndices)
             {
-                if (!IsInventorySpecialtyChart(charts[i]))
+                if (i < 0 || i >= charts.Count)
                     continue;
-
                 var pos = charts[i].GetClientRectCache.TopLeft.ToVector2Num();
                 Graphics.DrawTextWithBackground("!", pos, Color.Violet, Color.Black);
             }
@@ -796,7 +797,7 @@ public partial class DeepwaterEngagementSuite
                             var chartMod = Settings.VoyageSettings.ChartModifiers.Content
                                 .FirstOrDefault(cm => cm.Id.Value.Equals(im.RawName, StringComparison.OrdinalIgnoreCase));
                             return new Modifier(im.RawName, chartMod?.Weight.Value ?? 0, chartMod?.IsGlobal.Value ?? false,
-                                ModifierTagParser.Parse(chartMod?.Tags.Value, ModifierTag.None));
+                                ModifierTagParser.Parse(chartMod?.Tags.Value, ModifierTag.None), im.Value1);
                         }) ?? []
                     ], chartName));
             }
@@ -845,11 +846,9 @@ public partial class DeepwaterEngagementSuite
         if (placement.SavedStarfishCount > 0)
             savedBits.Add($"{placement.SavedStarfishCount} Starfish");
         if (placement.SavedAdjacentRareCount > 0)
-            savedBits.Add($"{placement.SavedAdjacentRareCount} adj. rares");
+            savedBits.Add($"{placement.SavedAdjacentRareCount} adj. rare T2");
         if (placement.SavedRareVoyageCount > 0)
             savedBits.Add($"{placement.SavedRareVoyageCount} voyage rares");
-        if (placement.SavedAdjacentFracturedCount > 0)
-            savedBits.Add($"{placement.SavedAdjacentFracturedCount} adj. fractured");
         if (placement.SavedLostMessageCount > 0)
             savedBits.Add($"{placement.SavedLostMessageCount} Lost Message");
         if (savedBits.Count > 0)
@@ -858,17 +857,33 @@ public partial class DeepwaterEngagementSuite
             DebugWindow.LogMsg($"Voyage: {placement.Locks.Count} strategy lock(s), solver fills the rest", 5);
     }
 
-    private static bool IsInventorySpecialtyChart(NormalInventoryItem chart)
+    /// <summary>
+    /// Indices into <paramref name="charts"/> that should show inventory "!" —
+    /// specialty rooms + uncapped saves, starfish/boxes capped at 6 by Value1.
+    /// </summary>
+    private static HashSet<int> GetInventorySpecialtyIndices(List<NormalInventoryItem> charts)
     {
-        if (chart?.Entity == null)
-            return false;
+        var roomNames = new List<string>(charts.Count);
+        var modsPerChart = new List<IReadOnlyList<(string RawName, int Value1)>>(charts.Count);
 
-        if (chart.Entity.TryGetComponent(out DeepwaterChart c) &&
-            VoyagePlacementRules.TrySpecialtyRoomLabel(c.Room.Name, out _))
-            return true;
+        foreach (var chart in charts)
+        {
+            var room = "";
+            if (chart?.Entity != null && chart.Entity.TryGetComponent(out DeepwaterChart c))
+                room = c.Room.Name ?? "";
+            roomNames.Add(room);
 
-        var mods = chart.Entity.GetComponent<Mods>()?.ImplicitMods ?? [];
-        return mods.Any(m => VoyagePlacementRules.IsSpecialtyComboModifier(m.RawName));
+            var mods = chart?.Entity?.GetComponent<Mods>()?.ImplicitMods;
+            if (mods == null || mods.Count == 0)
+            {
+                modsPerChart.Add([]);
+                continue;
+            }
+
+            modsPerChart.Add(mods.Select(m => (m.RawName, m.Value1)).ToList());
+        }
+
+        return VoyagePlacementRules.SelectInventorySpecialtyIndices(roomNames, modsPerChart);
     }
 
     private static string TrimChartPrefix(string name)

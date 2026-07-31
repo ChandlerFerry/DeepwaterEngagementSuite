@@ -81,9 +81,6 @@ public partial class DeepwaterEngagementSuite
     private static bool BoardIsClear(VoyageWindow tree) =>
         tree.Tiles.All(t => !TileHasChart(t));
 
-    /// <summary>
-    /// ImGui "Place" steals focus; a tiny cursor wiggle makes the game accept hover again.
-    /// </summary>
     private static async SyncTask<bool> WiggleCursorToFocus(Vector2 screenPos)
     {
         const float delta = 4f;
@@ -106,8 +103,6 @@ public partial class DeepwaterEngagementSuite
             var winOrigin = GameController.Window.GetWindowRectangleTimeCache.TopLeft.ToVector2Num();
             var needsFocusWiggle = true;
 
-            // Only clear when something is actually placed. Empty board: Clear never
-            // shiny-highlights and ItemContainer often stays non-null without a chart.
             if (!BoardIsClear(tree))
             {
                 var clearPos = winOrigin + tree.ClearButton.GetClientRectCache.Center.ToVector2Num();

@@ -25,7 +25,6 @@ public class DeepwaterEngagementSuiteSettings : ISettings
     public const MapIconsIndex DefaultGoldTreasureChestIcon = MapIconsIndex.LootFilterSmallYellowCircle;
     public const MapIconsIndex DefaultClamTreasureChestIcon = MapIconsIndex.LootFilterLargeYellowStar;
     public const MapIconsIndex DefaultCurrencyTreasureChestIcon = MapIconsIndex.RewardCurrency;
-    // Divine-tier loot filter star — large, high-contrast, not the normal currency reward icon.
     public const MapIconsIndex DefaultCurrencyTreasureChestOpulentIcon = MapIconsIndex.LootFilterLargeYellowStar;
     public const MapIconsIndex DefaultUniqueWeaponChestIcon = MapIconsIndex.RewardWeapons;
     public const MapIconsIndex DefaultUniqueArmourChestIcon = MapIconsIndex.RewardArmour;
@@ -87,7 +86,6 @@ public class DeepwaterEngagementSuiteSettings : ISettings
         _ => null,
     };
 
-    /// <summary>Per-type icon size multiplier (1 = WorldIconSize / MapIconSize as configured).</summary>
     public static float GetDefaultIconSizeScale(IconPickerIndex index) => index switch
     {
         IconPickerIndex.CurrencyTreasureChestOpulent => 2.0f,

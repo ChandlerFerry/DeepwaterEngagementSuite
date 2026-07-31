@@ -23,7 +23,6 @@ public record struct IconDisplaySettings(
     public bool ShowInWorld = ShowInWorld;
     public Color? Tint = Tint;
 
-    /// <summary>Multiplies WorldIconSize / MapIconSize. Null = type default (usually 1).</summary>
     public float? SizeScale = SizeScale;
 
     public bool ShouldSerializeIcon() => Icon != null;

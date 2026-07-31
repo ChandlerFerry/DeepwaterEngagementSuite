@@ -356,6 +356,12 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
 
     private void DrawLootWindow()
     {
+        if (Handler.MaxLanternCount < 10 &&
+            Handler.PlacedLanternCount == Handler.MaxLanternCount)
+        {
+            return;
+        }
+
         ImGui.SetNextWindowSizeConstraints(new Vector2(500, 0), new Vector2(float.MaxValue, float.MaxValue));
         ImGui.SetNextWindowSize(new Vector2(500, 0), ImGuiCond.FirstUseEver);
         var settingsWindowOpen = GameController.Settings.CoreSettings.Enable.Value;

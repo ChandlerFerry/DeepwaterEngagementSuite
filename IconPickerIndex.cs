@@ -11,6 +11,8 @@ public enum IconPickerIndex
     GoldTreasureChest,
     ClamTreasureChest,
     CurrencyTreasureChest,
+    /// <summary>Opulent currency chest (divine-tier) — Metadata/.../CurrencyTreasureChestOpulent.</summary>
+    CurrencyTreasureChestOpulent,
     UniqueWeaponChest,
     UniqueArmourChest,
     ScarabChest,

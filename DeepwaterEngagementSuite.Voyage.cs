@@ -267,17 +267,21 @@ public partial class DeepwaterEngagementSuite
                         if (!VoyagePlacementRules.IsSpecialtyComboModifier(im.RawName))
                             continue;
 
+                        // Only label combos present in the profile chart list with a visible highlight.
+                        // Missing/blacked-out entries must not fall back to a pink default name.
                         var chartMod = Settings.VoyageSettings.ChartModifiers.Content
                             .FirstOrDefault(cm => cm.Id.Value.Equals(im.RawName, StringComparison.OrdinalIgnoreCase));
-                        var displayName = chartMod?.Label.Value is { Length: > 0 } label
+                        if (chartMod?.HighlightColor.Value is not { A: > 0 } color)
+                            continue;
+
+                        var displayName = chartMod.Label.Value is { Length: > 0 } label
                             ? label
                             : TrimChartPrefix(im.RawName);
-                        var prefix = chartMod?.IsGlobal.Value == true ? "[G] " : "";
-                        var weight = chartMod?.Weight.Value ?? 0;
+                        var prefix = chartMod.IsGlobal.Value ? "[G] " : "";
+                        var weight = chartMod.Weight.Value;
                         var chartName = $"{prefix}{displayName}\n({weight:F1})";
                         var textSize = Graphics.MeasureText(chartName);
                         chartModOffset -= textSize.Y;
-                        var color = chartMod?.HighlightColor.Value is { A: > 0 } c ? c : Color.Violet;
                         Graphics.DrawTextWithBackground(chartName, tileCenter + new Vector2(0, chartModOffset),
                             color, FontAlign.Center, Color.Black);
                     }

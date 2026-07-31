@@ -350,7 +350,10 @@ public static class VoyagePlacementRules
     public static bool IsOrbRareComboChart(MapPiece piece) =>
         IsAdjacentRareChart(piece) || IsRareVoyageChart(piece);
 
-    /// <summary>Chart mods we lock/reserve — exact known families only.</summary>
+    /// <summary>
+    /// Chart mods drawn as voyage combo labels — exact known families only.
+    /// Adj rare matches save/inventory policy: T2+ only (T1 is normal filler, not a combo label).
+    /// </summary>
     public static bool IsSpecialtyComboModifier(string rawName)
     {
         if (string.IsNullOrEmpty(rawName))
@@ -360,7 +363,8 @@ public static class VoyagePlacementRules
                || IsFamily(rawName, AdjacentArcanistBoxPrefix)
                || IsFamily(rawName, AdjacentOperativeBoxPrefix)
                || IsFamily(rawName, AdjacentStarfishPrefix)
-               || IsFamily(rawName, AdjacentIncreasedRarePrefix)
+               || (IsFamily(rawName, AdjacentIncreasedRarePrefix) &&
+                   TierFromFamily(rawName, AdjacentIncreasedRarePrefix) >= 2)
                || IsFamily(rawName, AdjacentLostMessagePrefix)
                || rawName.Equals(VoyageIncreasedRareMonsters, StringComparison.OrdinalIgnoreCase);
     }

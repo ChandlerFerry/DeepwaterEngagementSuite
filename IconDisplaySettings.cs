@@ -5,7 +5,12 @@ using SharpDX;
 
 namespace DeepwaterEngagementSuite;
 
-public record struct IconDisplaySettings(MapIconsIndex? Icon = null, Color? Tint = null, bool ShowOnMap = true, bool ShowInWorld = true)
+public record struct IconDisplaySettings(
+    MapIconsIndex? Icon = null,
+    Color? Tint = null,
+    bool ShowOnMap = true,
+    bool ShowInWorld = true,
+    float? SizeScale = null)
 {
     public IconDisplaySettings() : this(null)
     {
@@ -18,5 +23,9 @@ public record struct IconDisplaySettings(MapIconsIndex? Icon = null, Color? Tint
     public bool ShowInWorld = ShowInWorld;
     public Color? Tint = Tint;
 
+    /// <summary>Multiplies WorldIconSize / MapIconSize. Null = type default (usually 1).</summary>
+    public float? SizeScale = SizeScale;
+
     public bool ShouldSerializeIcon() => Icon != null;
+    public bool ShouldSerializeSizeScale() => SizeScale != null;
 }

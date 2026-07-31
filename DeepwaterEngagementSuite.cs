@@ -186,6 +186,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
         var p when p.Contains("ClamTreasureChest", StringComparison.Ordinal) => IconPickerIndex.ClamTreasureChest,
         var p when p.Contains("CurrencyTreasureChestOpulent", StringComparison.Ordinal) => IconPickerIndex.CurrencyTreasureChestOpulent,
         var p when p.Contains("CurrencyTreasureChest", StringComparison.Ordinal) => IconPickerIndex.CurrencyTreasureChest,
+        var p when p.Contains("CurrencyGemcuttersChest", StringComparison.Ordinal) => IconPickerIndex.CurrencyGemcuttersChest,
         var p when p.Contains("DeepwaterAnchorUniqueWeapon", StringComparison.Ordinal) => IconPickerIndex.UniqueWeaponChest,
         var p when p.Contains("DeepwaterAnchorUniqueArmour", StringComparison.Ordinal) => IconPickerIndex.UniqueArmourChest,
         var p when p.Contains("DeepwaterChestScarabs", StringComparison.Ordinal) => IconPickerIndex.ScarabChest,

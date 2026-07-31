@@ -50,6 +50,8 @@ public class DeepwaterEngagementSuiteSettings : ISettings
     public RangeNode<int> WorldIconSize { get; set; } = new RangeNode<int>(50, 25, 200);
     public RangeNode<int> MapIconSize { get; set; } = new RangeNode<int>(30, 15, 200);
 
+    public ToggleNode ShowLootWindow { get; set; } = new ToggleNode(true);
+
     public CurrencyReminderSettings CurrencyReminderSettings { get; set; } = new CurrencyReminderSettings();
     public BubbleSettings BubbleSettings { get; set; } = new BubbleSettings();
     public TrailSettings TrailSettings { get; set; } = new TrailSettings();
@@ -100,15 +102,14 @@ public class DeepwaterEngagementSuiteSettings : ISettings
     };
 }
 
-[Submenu(CollapsedByDefault = false)]
+[Submenu(CollapsedByDefault = true)]
 public class TrailSettings
 {
-    public ToggleNode Enabled { get; set; } = new ToggleNode(true);
+    public ToggleNode Enabled { get; set; } = new ToggleNode(false);
     public ToggleNode DrawOnLargeMap { get; set; } = new ToggleNode(true);
     public ToggleNode DrawInWorld { get; set; } = new ToggleNode(false);
     public ToggleNode OnlyUnreachable { get; set; } = new ToggleNode(false);
     public ToggleNode ShowLabels { get; set; } = new ToggleNode(true);
-    public ToggleNode ShowLootWindow { get; set; } = new ToggleNode(true);
     public RangeNode<int> MaxDistance { get; set; } = new RangeNode<int>(500, 10, 1000);
     public RangeNode<int> MapLineWidth { get; set; } = new RangeNode<int>(3, 1, 20);
     public RangeNode<int> WorldLineWidth { get; set; } = new RangeNode<int>(5, 1, 20);

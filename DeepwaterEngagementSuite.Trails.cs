@@ -41,7 +41,7 @@ public partial class DeepwaterEngagementSuite
 
         var type = GetChestType(entity.Path);
         var gridPos = entity.PosNum.WorldToGrid();
-        if (IsTrailEntityCompleted(entity, type))
+        if (IsEntityCompleted(entity, type))
         {
             _trailMarkers.Remove(entity.Id);
             RememberCompletedTrailTarget(gridPos);
@@ -156,21 +156,6 @@ public partial class DeepwaterEngagementSuite
         return result;
     }
 
-    private static bool IsTrailEntityCompleted(Entity entity, IconPickerIndex type)
-    {
-        if (entity.IsOpened ||
-            (entity.TryGetComponent(out Chest chest) && chest.IsOpened))
-        {
-            return true;
-        }
-
-        // Targetable is range-dependent and must not be used as completion.
-        // Cursed Ducat exposes a stable StateMachine transition instead.
-        return type == IconPickerIndex.CursedDucatDrop &&
-               entity.TryGetComponent(out StateMachine stateMachine) &&
-               stateMachine.States.Any(x => x.Name == "activated" && x.Value == 1);
-    }
-
     private static bool DisappearsWhenConsumed(IconPickerIndex type) => type is
         IconPickerIndex.IzaroObject or
         IconPickerIndex.AltarCrab or
@@ -190,24 +175,12 @@ public partial class DeepwaterEngagementSuite
 
     private void RenderTrailOverlay(bool largePanelsOpen)
     {
-        if (!Settings.TrailSettings.Enabled)
+        if (!Settings.TrailSettings.Enabled ||
+            largePanelsOpen)
         {
             return;
         }
 
-        if (!largePanelsOpen)
-        {
-            DrawPersistentTrails();
-        }
-
-        if (Settings.TrailSettings.ShowLootWindow)
-        {
-            DrawTrailLootWindow();
-        }
-    }
-
-    private void DrawPersistentTrails()
-    {
         var largeMapVisible = _largeMapOpen;
         var drawMap = Settings.TrailSettings.DrawOnLargeMap && largeMapVisible;
         var drawWorld = Settings.TrailSettings.DrawInWorld && !largeMapVisible;
@@ -235,7 +208,8 @@ public partial class DeepwaterEngagementSuite
                 continue;
             }
 
-            if (Settings.TrailSettings.OnlyUnreachable && IsTrailTargetReachable(marker.GridPos))
+            if (Settings.TrailSettings.OnlyUnreachable &&
+                IsEntityInBubble(marker.GridPos))
             {
                 continue;
             }
@@ -247,7 +221,7 @@ public partial class DeepwaterEngagementSuite
             var worldColor = isPointer
                 ? Settings.TrailSettings.UndiscoveredColor.Value
                 : GetTrailColor(marker.Type, Settings.TrailSettings.DefaultWorldColor.Value);
-            var label = GetTrailName(marker.Type);
+            var label = GetEntityDisplayName(marker.Type);
 
             if (drawMap)
             {
@@ -284,125 +258,4 @@ public partial class DeepwaterEngagementSuite
             ? Settings.TrailSettings.ShowUndiscoveredTargets.Value
             : Settings.TrailSettings.Colors.IsEnabled(type);
     }
-
-    private bool IsTrailTargetReachable(Vector2 gridPos)
-    {
-        var target = gridPos.TruncateToVector2I();
-        return Bubbles.Any(x => x.Position.DistanceSqr(target) <= x.Radius * x.Radius);
-    }
-
-    private void DrawTrailLootWindow()
-    {
-        ImGui.SetNextWindowSizeConstraints(new Vector2(500, 0), new Vector2(float.MaxValue, float.MaxValue));
-        ImGui.SetNextWindowSize(new Vector2(500, 0), ImGuiCond.FirstUseEver);
-        if (!ImGui.Begin("Deepwater Loot", ImGuiWindowFlags.AlwaysAutoResize))
-        {
-            ImGui.End();
-            return;
-        }
-
-        var maxLanterns = Handler.MaxLanternCount;
-        var placedLanterns = Handler.PlacedLanternCount;
-        var remainingLanterns = Math.Max(0, maxLanterns - placedLanterns);
-        ImGui.TextColored(new Vector4(0.4f, 0.8f, 1f, 1f),
-            $"Lanterns: {placedLanterns}/{maxLanterns}  |  Remaining: {remainingLanterns}");
-        ImGui.Separator();
-
-        var entries = _trailMarkers.Values
-            .Select(x => (
-                Type: x.Type,
-                Distance: Vector2.Distance(x.GridPos, _playerGridPos),
-                Reachable: IsTrailTargetReachable(x.GridPos)))
-            .Concat(_trailPointerTargets.Select(x => (
-                Type: IconPickerIndex.PointerTarget,
-                Distance: Vector2.Distance(x, _playerGridPos),
-                Reachable: IsTrailTargetReachable(x))))
-            .Where(x => IsTrailTypeEnabled(x.Type))
-            .Where(x => x.Distance <= Settings.TrailSettings.MaxDistance.Value)
-            .ToList();
-
-        if (entries.Count == 0)
-        {
-            ImGui.TextColored(new Vector4(0.5f, 0.5f, 0.5f, 1f), "No targets discovered yet");
-            ImGui.End();
-            return;
-        }
-
-        var grouped = entries
-            .GroupBy(x => x.Type)
-            .Select(x => (
-                Type: x.Key,
-                Total: x.Count(),
-                Reachable: x.Count(y => y.Reachable),
-                NeedsLantern: x.Count(y => !y.Reachable),
-                Nearest: x.Min(y => y.Distance)))
-            .OrderByDescending(x => x.NeedsLantern)
-            .ThenBy(x => x.Nearest)
-            .ToList();
-
-        ImGui.Text($"Found: {entries.Count} ({entries.Count(x => x.Reachable)} reachable, {entries.Count(x => !x.Reachable)} need pylon)");
-        ImGui.Separator();
-
-        if (ImGui.BeginTable("DeepwaterLootTable", 4, ImGuiTableFlags.None))
-        {
-            ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed, 220);
-            ImGui.TableSetupColumn("Need", ImGuiTableColumnFlags.WidthFixed, 55);
-            ImGui.TableSetupColumn("Ok", ImGuiTableColumnFlags.WidthFixed, 60);
-            ImGui.TableSetupColumn("Nearest", ImGuiTableColumnFlags.WidthFixed, 75);
-
-            foreach (var group in grouped)
-            {
-                ImGui.TableNextRow();
-                ImGui.TableNextColumn();
-                ImGui.TextColored(
-                    group.NeedsLantern > 0
-                        ? new Vector4(1f, 0.7f, 0.2f, 1f)
-                        : new Vector4(0.3f, 0.9f, 0.3f, 1f),
-                    GetTrailName(group.Type));
-
-                ImGui.TableNextColumn();
-                ImGui.TextColored(
-                    group.NeedsLantern > 0
-                        ? new Vector4(1f, 0.4f, 0.4f, 1f)
-                        : new Vector4(0.3f, 0.3f, 0.3f, 1f),
-                    group.NeedsLantern > 0 ? $"{group.NeedsLantern}" : "-");
-
-                ImGui.TableNextColumn();
-                ImGui.TextColored(new Vector4(0.3f, 0.9f, 0.3f, 1f), $"{group.Reachable} ok");
-
-                ImGui.TableNextColumn();
-                ImGui.Text($"{group.Nearest:0}");
-            }
-
-            ImGui.EndTable();
-        }
-
-        ImGui.End();
-    }
-
-    private static string GetTrailName(IconPickerIndex type) => type switch
-    {
-        IconPickerIndex.BottledItemChest => "Bottled Item",
-        IconPickerIndex.GoldTreasureChest => "Gold Treasure",
-        IconPickerIndex.ClamTreasureChest => "Clam Treasure",
-        IconPickerIndex.CurrencyTreasureChest => "Currency",
-        IconPickerIndex.CurrencyTreasureChestOpulent => "Opulent Currency",
-        IconPickerIndex.UniqueWeaponChest => "Unique Weapon",
-        IconPickerIndex.UniqueArmourChest => "Unique Armour",
-        IconPickerIndex.ScarabChest => "Scarabs",
-        IconPickerIndex.StackedDecksChest => "Stacked Decks",
-        IconPickerIndex.MapsChest => "Maps",
-        IconPickerIndex.AllflameEmbersChest => "Allflame Embers",
-        IconPickerIndex.CursedDucatDrop => "Cursed Ducat",
-        IconPickerIndex.RandomDucatChest => "Random Ducat",
-        IconPickerIndex.IzaroObject => "Izaro",
-        IconPickerIndex.AltarCrab => "Altar (Crab)",
-        IconPickerIndex.AltarOctopus => "Altar (Octopus)",
-        IconPickerIndex.TormentedSpiritEncounter => "Tormented Spirit",
-        IconPickerIndex.LanternReplenishEncounter => "Lantern Replenish",
-        IconPickerIndex.GoldenLanternEncounter => "Golden Lantern",
-        IconPickerIndex.InfusedCoralEncounter => "Infused Coral",
-        IconPickerIndex.PointerTarget => "Undiscovered Target",
-        _ => "Other",
-    };
 }

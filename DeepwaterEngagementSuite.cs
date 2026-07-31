@@ -25,6 +25,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Chest = ExileCore.PoEMemory.Components.Chest;
 using Color = SharpDX.Color;
 using Direction = DeepwaterEngagementSuite.VoyagePlannerData.Direction;
 using Vector2 = System.Numerics.Vector2;
@@ -292,7 +293,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
             if (GetEntityType(entity.Path) == ExpeditionEntityType.None)
                 continue;
 
-            if (entity.IsOpened)
+            if (IsEntityCompleted(entity, GetChestType(entity.Path)))
             {
                 _cachedEntities.Remove(entity.Id);
                 continue;
@@ -353,6 +354,117 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
             .Sum();
     }
 
+    private void DrawLootWindow()
+    {
+        ImGui.SetNextWindowSizeConstraints(new Vector2(500, 0), new Vector2(float.MaxValue, float.MaxValue));
+        ImGui.SetNextWindowSize(new Vector2(500, 0), ImGuiCond.FirstUseEver);
+        var settingsWindowOpen = GameController.Settings.CoreSettings.Enable.Value;
+        if (!ImGui.Begin("Deepwater Loot", ImGuiWindowFlags.AlwaysAutoResize |
+                                           (settingsWindowOpen ? 0 : ImGuiWindowFlags.NoInputs | ImGuiWindowFlags.NoDecoration)))
+        {
+            ImGui.End();
+            return;
+        }
+
+        var maxLanterns = Handler.MaxLanternCount;
+        var placedLanterns = Handler.PlacedLanternCount;
+        var remainingLanterns = Math.Max(0, maxLanterns - placedLanterns);
+        ImGui.TextColored(new Vector4(0.4f, 0.8f, 1f, 1f),
+            $"Lanterns: {placedLanterns}/{maxLanterns}  |  Remaining: {remainingLanterns}");
+        ImGui.Separator();
+
+        var entries = _cachedEntities.Values
+            .Select(x => (
+                Type: GetChestType(x.Path),
+                Distance: Vector2.Distance(x.GridPos, _playerGridPos),
+                Reachable: IsEntityInBubble(x.GridPos)))
+            .Concat(GetUnknownPointerTargets().Select(x => (
+                Type: IconPickerIndex.PointerTarget,
+                Distance: Vector2.Distance(x, _playerGridPos),
+                Reachable: IsEntityInBubble(x))))
+            .ToList();
+
+        if (entries.Count == 0)
+        {
+            ImGui.TextColored(new Vector4(0.5f, 0.5f, 0.5f, 1f), "No targets discovered yet");
+            ImGui.End();
+            return;
+        }
+
+        var grouped = entries
+            .GroupBy(x => x.Type)
+            .Select(x => (
+                Type: x.Key,
+                Total: x.Count(),
+                Reachable: x.Count(y => y.Reachable),
+                NeedsLantern: x.Count(y => !y.Reachable),
+                Nearest: x.Min(y => y.Distance)))
+            .OrderByDescending(x => x.NeedsLantern)
+            .ThenBy(x => x.Nearest)
+            .ToList();
+
+        ImGui.Text($"Found: {entries.Count} ({entries.Count(x => x.Reachable)} reachable, {entries.Count(x => !x.Reachable)} need pylon)");
+        ImGui.Separator();
+
+        if (ImGui.BeginTable("DeepwaterLootTable", 4, ImGuiTableFlags.None))
+        {
+            ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed, 220);
+            ImGui.TableSetupColumn("Out of\nbubble", ImGuiTableColumnFlags.WidthFixed, 55);
+            ImGui.TableSetupColumn("In\nbubble", ImGuiTableColumnFlags.WidthFixed, 55);
+            ImGui.TableSetupColumn("Distance", ImGuiTableColumnFlags.WidthFixed, 75);
+            ImGui.TableHeadersRow();
+
+            foreach (var group in grouped)
+            {
+                ImGui.TableNextRow();
+                ImGui.TableNextColumn();
+                ImGui.TextColored(
+                    group.NeedsLantern > 0
+                        ? new Vector4(1f, 0.7f, 0.2f, 1f)
+                        : new Vector4(0.3f, 0.9f, 0.3f, 1f),
+                    GetEntityDisplayName(group.Type));
+
+                ImGui.TableNextColumn();
+                ImGui.TextColored(
+                    group.NeedsLantern > 0
+                        ? new Vector4(1f, 0.4f, 0.4f, 1f)
+                        : new Vector4(0.3f, 0.3f, 0.3f, 1f),
+                    group.NeedsLantern > 0 ? $"{group.NeedsLantern}" : "-");
+
+                ImGui.TableNextColumn();
+                ImGui.TextColored(new Vector4(0.3f, 0.9f, 0.3f, 1f),
+                    group.Reachable > 0 ? $"{group.Reachable}" : "-");
+
+                ImGui.TableNextColumn();
+                ImGui.Text($"{group.Nearest:0}");
+            }
+
+            ImGui.EndTable();
+        }
+
+        ImGui.End();
+    }
+
+    private IEnumerable<Vector2i> GetUnknownPointerTargets()
+    {
+        var knownEntityPositions = _cachedEntities.Values.Where(x => !x.IsOpened).Select(x => x.GridPos).ToList();
+        foreach (var e in GameController.EntityListWrapper.ValidEntitiesByType[EntityType.Terrain]
+                     .Where(x => x.Path == "Metadata/Terrain/Leagues/Deepwater/Objects/Pointer"))
+        {
+            if (!e.TryGetComponent(out Pointer pointer))
+                continue;
+
+            foreach (var target in pointer.Targets)
+            {
+                const float pointerOccupiedGridRadius = 8f;
+                if (knownEntityPositions.Any(p => p.DistanceLessThanOrEqual(target, pointerOccupiedGridRadius)))
+                    continue;
+
+                yield return target;
+            }
+        }
+    }
+
     public override void Render()
     {
         DrawVoyageHighlights();
@@ -402,6 +514,11 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
         if (Handler == null)
         {
             return;
+        }
+
+        if (!largePanelsOpen && Settings.ShowLootWindow)
+        {
+            DrawLootWindow();
         }
 
         RenderTrailOverlay(largePanelsOpen);
@@ -477,7 +594,6 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
 
         if (!largePanelsOpen)
         {
-            var drawnMarkerGridPositions = new List<Vector2>();
             foreach (var e in _cachedEntities.Values)
             {
                 if (e.IsOpened)
@@ -494,8 +610,6 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
                         var sizeScale = mapSettings.SizeScale ?? DeepwaterEngagementSuiteSettings.GetDefaultIconSizeScale(chestType);
                         var drawOnMap = mapSettings.ShowOnMap;
                         var drawInWorld = mapSettings.ShowInWorld;
-                        if (drawOnMap || drawInWorld)
-                            drawnMarkerGridPositions.Add(e.GridPos);
 
                         if (drawOnMap)
                         {
@@ -512,30 +626,19 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
                 }
             }
 
-            const float pointerOccupiedGridRadius = 8f;
             if (_largeMapOpen)
             {
-                foreach (var e in GameController.EntityListWrapper.ValidEntitiesByType[EntityType.Terrain]
-                             .Where(x => x.Path == "Metadata/Terrain/Leagues/Deepwater/Objects/Pointer"))
+                foreach (var target in GetUnknownPointerTargets())
                 {
-                    if (!e.TryGetComponent(out Pointer pointer))
-                        continue;
-
-                    foreach (var target in pointer.Targets)
-                    {
-                        if (drawnMarkerGridPositions.Any(p => p.DistanceLessThanOrEqual(target, pointerOccupiedGridRadius)))
-                            continue;
-
-                        DrawIcon(
-                            MapIconsIndex.AncestralEnemyTotem,
-                            Color.White,
-                            Graphics.GridToMap(target, target),
-                            target.GridToWorld(),
-                            hideCaptured: true,
-                            plannerCapturedFrameColor: Color.White,
-                            frameThickness: 1,
-                            iconSize: Settings.MapIconSize.Value);
-                    }
+                    DrawIcon(
+                        MapIconsIndex.AncestralEnemyTotem,
+                        Color.White,
+                        Graphics.GridToMap(target, target),
+                        target.GridToWorld(),
+                        hideCaptured: true,
+                        plannerCapturedFrameColor: Color.White,
+                        frameThickness: 1,
+                        iconSize: Settings.MapIconSize.Value);
                 }
             }
         }
@@ -938,7 +1041,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
     {
         if ((entity.Type is EntityType.Chest or EntityType.Terrain or EntityType.IngameIcon)
             && GetEntityType(entity.Path) != ExpeditionEntityType.None
-            && !entity.IsOpened)
+            && !IsEntityCompleted(entity, GetChestType(entity.Path)))
         {
             _cachedEntities[entity.Id] = BuildCacheItem(entity);
             TrackTrailEntity(entity);
@@ -961,6 +1064,47 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
             entity.GetComponent<Render>()?.Z,
             entity.GetComponent<Render>()?.BoundsNum is { } b ? Math.Min(b.X, b.Y) : null,
             entity.GetComponent<MinimapIcon>()?.IsHide,
-            entity.IsOpened);
+            IsEntityCompleted(entity, GetChestType(entity.Path)));
+    }
+
+    private bool IsEntityInBubble(Vector2 gridPos)
+    {
+        var target = gridPos.TruncateToVector2I();
+        return Bubbles.Any(x => x.Position.DistanceLessThanOrEqual(target, x.Radius));
+    }
+
+    private static string GetEntityDisplayName(IconPickerIndex type) => type switch
+    {
+        IconPickerIndex.BottledItemChest => "Bottled Item",
+        IconPickerIndex.GoldTreasureChest => "Gold Treasure",
+        IconPickerIndex.ClamTreasureChest => "Clam Treasure",
+        IconPickerIndex.CurrencyTreasureChest => "Currency",
+        IconPickerIndex.CurrencyTreasureChestOpulent => "Opulent Currency",
+        IconPickerIndex.UniqueWeaponChest => "Unique Weapon",
+        IconPickerIndex.UniqueArmourChest => "Unique Armour",
+        IconPickerIndex.ScarabChest => "Scarabs",
+        IconPickerIndex.StackedDecksChest => "Stacked Decks",
+        IconPickerIndex.MapsChest => "Maps",
+        IconPickerIndex.AllflameEmbersChest => "Allflame Embers",
+        IconPickerIndex.CursedDucatDrop => "Cursed Ducat",
+        IconPickerIndex.RandomDucatChest => "Random Ducat",
+        IconPickerIndex.IzaroObject => "Izaro",
+        IconPickerIndex.AltarCrab => "Altar (Crab)",
+        IconPickerIndex.AltarOctopus => "Altar (Octopus)",
+        IconPickerIndex.TormentedSpiritEncounter => "Tormented Spirit",
+        IconPickerIndex.LanternReplenishEncounter => "Lantern Replenish",
+        IconPickerIndex.GoldenLanternEncounter => "Golden Lantern",
+        IconPickerIndex.InfusedCoralEncounter => "Infused Coral",
+        IconPickerIndex.PointerTarget => "Undiscovered Target",
+        _ => "Other",
+    };
+
+    private static bool IsEntityCompleted(Entity entity, IconPickerIndex type)
+    {
+        return entity.IsOpened ||
+               entity.TryGetComponent(out Chest chest) && chest.IsOpened || 
+               type == IconPickerIndex.CursedDucatDrop &&
+               entity.TryGetComponent(out StateMachine stateMachine) &&
+               stateMachine.States.Any(x => x.Name == "activated" && x.Value == 1);
     }
 }

@@ -30,15 +30,20 @@ public static class VoyagePlacementRules
     public const string AdjacentIncreasedRarePrefix = "MapDeepwaterChartAdjacentIncreasedRareMonsters"; // 1 < 2
     public const string AdjacentDivinerBoxPrefix = "MapDeepwaterChartAdjacentDivinerBox"; // 1 < 2
     public const string AdjacentArcanistBoxPrefix = "MapDeepwaterChartAdjacentArcanistBox"; // 1 < 2
+    /// <summary>Operative boxes: scarab-surround strategy — save all leftovers.</summary>
+    public const string AdjacentOperativeBoxPrefix = "MapDeepwaterChartAdjacentOperativeBox"; // 1 < 2
     public const string AdjacentLostMessagePrefix = "MapDeepwaterChartAdjacentLostMessage"; // 1 < 2; center only
 
     /// <summary>Board center — only valid seat for Adjacent Lost Message charts.</summary>
     public const int CenterRow = 1;
     public const int CenterCol = 1;
 
-    /// <summary>Max unused strongbox/Diviner/Arcanist charts held off the solver pool.</summary>
+    /// <summary>
+    /// Max unused charts held from the Divine box pool
+    /// (AdjacentStrongboxes + Diviner + Arcanist), ranked by ItemMod.Value1.
+    /// </summary>
     public const int MaxSavedBoxes = 6;
-    /// <summary>Max unused starfish charts held off the solver pool.</summary>
+    /// <summary>Max unused starfish charts held off the solver pool (by Value1).</summary>
     public const int MaxSavedStarfish = 6;
 
     // DeepwaterChart.Room.Name values
@@ -57,6 +62,7 @@ public static class VoyagePlacementRules
         int SavedStarfishCount,
         int SavedRareVoyageCount,
         int SavedAdjacentRareCount,
+        int SavedOperativeBoxCount,
         int SavedLostMessageCount,
         int SavedKisharaCount);
 
@@ -140,7 +146,7 @@ public static class VoyagePlacementRules
         {
             foreach (var n in FreeNeighbors(center.Row, center.Col, CellFree))
             {
-                var support = TakeBest(working, usedPieceIds, IsStrongboxCountChart, StrongboxCountScore)
+                var support = TakeBest(working, usedPieceIds, IsStrongboxCountChart, BoxValue1Score)
                               ?? TakeBest(working, usedPieceIds, IsStarfishChart, StarfishScore)
                               ?? TakeBest(working, usedPieceIds, IsOrbRareComboChart, OrbRareComboScore);
                 if (support == null) break;
@@ -173,9 +179,9 @@ public static class VoyagePlacementRules
             }
         }
 
-        // --- 5. Scarab surrounds (above Ancient): AdjacentStrongboxesN ---
-        // Same mod family as divine strongbox support (MapDeepwaterChartAdjacentStrongboxes1/2/…).
-        // Divine already took first pick; leftovers go here. Round-robin neighbors across scarab tiles.
+        // --- 5. Scarab surrounds (above Ancient): Operative boxes ---
+        // MoreScarabs2/3 only. Operatives are scarab-only (not Divine Strongboxes/Diviner/Arcanist).
+        // Round-robin neighbors so several scarab tiles each get Operatives.
         {
             var pending = scarabCenters
                 .Select(c => (
@@ -209,14 +215,14 @@ public static class VoyagePlacementRules
                         continue;
                     }
 
-                    var box = TakeBest(working, usedPieceIds, IsAdjacentStrongboxesChart, AdjacentStrongboxesScore);
-                    if (box == null)
+                    var op = TakeBest(working, usedPieceIds, IsOperativeBoxChart, OperativeBoxScore);
+                    if (op == null)
                     {
                         pending.Clear();
                         break;
                     }
 
-                    LockCell(target.Value.Row, target.Value.Col, box);
+                    LockCell(target.Value.Row, target.Value.Col, op);
                     progressed = true;
                     if (neighbors.Count == 0)
                         pending.RemoveAt(i);
@@ -263,20 +269,22 @@ public static class VoyagePlacementRules
         // --- 9. Save leftovers (never drop below 9 pieces for the solver) ---
         // Combo pieces for orb / scarab boards: hold off the pool so the solver cannot
         // waste them on filler tiles (or on boards with no matching border).
-        // Boxes/starfish: keep up to 6 best tiers. Voyage rare globals: save all.
+        // Strongboxes/Diviner/Arcanist: top 6 by Value1 (Divine pool).
+        // Operative boxes: scarab pool — save all leftovers. Voyage rare globals: save all.
         var savedStrongbox = RemoveUnused(working, usedPieceIds, IsStrongboxCountChart,
-            StrongboxCountScore, maxSave: MaxSavedBoxes);
+            BoxValue1Score, maxSave: MaxSavedBoxes);
         var savedStarfish = RemoveUnused(working, usedPieceIds, IsStarfishChart,
             StarfishScore, maxSave: MaxSavedStarfish);
         // Adj rare T2 (60%) only — T1 (30%) is never reserved.
         var savedAdjacentRare = RemoveUnused(working, usedPieceIds, IsAdjacentRareSaveChart);
         var savedRareVoyage = RemoveUnused(working, usedPieceIds, IsRareVoyageChart); // all
+        var savedOperative = RemoveUnused(working, usedPieceIds, IsOperativeBoxChart); // all
         var savedLostMessage = RemoveUnused(working, usedPieceIds, IsLostMessageChart);
 
         return new Result(
             working, locks,
             savedPelagic, savedStrongbox, savedStarfish, savedRareVoyage,
-            savedAdjacentRare, savedLostMessage, savedKishara);
+            savedAdjacentRare, savedOperative, savedLostMessage, savedKishara);
     }
 
     // --- Chart classification (exact ids from game data) ---
@@ -299,9 +307,16 @@ public static class VoyagePlacementRules
             IsFamily(m.Name, AdjacentDivinerBoxPrefix) ||
             IsFamily(m.Name, AdjacentArcanistBoxPrefix));
 
-    /// <summary>Divine strongbox support: AdjacentStrongboxesN + Diviner/Arcanist boxes.</summary>
+    /// <summary>
+    /// Divine box pool: AdjacentStrongboxes + Diviner + Arcanist.
+    /// Ranked/saved by Value1 (top <see cref="MaxSavedBoxes"/>). Not Operative (scarab).
+    /// </summary>
     public static bool IsStrongboxCountChart(MapPiece piece) =>
         IsAdjacentStrongboxesChart(piece) || IsPremiumBoxChart(piece);
+
+    /// <summary>Operative boxes — scarab surround strategy; save all leftovers.</summary>
+    public static bool IsOperativeBoxChart(MapPiece piece) =>
+        piece.Modifiers.Any(m => IsFamily(m.Name, AdjacentOperativeBoxPrefix));
 
     public static bool IsStarfishChart(MapPiece piece) =>
         piece.Modifiers.Any(m => IsFamily(m.Name, AdjacentStarfishPrefix));
@@ -343,6 +358,7 @@ public static class VoyagePlacementRules
         return IsFamily(rawName, AdjacentStrongboxesPrefix)
                || IsFamily(rawName, AdjacentDivinerBoxPrefix)
                || IsFamily(rawName, AdjacentArcanistBoxPrefix)
+               || IsFamily(rawName, AdjacentOperativeBoxPrefix)
                || IsFamily(rawName, AdjacentStarfishPrefix)
                || IsFamily(rawName, AdjacentIncreasedRarePrefix)
                || IsFamily(rawName, AdjacentLostMessagePrefix)
@@ -350,9 +366,8 @@ public static class VoyagePlacementRules
     }
 
     /// <summary>
-    /// Inventory "!" markers: specialty rooms + uncapped combo mods always;
-    /// starfish/boxes only the top <see cref="MaxSavedStarfish"/> / <see cref="MaxSavedBoxes"/>
-    /// by ItemMod.Value1 (spawn/count magnitude).
+    /// Inventory "!" markers: specialty rooms + uncapped combos always (incl. Operative/scarab);
+    /// starfish and Divine box pool only top N by ItemMod.Value1.
     /// </summary>
     public static HashSet<int> SelectInventorySpecialtyIndices(
         IReadOnlyList<string> roomNames,
@@ -379,6 +394,7 @@ public static class VoyagePlacementRules
                     continue;
                 if (raw.Equals(VoyageIncreasedRareMonsters, StringComparison.OrdinalIgnoreCase) ||
                     IsFamily(raw, AdjacentLostMessagePrefix) ||
+                    IsFamily(raw, AdjacentOperativeBoxPrefix) ||
                     (IsFamily(raw, AdjacentIncreasedRarePrefix) &&
                      TierFromFamily(raw, AdjacentIncreasedRarePrefix) >= 2))
                 {
@@ -394,11 +410,8 @@ public static class VoyagePlacementRules
             if (starfishV > 0)
                 starfish.Add((i, starfishV));
 
-            var boxV = Math.Max(
-                MaxFamilyValue1(mods, AdjacentStrongboxesPrefix),
-                Math.Max(
-                    MaxFamilyValue1(mods, AdjacentDivinerBoxPrefix),
-                    MaxFamilyValue1(mods, AdjacentArcanistBoxPrefix)));
+            // One shared top-6 pool: Strongboxes + Diviner + Arcanist by Value1 (not Operative).
+            var boxV = BoxPoolValue1(mods);
             if (boxV > 0)
                 boxes.Add((i, boxV));
         }
@@ -475,20 +488,20 @@ public static class VoyagePlacementRules
         return room * 1_000_000 + p.LocalModifier + p.GlobalModifier;
     }
 
-    private static double AdjacentStrongboxesScore(MapPiece p) =>
-        MaxFamilyValue1Score(p, AdjacentStrongboxesPrefix);
+    /// <summary>
+    /// Strongboxes + Diviner + Arcanist ranked purely by max ItemMod.Value1 (box count),
+    /// same idea as starfish. Operative is scarab-only, not in this pool.
+    /// </summary>
+    private static double BoxValue1Score(MapPiece p) =>
+        Math.Max(
+            MaxFamilyValue1Score(p, AdjacentStrongboxesPrefix),
+            Math.Max(
+                MaxFamilyValue1Score(p, AdjacentDivinerBoxPrefix),
+                MaxFamilyValue1Score(p, AdjacentArcanistBoxPrefix)));
 
-    private static double StrongboxCountScore(MapPiece p)
-    {
-        // Rank by ItemMod.Value1 (additional boxes). Prefer AdjacentStrongboxes over premium at equal count.
-        var adj = AdjacentStrongboxesScore(p);
-        if (adj > 0)
-            return adj + 10_000;
-
-        return Math.Max(
-            MaxFamilyValue1Score(p, AdjacentDivinerBoxPrefix),
-            MaxFamilyValue1Score(p, AdjacentArcanistBoxPrefix));
-    }
+    /// <summary>Operative boxes for scarab surrounds — rank by Value1.</summary>
+    private static double OperativeBoxScore(MapPiece p) =>
+        MaxFamilyValue1Score(p, AdjacentOperativeBoxPrefix);
 
     /// <summary>Rank starfish by ItemMod.Value1 (spawn count), not name-tier digit.</summary>
     private static double StarfishScore(MapPiece p) =>
@@ -555,6 +568,14 @@ public static class VoyagePlacementRules
 
         return best;
     }
+
+    /// <summary>Max Value1 across Strongboxes / Diviner / Arcanist on one chart's mods.</summary>
+    private static int BoxPoolValue1(IEnumerable<(string Name, int Value1)> mods) =>
+        Math.Max(
+            MaxFamilyValue1(mods, AdjacentStrongboxesPrefix),
+            Math.Max(
+                MaxFamilyValue1(mods, AdjacentDivinerBoxPrefix),
+                MaxFamilyValue1(mods, AdjacentArcanistBoxPrefix)));
 
     private static bool IsFamily(string rawName, string prefix) =>
         !string.IsNullOrEmpty(rawName) &&

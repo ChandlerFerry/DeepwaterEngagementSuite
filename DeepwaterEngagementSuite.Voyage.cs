@@ -842,7 +842,9 @@ public partial class DeepwaterEngagementSuite
         if (placement.SavedPelagicCount > 0)
             savedBits.Add($"{placement.SavedPelagicCount} Pelagic");
         if (placement.SavedStrongboxCount > 0)
-            savedBits.Add($"{placement.SavedStrongboxCount} strongboxes");
+            savedBits.Add($"{placement.SavedStrongboxCount} boxes (Strongboxes/Diviner/Arcanist)");
+        if (placement.SavedOperativeBoxCount > 0)
+            savedBits.Add($"{placement.SavedOperativeBoxCount} Operative boxes");
         if (placement.SavedStarfishCount > 0)
             savedBits.Add($"{placement.SavedStarfishCount} Starfish");
         if (placement.SavedAdjacentRareCount > 0)

@@ -28,4 +28,6 @@ public enum IconPickerIndex
     TormentedSpiritEncounter,
     LanternReplenishEncounter,
     GoldenLanternEncounter,
+    InfusedCoralEncounter,
+    PointerTarget,
 }

@@ -68,9 +68,18 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
     private DeepwaterHandler Handler => GameController.IngameState.ServerData.DeepwaterHandler;
     private bool _initialized;
 
+    public DeepwaterEngagementSuite()
+    {
+        // ExileCore sorts plugins by Order ascending for Tick/Render.
+        // Higher Order renders later → our icons draw on top of MinimapIcons / other overlays.
+        Order = 10_000;
+    }
+
     public override bool Initialise()
     {
         InitOnce();
+        // Re-apply in case the host resets Order after construction.
+        Order = 10_000;
         _profilesDirectory = Path.Combine(ConfigDirectory, "profiles");
         Directory.CreateDirectory(_profilesDirectory);
         EnsureDefaultProfile();
@@ -465,7 +474,8 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
 
         if (!largePanelsOpen)
         {
-            var positions = new List<Vector2>();
+            // Grid positions where we already draw a typed marker icon — pointer placeholders must not stack on these.
+            var drawnMarkerGridPositions = new List<Vector2>();
             foreach (var e in _cachedEntities.Values)
             {
                 if (e.IsOpened)
@@ -480,13 +490,17 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
                         var icon = mapSettings.Icon ?? DeepwaterEngagementSuiteSettings.GetDefaultIcon(chestType);
                         var tint = mapSettings.Tint ?? DeepwaterEngagementSuiteSettings.GetDefaultTint(chestType);
                         var sizeScale = mapSettings.SizeScale ?? DeepwaterEngagementSuiteSettings.GetDefaultIconSizeScale(chestType);
-                        positions.Add(e.GridPos);
-                        if (mapSettings.ShowOnMap)
+                        var drawOnMap = mapSettings.ShowOnMap;
+                        var drawInWorld = mapSettings.ShowInWorld;
+                        if (drawOnMap || drawInWorld)
+                            drawnMarkerGridPositions.Add(e.GridPos);
+
+                        if (drawOnMap)
                         {
                             DrawIconOnMap(e, icon, tint, Vector2.Zero, sizeScale);
                         }
 
-                        if (mapSettings.ShowInWorld)
+                        if (drawInWorld)
                         {
                             DrawIconInWorld(e, icon, tint, Vector2.Zero, sizeScale);
                         }
@@ -496,16 +510,31 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
                 }
             }
 
-            foreach (var e in GameController.EntityListWrapper.ValidEntitiesByType[EntityType.Terrain].Where(x => x.Path == "Metadata/Terrain/Leagues/Deepwater/Objects/Pointer"))
+            // Stand-in for pointer targets that don't already have a real marker icon nearby.
+            // Match radius > 1: pointer targets are often a few grid units off the chest entity.
+            const float pointerOccupiedGridRadius = 8f;
+            if (_largeMapOpen)
             {
-                if (e.TryGetComponent(out Pointer pointer))
+                foreach (var e in GameController.EntityListWrapper.ValidEntitiesByType[EntityType.Terrain]
+                             .Where(x => x.Path == "Metadata/Terrain/Leagues/Deepwater/Objects/Pointer"))
                 {
+                    if (!e.TryGetComponent(out Pointer pointer))
+                        continue;
+
                     foreach (var target in pointer.Targets)
                     {
-                        if (!positions.Any(p => p.DistanceLessThanOrEqual(target, 1)))
-                        {
-                            DrawIcon(MapIconsIndex.AncestralEnemyTotem, Color.White, Graphics.GridToMap(target, target), target.GridToWorld(), true, Color.White, 1, 20);
-                        }
+                        if (drawnMarkerGridPositions.Any(p => p.DistanceLessThanOrEqual(target, pointerOccupiedGridRadius)))
+                            continue;
+
+                        DrawIcon(
+                            MapIconsIndex.AncestralEnemyTotem,
+                            Color.White,
+                            Graphics.GridToMap(target, target),
+                            target.GridToWorld(),
+                            hideCaptured: true,
+                            plannerCapturedFrameColor: Color.White,
+                            frameThickness: 1,
+                            iconSize: Settings.MapIconSize.Value);
                     }
                 }
             }

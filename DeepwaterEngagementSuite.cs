@@ -68,9 +68,18 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
     private DeepwaterHandler Handler => GameController.IngameState.ServerData.DeepwaterHandler;
     private bool _initialized;
 
+    public DeepwaterEngagementSuite()
+    {
+        // ExileCore sorts plugins by Order ascending for Tick/Render.
+        // Higher Order renders later → our icons draw on top of MinimapIcons / other overlays.
+        Order = 10_000;
+    }
+
     public override bool Initialise()
     {
         InitOnce();
+        // Re-apply in case the host resets Order after construction.
+        Order = 10_000;
         _profilesDirectory = Path.Combine(ConfigDirectory, "profiles");
         Directory.CreateDirectory(_profilesDirectory);
         EnsureDefaultProfile();
@@ -178,6 +187,8 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
     {
         var p when p.Contains("BottledItemChest", StringComparison.Ordinal) => IconPickerIndex.BottledItemChest,
         var p when p.Contains("ClamTreasureChest", StringComparison.Ordinal) => IconPickerIndex.ClamTreasureChest,
+        // Opulent before generic CurrencyTreasureChest (substring match).
+        var p when p.Contains("CurrencyTreasureChestOpulent", StringComparison.Ordinal) => IconPickerIndex.CurrencyTreasureChestOpulent,
         var p when p.Contains("CurrencyTreasureChest", StringComparison.Ordinal) => IconPickerIndex.CurrencyTreasureChest,
         var p when p.Contains("DeepwaterAnchorUniqueWeapon", StringComparison.Ordinal) => IconPickerIndex.UniqueWeaponChest,
         var p when p.Contains("DeepwaterAnchorUniqueArmour", StringComparison.Ordinal) => IconPickerIndex.UniqueArmourChest,
@@ -463,7 +474,8 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
 
         if (!largePanelsOpen)
         {
-            var positions = new List<Vector2>();
+            // Grid positions where we already draw a typed marker icon — pointer placeholders must not stack on these.
+            var drawnMarkerGridPositions = new List<Vector2>();
             foreach (var e in _cachedEntities.Values)
             {
                 if (e.IsOpened)
@@ -477,15 +489,20 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
                         var mapSettings = Settings.IconMapping.GetValueOrDefault(chestType, new IconDisplaySettings());
                         var icon = mapSettings.Icon ?? DeepwaterEngagementSuiteSettings.GetDefaultIcon(chestType);
                         var tint = mapSettings.Tint ?? DeepwaterEngagementSuiteSettings.GetDefaultTint(chestType);
-                        positions.Add(e.GridPos);
-                        if (mapSettings.ShowOnMap)
+                        var sizeScale = mapSettings.SizeScale ?? DeepwaterEngagementSuiteSettings.GetDefaultIconSizeScale(chestType);
+                        var drawOnMap = mapSettings.ShowOnMap;
+                        var drawInWorld = mapSettings.ShowInWorld;
+                        if (drawOnMap || drawInWorld)
+                            drawnMarkerGridPositions.Add(e.GridPos);
+
+                        if (drawOnMap)
                         {
-                            DrawIconOnMap(e, icon, tint, Vector2.Zero);
+                            DrawIconOnMap(e, icon, tint, Vector2.Zero, sizeScale);
                         }
 
-                        if (mapSettings.ShowInWorld)
+                        if (drawInWorld)
                         {
-                            DrawIconInWorld(e, icon, tint, Vector2.Zero);
+                            DrawIconInWorld(e, icon, tint, Vector2.Zero, sizeScale);
                         }
 
                         continue;
@@ -493,16 +510,31 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
                 }
             }
 
-            foreach (var e in GameController.EntityListWrapper.ValidEntitiesByType[EntityType.Terrain].Where(x => x.Path == "Metadata/Terrain/Leagues/Deepwater/Objects/Pointer"))
+            // Stand-in for pointer targets that don't already have a real marker icon nearby.
+            // Match radius > 1: pointer targets are often a few grid units off the chest entity.
+            const float pointerOccupiedGridRadius = 8f;
+            if (_largeMapOpen)
             {
-                if (e.TryGetComponent(out Pointer pointer))
+                foreach (var e in GameController.EntityListWrapper.ValidEntitiesByType[EntityType.Terrain]
+                             .Where(x => x.Path == "Metadata/Terrain/Leagues/Deepwater/Objects/Pointer"))
                 {
+                    if (!e.TryGetComponent(out Pointer pointer))
+                        continue;
+
                     foreach (var target in pointer.Targets)
                     {
-                        if (!positions.Any(p => p.DistanceLessThanOrEqual(target, 1)))
-                        {
-                            DrawIcon(MapIconsIndex.AncestralEnemyTotem, Color.White, Graphics.GridToMap(target, target), target.GridToWorld(), true, Color.White, 1, 20);
-                        }
+                        if (drawnMarkerGridPositions.Any(p => p.DistanceLessThanOrEqual(target, pointerOccupiedGridRadius)))
+                            continue;
+
+                        DrawIcon(
+                            MapIconsIndex.AncestralEnemyTotem,
+                            Color.White,
+                            Graphics.GridToMap(target, target),
+                            target.GridToWorld(),
+                            hideCaptured: true,
+                            plannerCapturedFrameColor: Color.White,
+                            frameThickness: 1,
+                            iconSize: Settings.MapIconSize.Value);
                     }
                 }
             }
@@ -796,11 +828,12 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
         };
     }
 
-    private void DrawIconOnMap(EntityCacheItem entity, MapIconsIndex icon, Color? color, Vector2 offset)
+    private void DrawIconOnMap(EntityCacheItem entity, MapIconsIndex icon, Color? color, Vector2 offset, float sizeScale = 1f)
     {
         if (_largeMapOpen)
         {
-            var halfsize = Settings.MapIconSize / 2.0f;
+            var iconSize = Settings.MapIconSize.Value * sizeScale;
+            var halfsize = iconSize / 2.0f;
             var point = GetEntityPosOnMapScreen(entity) + offset * halfsize * 2;
             var entityPos = entity.Pos;
             var entityPos2 = new Vector2(entityPos.X, entityPos.Y);
@@ -809,13 +842,14 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
                 Settings.BubbleSettings.HideCapturedEntitiesOnMap,
                 Settings.PlannerSettings.CapturedEntityMapFrameColor,
                 Settings.BubbleSettings.CapturedEntityMapFrameThickness,
-                Settings.MapIconSize);
+                iconSize);
         }
     }
 
-    private void DrawIconInWorld(EntityCacheItem entity, MapIconsIndex icon, Color? color, Vector2 offset)
+    private void DrawIconInWorld(EntityCacheItem entity, MapIconsIndex icon, Color? color, Vector2 offset, float sizeScale = 1f)
     {
-        var halfsize = Settings.WorldIconSize / 2.0f;
+        var iconSize = Settings.WorldIconSize.Value * sizeScale;
+        var halfsize = iconSize / 2.0f;
         var entityPos = entity.Pos;
         var entityPos2 = new Vector2(entityPos.X, entityPos.Y);
         var point = Camera.WorldToScreen(entityPos) + offset * halfsize * 2;
@@ -823,7 +857,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
             Settings.BubbleSettings.HideCapturedEntitiesInWorld,
             Settings.PlannerSettings.CapturedEntityWorldFrameColor,
             Settings.BubbleSettings.CapturedEntityWorldFrameThickness,
-            Settings.WorldIconSize);
+            iconSize);
     }
 
     private void DrawIcon(

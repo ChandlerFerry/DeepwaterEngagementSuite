@@ -25,6 +25,8 @@ public class DeepwaterEngagementSuiteSettings : ISettings
     public const MapIconsIndex DefaultGoldTreasureChestIcon = MapIconsIndex.LootFilterSmallYellowCircle;
     public const MapIconsIndex DefaultClamTreasureChestIcon = MapIconsIndex.LootFilterLargeYellowStar;
     public const MapIconsIndex DefaultCurrencyTreasureChestIcon = MapIconsIndex.RewardCurrency;
+    // Divine-tier loot filter star — large, high-contrast, not the normal currency reward icon.
+    public const MapIconsIndex DefaultCurrencyTreasureChestOpulentIcon = MapIconsIndex.LootFilterLargeYellowStar;
     public const MapIconsIndex DefaultUniqueWeaponChestIcon = MapIconsIndex.RewardWeapons;
     public const MapIconsIndex DefaultUniqueArmourChestIcon = MapIconsIndex.RewardArmour;
     public static readonly Color UniqueItemTint = new Color(175, 96, 37); // PoE unique orange
@@ -61,6 +63,7 @@ public class DeepwaterEngagementSuiteSettings : ISettings
         IconPickerIndex.GoldTreasureChest => DefaultGoldTreasureChestIcon,
         IconPickerIndex.ClamTreasureChest => DefaultClamTreasureChestIcon,
         IconPickerIndex.CurrencyTreasureChest => DefaultCurrencyTreasureChestIcon,
+        IconPickerIndex.CurrencyTreasureChestOpulent => DefaultCurrencyTreasureChestOpulentIcon,
         IconPickerIndex.UniqueWeaponChest => DefaultUniqueWeaponChestIcon,
         IconPickerIndex.UniqueArmourChest => DefaultUniqueArmourChestIcon,
         IconPickerIndex.ScarabChest => DefaultScarabChestIcon,
@@ -82,6 +85,13 @@ public class DeepwaterEngagementSuiteSettings : ISettings
     {
         IconPickerIndex.UniqueWeaponChest or IconPickerIndex.UniqueArmourChest => UniqueItemTint,
         _ => null,
+    };
+
+    /// <summary>Per-type icon size multiplier (1 = WorldIconSize / MapIconSize as configured).</summary>
+    public static float GetDefaultIconSizeScale(IconPickerIndex index) => index switch
+    {
+        IconPickerIndex.CurrencyTreasureChestOpulent => 2.0f,
+        _ => 1f,
     };
 }
 
@@ -105,6 +115,7 @@ public class PlannerSettings
         [IconPickerIndex.BottledItemChest] = new ChestSettings { Weight = 30 },
         [IconPickerIndex.ClamTreasureChest] = new ChestSettings { Weight = 2 },
         [IconPickerIndex.LanternReplenishEncounter] = new ChestSettings { Weight = 30 },
+        [IconPickerIndex.CurrencyTreasureChestOpulent] = new ChestSettings { Weight = 50 },
     };
 
     public HotkeyNodeV2 StartSearchHotkey { get; set; } = new HotkeyNodeV2(Keys.None);

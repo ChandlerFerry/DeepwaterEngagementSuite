@@ -27,6 +27,7 @@ public class DeepwaterEngagementSuiteSettings : ISettings
     public const MapIconsIndex DefaultCurrencyTreasureChestIcon = MapIconsIndex.RewardCurrency;
     // Divine-tier loot filter star — large, high-contrast, not the normal currency reward icon.
     public const MapIconsIndex DefaultCurrencyTreasureChestOpulentIcon = MapIconsIndex.LootFilterLargeYellowStar;
+    public const MapIconsIndex DefaultCurrencyGemcuttersChestIcon = MapIconsIndex.RewardChestGems;
     public const MapIconsIndex DefaultUniqueWeaponChestIcon = MapIconsIndex.RewardWeapons;
     public const MapIconsIndex DefaultUniqueArmourChestIcon = MapIconsIndex.RewardArmour;
     public static readonly Color UniqueItemTint = new Color(175, 96, 37); // PoE unique orange
@@ -64,6 +65,7 @@ public class DeepwaterEngagementSuiteSettings : ISettings
         IconPickerIndex.ClamTreasureChest => DefaultClamTreasureChestIcon,
         IconPickerIndex.CurrencyTreasureChest => DefaultCurrencyTreasureChestIcon,
         IconPickerIndex.CurrencyTreasureChestOpulent => DefaultCurrencyTreasureChestOpulentIcon,
+        IconPickerIndex.CurrencyGemcuttersChest => DefaultCurrencyGemcuttersChestIcon,
         IconPickerIndex.UniqueWeaponChest => DefaultUniqueWeaponChestIcon,
         IconPickerIndex.UniqueArmourChest => DefaultUniqueArmourChestIcon,
         IconPickerIndex.ScarabChest => DefaultScarabChestIcon,

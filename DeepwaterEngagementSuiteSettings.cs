@@ -105,6 +105,57 @@ public class TrailSettings
     public ColorNode DefaultMapColor { get; set; } = new Color(255, 140, 0, 200);
     public ColorNode DefaultWorldColor { get; set; } = new Color(255, 140, 0, 200);
     public ColorNode UndiscoveredColor { get; set; } = new Color(255, 255, 255, 220);
+    public TrailColorSettings Colors { get; set; } = new TrailColorSettings();
+}
+
+[Submenu(CollapsedByDefault = true)]
+public class TrailColorSettings
+{
+    public ColorNode BottledItem { get; set; } = new Color(255, 215, 0, 255);
+    public ColorNode GoldTreasure { get; set; } = new Color(255, 215, 0, 255);
+    public ColorNode ClamTreasure { get; set; } = new Color(255, 255, 100, 255);
+    public ColorNode Currency { get; set; } = new Color(255, 255, 255, 255);
+    public ColorNode UniqueWeapon { get; set; } = new Color(175, 96, 37, 255);
+    public ColorNode UniqueArmour { get; set; } = new Color(175, 96, 37, 255);
+    public ColorNode Scarabs { get; set; } = new Color(200, 150, 255, 255);
+    public ColorNode StackedDecks { get; set; } = new Color(100, 200, 255, 255);
+    public ColorNode Maps { get; set; } = new Color(200, 200, 200, 255);
+    public ColorNode AllflameEmbers { get; set; } = new Color(255, 100, 50, 255);
+    public ColorNode CursedDucat { get; set; } = new Color(255, 200, 50, 255);
+    public ColorNode RandomDucat { get; set; } = new Color(255, 200, 50, 255);
+    public ColorNode Izaro { get; set; } = new Color(255, 255, 0, 255);
+    public ColorNode AltarCrab { get; set; } = new Color(50, 200, 50, 255);
+    public ColorNode AltarOctopus { get; set; } = new Color(150, 50, 255, 255);
+    public ColorNode TormentedSpirit { get; set; } = new Color(0, 255, 100, 255);
+    public ColorNode LanternReplenish { get; set; } = new Color(100, 200, 255, 255);
+    public ColorNode GoldenLantern { get; set; } = new Color(255, 215, 0, 255);
+    public ColorNode InfusedCoral { get; set; } = new Color(255, 90, 180, 255);
+    public ColorNode Other { get; set; } = new Color(180, 180, 180, 255);
+
+    public Color Get(IconPickerIndex type, Color fallback) => type switch
+    {
+        IconPickerIndex.BottledItemChest => BottledItem.Value,
+        IconPickerIndex.GoldTreasureChest => GoldTreasure.Value,
+        IconPickerIndex.ClamTreasureChest => ClamTreasure.Value,
+        IconPickerIndex.CurrencyTreasureChest => Currency.Value,
+        IconPickerIndex.UniqueWeaponChest => UniqueWeapon.Value,
+        IconPickerIndex.UniqueArmourChest => UniqueArmour.Value,
+        IconPickerIndex.ScarabChest => Scarabs.Value,
+        IconPickerIndex.StackedDecksChest => StackedDecks.Value,
+        IconPickerIndex.MapsChest => Maps.Value,
+        IconPickerIndex.AllflameEmbersChest => AllflameEmbers.Value,
+        IconPickerIndex.CursedDucatDrop => CursedDucat.Value,
+        IconPickerIndex.RandomDucatChest => RandomDucat.Value,
+        IconPickerIndex.IzaroObject => Izaro.Value,
+        IconPickerIndex.AltarCrab => AltarCrab.Value,
+        IconPickerIndex.AltarOctopus => AltarOctopus.Value,
+        IconPickerIndex.TormentedSpiritEncounter => TormentedSpirit.Value,
+        IconPickerIndex.LanternReplenishEncounter => LanternReplenish.Value,
+        IconPickerIndex.GoldenLanternEncounter => GoldenLantern.Value,
+        IconPickerIndex.InfusedCoralEncounter => InfusedCoral.Value,
+        IconPickerIndex.OtherChests => Other.Value,
+        _ => fallback,
+    };
 }
 
 [Submenu(CollapsedByDefault = true)]

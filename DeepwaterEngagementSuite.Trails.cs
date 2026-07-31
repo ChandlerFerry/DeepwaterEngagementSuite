@@ -270,12 +270,7 @@ public partial class DeepwaterEngagementSuite
 
     private Color GetTrailColor(IconPickerIndex type, Color fallback)
     {
-        var configuredTint = Settings.IconMapping
-            .GetValueOrDefault(type, new IconDisplaySettings())
-            .Tint;
-        return configuredTint ??
-               DeepwaterEngagementSuiteSettings.GetDefaultTint(type) ??
-               fallback;
+        return Settings.TrailSettings.Colors.Get(type, fallback);
     }
 
     private bool IsTrailTargetReachable(Vector2 gridPos)

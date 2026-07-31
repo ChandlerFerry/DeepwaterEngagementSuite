@@ -81,19 +81,43 @@ public partial class DeepwaterEngagementSuite
     private static bool BoardIsClear(VoyageWindow tree) =>
         tree.Tiles.All(t => !TileHasChart(t));
 
+    /// <summary>
+    /// ImGui "Place" steals focus; a tiny cursor wiggle makes the game accept hover again.
+    /// </summary>
+    private static async SyncTask<bool> WiggleCursorToFocus(Vector2 screenPos)
+    {
+        const float delta = 4f;
+        Input.SetCursorPos(screenPos + new Vector2(delta, 0));
+        await TaskUtils.NextFrame();
+        Input.SetCursorPos(screenPos + new Vector2(-delta, 0));
+        await TaskUtils.NextFrame();
+        Input.SetCursorPos(screenPos + new Vector2(0, delta));
+        await TaskUtils.NextFrame();
+        Input.SetCursorPos(screenPos);
+        await TaskUtils.NextFrame();
+        return true;
+    }
+
     private async SyncTask<bool> PlacePieces(VoyageSolution solution)
     {
         try
         {
             var tree = GameController.IngameState.IngameUi.VoyageWindow;
             var winOrigin = GameController.Window.GetWindowRectangleTimeCache.TopLeft.ToVector2Num();
+            var needsFocusWiggle = true;
 
             // Only clear when something is actually placed. Empty board: Clear never
             // shiny-highlights and ItemContainer often stays non-null without a chart.
             if (!BoardIsClear(tree))
             {
-                var clearPos = tree.ClearButton.GetClientRectCache.Center.ToVector2Num();
-                Input.SetCursorPos(winOrigin + clearPos);
+                var clearPos = winOrigin + tree.ClearButton.GetClientRectCache.Center.ToVector2Num();
+                Input.SetCursorPos(clearPos);
+                if (needsFocusWiggle)
+                {
+                    await WiggleCursorToFocus(clearPos);
+                    needsFocusWiggle = false;
+                }
+
                 await TaskUtils.CheckEveryFrameWithThrow(
                     () => tree.ClearButton.HasShinyHighlight,
                     () => "Clear button never highlighted (board may already be empty?)",
@@ -121,9 +145,15 @@ public partial class DeepwaterEngagementSuite
                 }
 
                 var pieceElem = availableCharts[p.Piece.Id];
-                var click1Pos = pieceElem.GetClientRectCache.Center.ToVector2Num();
-                var click2Pos = tile.GetClientRectCache.Center.ToVector2Num();
-                Input.SetCursorPos(winOrigin + click1Pos);
+                var click1Pos = winOrigin + pieceElem.GetClientRectCache.Center.ToVector2Num();
+                var click2Pos = winOrigin + tile.GetClientRectCache.Center.ToVector2Num();
+                Input.SetCursorPos(click1Pos);
+                if (needsFocusWiggle)
+                {
+                    await WiggleCursorToFocus(click1Pos);
+                    needsFocusWiggle = false;
+                }
+
                 await TaskUtils.CheckEveryFrameWithThrow(
                     () => GameController.IngameState.UIHover?.Address.Equals(pieceElem.Address) ?? false,
                     () => $"Hover address was {GameController.IngameState.UIHover?.Address:X} not {pieceElem.Address:X}",
@@ -134,7 +164,7 @@ public partial class DeepwaterEngagementSuite
                 await TaskUtils.CheckEveryFrameWithThrow(
                     () => GameController.IngameState.IngameUi.Cursor.Action == MouseActionType.HoldItemForSell,
                     TimeSpan.FromSeconds(1));
-                Input.SetCursorPos(winOrigin + click2Pos);
+                Input.SetCursorPos(click2Pos);
                 await TaskUtils.CheckEveryFrameWithThrow(
                     () => GameController.IngameState.UIHoverElement?.Address.Equals(tile.Address) ?? false,
                     () => $"Hover address was {GameController.IngameState.UIHoverElement?.Address:X} not {tile.Address:X}",
@@ -151,8 +181,8 @@ public partial class DeepwaterEngagementSuite
                        rot != p.Rotation)
                 {
                     DebugWindow.LogMsg($"{rot}, {p.Rotation}");
-                    var click3Pos = tile.GetClientRectCache.Center.ToVector2Num();
-                    Input.SetCursorPos(winOrigin + click3Pos);
+                    var click3Pos = winOrigin + tile.GetClientRectCache.Center.ToVector2Num();
+                    Input.SetCursorPos(click3Pos);
                     await TaskUtils.CheckEveryFrameWithThrow(
                         () => GameController.IngameState.UIHover?.Address.Equals(tile.ItemContainer.Address) ?? false,
                         TimeSpan.FromSeconds(1));

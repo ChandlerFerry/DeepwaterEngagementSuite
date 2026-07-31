@@ -29,5 +29,8 @@ public enum IconPickerIndex
     LanternReplenishEncounter,
     GoldenLanternEncounter,
     InfusedCoralEncounter,
+    StrongboxDivination,
+    StrongboxScarab,
+    StrongboxArcanist,
     PointerTarget,
 }

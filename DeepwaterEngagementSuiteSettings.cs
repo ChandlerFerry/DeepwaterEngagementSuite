@@ -83,6 +83,9 @@ public class DeepwaterEngagementSuiteSettings : ISettings
         IconPickerIndex.LanternReplenishEncounter => DefaultLanternReplenishEncounterIcon,
         IconPickerIndex.GoldenLanternEncounter => MapIconsIndex.LabyrinthGoldKey,
         IconPickerIndex.InfusedCoralEncounter => MapIconsIndex.RewardBreach,
+        IconPickerIndex.StrongboxDivination => MapIconsIndex.CorpseTypeUndead,
+        IconPickerIndex.StrongboxScarab => MapIconsIndex.CorpseTypeEldritch,
+        IconPickerIndex.StrongboxArcanist => MapIconsIndex.CorpseTypeBeast,
         IconPickerIndex.PointerTarget => MapIconsIndex.AncestralEnemyTotem,
         _ => DefaultOtherChestIcon,
     };

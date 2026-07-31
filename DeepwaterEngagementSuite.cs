@@ -170,6 +170,9 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
     {
         return _entityTypeCache.GetOrAdd(path, p => p switch
         {
+            "Metadata/Chests/StrongBoxes/StrongboxDivination" => ExpeditionEntityType.Marker,
+            "Metadata/Chests/StrongBoxes/StrongboxScarab" => ExpeditionEntityType.Marker,
+            "Metadata/Chests/StrongBoxes/Arcanist" => ExpeditionEntityType.Marker,
             var a when a.StartsWith("Metadata/Chests/LeagueDeepwater/", StringComparison.Ordinal) => ExpeditionEntityType.Marker,
             var a when a.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterIzaroObject", StringComparison.Ordinal) => ExpeditionEntityType.Marker,
             var a when a.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterAltarCrab", StringComparison.Ordinal) => ExpeditionEntityType.Marker,
@@ -185,6 +188,9 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
 
     private static IconPickerIndex GetChestType(string path) => path switch
     {
+        "Metadata/Chests/StrongBoxes/StrongboxDivination" => IconPickerIndex.StrongboxDivination,
+        "Metadata/Chests/StrongBoxes/StrongboxScarab" => IconPickerIndex.StrongboxScarab,
+        "Metadata/Chests/StrongBoxes/Arcanist" => IconPickerIndex.StrongboxArcanist,
         var p when p.Contains("BottledItemChest", StringComparison.Ordinal) => IconPickerIndex.BottledItemChest,
         var p when p.Contains("ClamTreasureChest", StringComparison.Ordinal) => IconPickerIndex.ClamTreasureChest,
         var p when p.Contains("CurrencyTreasureChestOpulent", StringComparison.Ordinal) => IconPickerIndex.CurrencyTreasureChestOpulent,
@@ -287,7 +293,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
 
         _bubbleRadius = Settings.BubbleSettings.BubbleRadiusOverride.Value is > 0 and var o ? o : Bubbles.Min(x => x.Radius);
 
-        foreach (var entity in new[] { EntityType.Chest, EntityType.Terrain, EntityType.IngameIcon }
+        foreach (var entity in new[] { EntityType.Chest, EntityType.Terrain, EntityType.IngameIcon, }
                      .SelectMany(x => GameController.EntityListWrapper.ValidEntitiesByType[x]))
         {
             if (GetEntityType(entity.Path) == ExpeditionEntityType.None)
@@ -1101,6 +1107,9 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
         IconPickerIndex.LanternReplenishEncounter => "Lantern Replenish",
         IconPickerIndex.GoldenLanternEncounter => "Golden Lantern",
         IconPickerIndex.InfusedCoralEncounter => "Infused Coral",
+        IconPickerIndex.StrongboxDivination => "Card box",
+        IconPickerIndex.StrongboxScarab => "Scarab box",
+        IconPickerIndex.StrongboxArcanist => "Currency box",
         IconPickerIndex.PointerTarget => "Undiscovered Target",
         _ => "Other",
     };

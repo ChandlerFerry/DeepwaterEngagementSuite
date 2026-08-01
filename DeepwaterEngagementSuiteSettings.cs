@@ -513,6 +513,10 @@ public class VoyageSettings
 
     [Menu("Use fast solver (exact, experimental)", "Exact branch-and-bound solver. Ignores the time limit. Per-connection border mods are ignored for now, so scores on those boards are approximate.")]
     public ToggleNode UseFastSolver { get; set; } = new ToggleNode(true);
+
+    public ToggleNode ShowAllBorderModifiers { get; set; } = new ToggleNode(true);
+    public ToggleNode ShowAllChartModifiers { get; set; } = new ToggleNode(true);
+
     public ListNode ProfileSelector { get; set; } = new ListNode();
     [JsonIgnore] public ButtonNode AddProfile { get; set; } = new ButtonNode();
     [JsonIgnore] public ButtonNode ReloadProfiles { get; set; } = new ButtonNode();

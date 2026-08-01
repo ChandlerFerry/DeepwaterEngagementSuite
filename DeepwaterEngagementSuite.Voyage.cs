@@ -258,7 +258,8 @@ public partial class DeepwaterEngagementSuite
                     var chartMods = tile.ItemContainer.Entity.GetComponent<Mods>()?.ImplicitMods ?? [];
                     foreach (var im in chartMods)
                     {
-                        if (!VoyagePlacementRules.IsSpecialtyComboModifier(im.RawName))
+                        if (!Settings.VoyageSettings.ShowAllChartModifiers &&
+                            !VoyagePlacementRules.IsSpecialtyComboModifier(im.RawName))
                             continue;
 
                         var chartMod = Settings.VoyageSettings.ChartModifiers.Content
@@ -287,7 +288,7 @@ public partial class DeepwaterEngagementSuite
                     var isStrategy = VoyagePlacementRules.IsStrategyBorder(itemMod.RawName);
                     var isTreasureHighlight = strongTreasureAnchors &&
                                               VoyagePlacementRules.IsTreasureAnchorsBorder(itemMod.RawName);
-                    if (!isStrategy && !isTreasureHighlight)
+                    if (!Settings.VoyageSettings.ShowAllBorderModifiers && !isStrategy && !isTreasureHighlight)
                         continue;
 
                     var matchingSetting = Settings.VoyageSettings.BorderModifiers.Content

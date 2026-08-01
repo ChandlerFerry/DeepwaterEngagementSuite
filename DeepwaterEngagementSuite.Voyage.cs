@@ -835,7 +835,11 @@ public partial class DeepwaterEngagementSuite
         if (placement.SavedPelagicCount > 0)
             savedBits.Add($"{placement.SavedPelagicCount} Pelagic");
         if (placement.SavedFarmCount > 0)
-            savedBits.Add($"{placement.SavedFarmCount} farm (Anchorfield/Clam for no-consume)");
+            savedBits.Add($"{placement.SavedFarmCount} Anchorfield (no-consume)");
+        if (placement.SavedClamCount > 0)
+            savedBits.Add($"{placement.SavedClamCount} Clam (for Unique Amulet2)");
+        if (placement.SavedUniqueAmuletCount > 0)
+            savedBits.Add($"{placement.SavedUniqueAmuletCount} Unique Amulet2");
         if (placement.SavedStrongboxCount > 0)
             savedBits.Add($"{placement.SavedStrongboxCount} boxes (Strongboxes/Diviner/Arcanist)");
         if (placement.SavedOperativeBoxCount > 0)

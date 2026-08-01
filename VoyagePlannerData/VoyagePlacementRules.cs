@@ -24,12 +24,15 @@ public static class VoyagePlacementRules
     public const string AdjacentArcanistBoxPrefix = "MapDeepwaterChartAdjacentArcanistBox";
     public const string AdjacentOperativeBoxPrefix = "MapDeepwaterChartAdjacentOperativeBox";
     public const string AdjacentLostMessagePrefix = "MapDeepwaterChartAdjacentLostMessage";
+    public const string AdjacentUniqueAmuletPrefix = "MapDeepwaterChartAdjacentUniqueAmulet";
 
     public const int CenterRow = 1;
     public const int CenterCol = 1;
 
     public const int MaxSavedBoxes = 6;
     public const int MaxSavedStarfish = 6;
+    public const int MaxSavedUniqueAmulet2 = 1;
+    public const int MaxSavedClamsForAmulet = 4;
 
     public const string PelagicRoomName = "Pelagic Abyss";
     public const string ClamRoomName = "Clam-infested Shelf";
@@ -49,7 +52,9 @@ public static class VoyagePlacementRules
         int SavedAdjacentRareCount,
         int SavedOperativeBoxCount,
         int SavedLostMessageCount,
-        int SavedKisharaCount);
+        int SavedKisharaCount,
+        int SavedClamCount,
+        int SavedUniqueAmuletCount);
 
     public static Result Apply(
         IReadOnlyList<MapPiece> pieces,
@@ -117,6 +122,28 @@ public static class VoyagePlacementRules
             }
         }
 
+        // Unique Amulet2 + 4 Clams: amulet center, clams on ortho neighbors.
+        if (CellFree(CenterRow, CenterCol))
+        {
+            var amulet2 = TakeBest(working, usedPieceIds, IsUniqueAmulet2Chart, UniqueAmuletScore);
+            var freeCross = FreeNeighbors(CenterRow, CenterCol, CellFree).ToList();
+            if (amulet2 != null && freeCross.Count >= 4)
+            {
+                var clams = working
+                    .Where(p => !usedPieceIds.Contains(p.Id) && IsClamChart(p))
+                    .OrderByDescending(ClamScore)
+                    .ThenByDescending(p => p.LocalModifier + p.GlobalModifier)
+                    .Take(MaxSavedClamsForAmulet)
+                    .ToList();
+                if (clams.Count >= MaxSavedClamsForAmulet)
+                {
+                    LockCell(CenterRow, CenterCol, amulet2);
+                    for (var i = 0; i < MaxSavedClamsForAmulet; i++)
+                        LockCell(freeCross[i].Row, freeCross[i].Col, clams[i]);
+                }
+            }
+        }
+
         foreach (var center in divineCenters)
         {
             foreach (var n in FreeNeighbors(center.Row, center.Col, CellFree))
@@ -155,7 +182,7 @@ public static class VoyagePlacementRules
                      CellFree(c.Row, c.Col) &&
                      IsStrongNoConsume(BordersAt(tileBorders, c.Row, c.Col))))
         {
-            var farm = TakeBest(working, usedPieceIds, IsFarmChart, FarmPriority);
+            var farm = TakeBest(working, usedPieceIds, IsAnchorfieldChart, FarmPriority);
             if (farm == null) break;
             LockCell(cell.Row, cell.Col, farm);
         }
@@ -163,7 +190,8 @@ public static class VoyagePlacementRules
         if (CellFree(CenterRow, CenterCol))
         {
             var centerPiece = TakeBest(working, usedPieceIds, IsOperativeBoxChart, OperativeBoxScore)
-                              ?? TakeBest(working, usedPieceIds, IsLostMessageChart, LostMessageScore);
+                              ?? TakeBest(working, usedPieceIds, IsLostMessageChart, LostMessageScore)
+                              ?? TakeBest(working, usedPieceIds, IsUniqueAmulet1Chart, UniqueAmuletScore);
             if (centerPiece != null)
                 LockCell(CenterRow, CenterCol, centerPiece);
         }
@@ -179,7 +207,7 @@ public static class VoyagePlacementRules
             }
         }
 
-        var savedFarm = RemoveUnused(working, usedPieceIds, IsFarmChart, FarmPriority);
+        var savedFarm = RemoveUnused(working, usedPieceIds, IsAnchorfieldChart, FarmPriority);
         var savedStrongbox = RemoveUnused(working, usedPieceIds, IsStrongboxCountChart,
             BoxValue1Score, maxSave: MaxSavedBoxes);
         var savedStarfish = RemoveUnused(working, usedPieceIds, IsStarfishChart,
@@ -188,16 +216,30 @@ public static class VoyagePlacementRules
         var savedRareVoyage = RemoveUnused(working, usedPieceIds, IsRareVoyageChart);
         var savedOperative = RemoveUnused(working, usedPieceIds, IsOperativeBoxChart);
         var savedLostMessage = RemoveUnused(working, usedPieceIds, IsLostMessageChart);
+        // Hold one T2 amulet until the 4-clam cross is ready; never save T1.
+        var savedUniqueAmulet = RemoveUnused(working, usedPieceIds, IsUniqueAmulet2Chart,
+            UniqueAmuletScore, maxSave: MaxSavedUniqueAmulet2);
+        var holdingAmulet2 = savedUniqueAmulet > 0 ||
+                             working.Any(p => !usedPieceIds.Contains(p.Id) && IsUniqueAmulet2Chart(p));
+        var savedClam = holdingAmulet2
+            ? RemoveUnused(working, usedPieceIds, IsClamChart, ClamScore, maxSave: MaxSavedClamsForAmulet)
+            : 0;
 
         return new Result(
             working, locks,
             savedPelagic, savedFarm, savedStrongbox, savedStarfish, savedRareVoyage,
-            savedAdjacentRare, savedOperative, savedLostMessage, savedKishara);
+            savedAdjacentRare, savedOperative, savedLostMessage, savedKishara,
+            savedClam, savedUniqueAmulet);
     }
 
-    public static bool IsFarmChart(MapPiece piece) =>
-        piece.Name.Contains(ClamRoomName, StringComparison.OrdinalIgnoreCase) ||
+    public static bool IsClamChart(MapPiece piece) =>
+        piece.Name.Contains(ClamRoomName, StringComparison.OrdinalIgnoreCase);
+
+    public static bool IsAnchorfieldChart(MapPiece piece) =>
         piece.Name.Contains(AnchorfieldRoomName, StringComparison.OrdinalIgnoreCase);
+
+    public static bool IsFarmChart(MapPiece piece) =>
+        IsClamChart(piece) || IsAnchorfieldChart(piece);
 
     public static bool IsPelagic(MapPiece piece) =>
         piece.Name.Contains(PelagicRoomName, StringComparison.OrdinalIgnoreCase);
@@ -237,6 +279,19 @@ public static class VoyagePlacementRules
     public static bool IsLostMessageChart(MapPiece piece) =>
         piece.Modifiers.Any(m => IsFamily(m.Name, AdjacentLostMessagePrefix));
 
+    public static bool IsUniqueAmuletChart(MapPiece piece) =>
+        piece.Modifiers.Any(m => IsFamily(m.Name, AdjacentUniqueAmuletPrefix));
+
+    public static bool IsUniqueAmulet1Chart(MapPiece piece) =>
+        piece.Modifiers.Any(m =>
+            IsFamily(m.Name, AdjacentUniqueAmuletPrefix) &&
+            TierFromFamily(m.Name, AdjacentUniqueAmuletPrefix) == 1);
+
+    public static bool IsUniqueAmulet2Chart(MapPiece piece) =>
+        piece.Modifiers.Any(m =>
+            IsFamily(m.Name, AdjacentUniqueAmuletPrefix) &&
+            TierFromFamily(m.Name, AdjacentUniqueAmuletPrefix) == 2);
+
     public static bool IsOrbRareGlobalChart(MapPiece piece) =>
         IsRareVoyageChart(piece);
 
@@ -255,6 +310,7 @@ public static class VoyagePlacementRules
                || (IsFamily(rawName, AdjacentIncreasedRarePrefix) &&
                    TierFromFamily(rawName, AdjacentIncreasedRarePrefix) >= 2)
                || IsFamily(rawName, AdjacentLostMessagePrefix)
+               || IsFamily(rawName, AdjacentUniqueAmuletPrefix)
                || rawName.Equals(VoyageIncreasedRareMonsters, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -284,6 +340,7 @@ public static class VoyagePlacementRules
                 if (raw.Equals(VoyageIncreasedRareMonsters, StringComparison.OrdinalIgnoreCase) ||
                     IsFamily(raw, AdjacentLostMessagePrefix) ||
                     IsFamily(raw, AdjacentOperativeBoxPrefix) ||
+                    IsFamily(raw, AdjacentUniqueAmuletPrefix) ||
                     (IsFamily(raw, AdjacentIncreasedRarePrefix) &&
                      TierFromFamily(raw, AdjacentIncreasedRarePrefix) >= 2))
                 {
@@ -368,15 +425,11 @@ public static class VoyagePlacementRules
                || rawName.Equals(TreasureAnchors2, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static double FarmPriority(MapPiece p)
-    {
-        var room = 0.0;
-        if (p.Name.Contains(AnchorfieldRoomName, StringComparison.OrdinalIgnoreCase))
-            room = 2;
-        else if (p.Name.Contains(ClamRoomName, StringComparison.OrdinalIgnoreCase))
-            room = 1;
-        return room * 1_000_000 + p.LocalModifier + p.GlobalModifier;
-    }
+    private static double FarmPriority(MapPiece p) =>
+        p.LocalModifier + p.GlobalModifier;
+
+    private static double ClamScore(MapPiece p) =>
+        p.LocalModifier + p.GlobalModifier;
 
     private static double BoxValue1Score(MapPiece p) =>
         Math.Max(
@@ -400,6 +453,9 @@ public static class VoyagePlacementRules
 
     private static double LostMessageScore(MapPiece p) =>
         MaxFamilyTierScore(p, AdjacentLostMessagePrefix);
+
+    private static double UniqueAmuletScore(MapPiece p) =>
+        MaxFamilyTierScore(p, AdjacentUniqueAmuletPrefix);
 
     private static double OrbRareComboScore(MapPiece p)
     {

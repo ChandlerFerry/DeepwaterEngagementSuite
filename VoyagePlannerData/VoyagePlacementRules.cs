@@ -93,12 +93,6 @@ public static class VoyagePlacementRules
             .Select(c => (c.Row, c.Col))
             .ToList();
 
-        var scarabCenters = EnumerateCells()
-            .Select(c => (c.Row, c.Col, Tier: ScarabTier(BordersAt(tileBorders, c.Row, c.Col))))
-            .Where(x => x.Tier > 0)
-            .OrderByDescending(x => x.Tier)
-            .ToList();
-
         var orbCenters = divineCenters.Select(c => (c.Row, c.Col, Priority: 3))
             .Concat(annulCenters.Select(c => (c.Row, c.Col, Priority: 2)))
             .Concat(ancientCenters.Select(c => (c.Row, c.Col, Priority: 1)))
@@ -146,58 +140,6 @@ public static class VoyagePlacementRules
             }
         }
 
-        {
-            var pending = scarabCenters
-                .Select(c => (
-                    c.Tier,
-                    Neighbors: new Queue<(int Row, int Col)>(FreeNeighbors(c.Row, c.Col, CellFree))))
-                .Where(c => c.Neighbors.Count > 0)
-                .OrderByDescending(c => c.Tier)
-                .ToList();
-
-            while (pending.Count > 0)
-            {
-                var progressed = false;
-                for (var i = 0; i < pending.Count;)
-                {
-                    var neighbors = pending[i].Neighbors;
-                    (int Row, int Col)? target = null;
-                    while (neighbors.Count > 0)
-                    {
-                        var n = neighbors.Dequeue();
-                        if (CellFree(n.Row, n.Col))
-                        {
-                            target = n;
-                            break;
-                        }
-                    }
-
-                    if (target is null)
-                    {
-                        pending.RemoveAt(i);
-                        continue;
-                    }
-
-                    var op = TakeBest(working, usedPieceIds, IsOperativeBoxChart, OperativeBoxScore);
-                    if (op == null)
-                    {
-                        pending.Clear();
-                        break;
-                    }
-
-                    LockCell(target.Value.Row, target.Value.Col, op);
-                    progressed = true;
-                    if (neighbors.Count == 0)
-                        pending.RemoveAt(i);
-                    else
-                        i++;
-                }
-
-                if (!progressed)
-                    break;
-            }
-        }
-
         foreach (var center in ancientCenters)
         {
             foreach (var n in FreeNeighbors(center.Row, center.Col, CellFree))
@@ -220,9 +162,10 @@ public static class VoyagePlacementRules
 
         if (CellFree(CenterRow, CenterCol))
         {
-            var lost = TakeBest(working, usedPieceIds, IsLostMessageChart, LostMessageScore);
-            if (lost != null)
-                LockCell(CenterRow, CenterCol, lost);
+            var centerPiece = TakeBest(working, usedPieceIds, IsOperativeBoxChart, OperativeBoxScore)
+                              ?? TakeBest(working, usedPieceIds, IsLostMessageChart, LostMessageScore);
+            if (centerPiece != null)
+                LockCell(CenterRow, CenterCol, centerPiece);
         }
 
         if (divineCenters.Count > 0)
@@ -575,20 +518,6 @@ public static class VoyagePlacementRules
                 best = Math.Max(best, 2);
             else if (b.Name.Equals(RareAncient, StringComparison.OrdinalIgnoreCase))
                 best = Math.Max(best, 1);
-        }
-
-        return best;
-    }
-
-    public static int ScarabTier(IReadOnlyList<BorderEffect> borders)
-    {
-        var best = 0;
-        foreach (var b in borders)
-        {
-            if (b.Name.Equals(MoreScarabs3, StringComparison.OrdinalIgnoreCase))
-                best = Math.Max(best, 3);
-            else if (b.Name.Equals(MoreScarabs2, StringComparison.OrdinalIgnoreCase))
-                best = Math.Max(best, 2);
         }
 
         return best;

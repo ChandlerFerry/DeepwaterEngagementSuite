@@ -17,6 +17,7 @@ public enum IconPickerIndex
     CurrencyGemcuttersChest,
     UniqueWeaponChest,
     UniqueArmourChest,
+    UniqueJewelleryChest,
     ScarabChest,
     StackedDecksChest,
     MapsChest,

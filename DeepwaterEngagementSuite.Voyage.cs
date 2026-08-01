@@ -287,11 +287,17 @@ public partial class DeepwaterEngagementSuite
                     }
                 }
 
-                // Strategy borders only (orbs / scarabs) — no-consume is strategy-only, not labeled.
+                // Strategy borders: orbs / scarabs always; strong treasure-anchor combos (reroll highlight);
+                // no-consume remains strategy-only for farm locks and is not labeled.
+                var strongTreasureAnchors = VoyagePlacementRules.IsStrongTreasureAnchors(
+                    mods.Select(m => m.RawName));
                 tileCenter = tileCenter + new Vector2(0, 10);
                 foreach (var itemMod in mods)
                 {
-                    if (!VoyagePlacementRules.IsStrategyBorder(itemMod.RawName))
+                    var isStrategy = VoyagePlacementRules.IsStrategyBorder(itemMod.RawName);
+                    var isTreasureHighlight = strongTreasureAnchors &&
+                                              VoyagePlacementRules.IsTreasureAnchorsBorder(itemMod.RawName);
+                    if (!isStrategy && !isTreasureHighlight)
                         continue;
 
                     var matchingSetting = Settings.VoyageSettings.BorderModifiers.Content

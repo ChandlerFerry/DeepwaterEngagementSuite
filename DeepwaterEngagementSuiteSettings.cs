@@ -30,6 +30,7 @@ public class DeepwaterEngagementSuiteSettings : ISettings
     public const MapIconsIndex DefaultCurrencyGemcuttersChestIcon = MapIconsIndex.RewardChestGems;
     public const MapIconsIndex DefaultUniqueWeaponChestIcon = MapIconsIndex.RewardWeapons;
     public const MapIconsIndex DefaultUniqueArmourChestIcon = MapIconsIndex.RewardArmour;
+    public const MapIconsIndex DefaultUniqueJewelleryChestIcon = MapIconsIndex.RewardJewellery;
     public static readonly Color UniqueItemTint = new Color(175, 96, 37); // PoE unique orange
     public const MapIconsIndex DefaultScarabChestIcon = MapIconsIndex.RewardScarabs;
     public const MapIconsIndex DefaultStackedDecksChestIcon = MapIconsIndex.RewardDivinationCards;
@@ -68,6 +69,7 @@ public class DeepwaterEngagementSuiteSettings : ISettings
         IconPickerIndex.CurrencyGemcuttersChest => DefaultCurrencyGemcuttersChestIcon,
         IconPickerIndex.UniqueWeaponChest => DefaultUniqueWeaponChestIcon,
         IconPickerIndex.UniqueArmourChest => DefaultUniqueArmourChestIcon,
+        IconPickerIndex.UniqueJewelleryChest => DefaultUniqueJewelleryChestIcon,
         IconPickerIndex.ScarabChest => DefaultScarabChestIcon,
         IconPickerIndex.StackedDecksChest => DefaultStackedDecksChestIcon,
         IconPickerIndex.MapsChest => DefaultMapsChestIcon,
@@ -85,7 +87,7 @@ public class DeepwaterEngagementSuiteSettings : ISettings
 
     public static Color? GetDefaultTint(IconPickerIndex index) => index switch
     {
-        IconPickerIndex.UniqueWeaponChest or IconPickerIndex.UniqueArmourChest => UniqueItemTint,
+        IconPickerIndex.UniqueWeaponChest or IconPickerIndex.UniqueArmourChest or IconPickerIndex.UniqueJewelleryChest => UniqueItemTint,
         _ => null,
     };
 
@@ -231,7 +233,8 @@ public class VoyageSettings
 
     [Menu("Draw combo labels",
         "Overlay specialty combo pieces (Pelagic/farm rooms, starfish, rares, boxes, Lost Message) and strategy borders " +
-        "(orbs, scarabs). No-consume borders are used for strategy but not labeled. Turn off for a clean voyage UI.")]
+        "(orbs, scarabs, strong treasure anchors). No-consume borders are used for strategy but not labeled. " +
+        "Turn off for a clean voyage UI.")]
     public ToggleNode DrawComboLabels { get; set; } = new ToggleNode(true);
 
     [Menu("Solver time limit (seconds)", "Max time the solver runs before returning the best solution found so far. 0 = no limit.")]

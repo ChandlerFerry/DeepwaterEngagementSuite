@@ -20,6 +20,8 @@ public static class VoyagePlacementRules
     public const string RareAncient = "DeepwaterBorderRareMonsterAncient";
     public const string MoreScarabs2 = "DeepwaterBorderMoreScarabs2";
     public const string MoreScarabs3 = "DeepwaterBorderMoreScarabs3";
+    public const string TreasureAnchors1 = "DeepwaterBorderTreasureAnchors1";
+    public const string TreasureAnchors2 = "DeepwaterBorderTreasureAnchors2";
 
     // --- Chart mods (exact ids / families) ---
     // Only global rare combo:
@@ -467,8 +469,9 @@ public static class VoyagePlacementRules
     }
 
     /// <summary>
-    /// Borders drawn on the voyage combo overlay: orbs + MoreScarabs2/3 only.
+    /// Borders always drawn on the voyage combo overlay: orbs + MoreScarabs2/3.
     /// No-consume still drives farm placement via <see cref="IsStrongNoConsume"/> but is not labeled.
+    /// Treasure anchors are labeled only when <see cref="IsStrongTreasureAnchors"/> is true on the tile.
     /// </summary>
     public static bool IsStrategyBorder(string rawName)
     {
@@ -479,6 +482,15 @@ public static class VoyagePlacementRules
                || rawName.Equals(RareAncient, StringComparison.OrdinalIgnoreCase)
                || rawName.Equals(MoreScarabs2, StringComparison.OrdinalIgnoreCase)
                || rawName.Equals(MoreScarabs3, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>TreasureAnchors1/2 border ids — drawn only on strong combo tiles.</summary>
+    public static bool IsTreasureAnchorsBorder(string rawName)
+    {
+        if (string.IsNullOrEmpty(rawName))
+            return false;
+        return rawName.Equals(TreasureAnchors1, StringComparison.OrdinalIgnoreCase)
+               || rawName.Equals(TreasureAnchors2, StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>Anchorfield preferred over Clam-infested Shelf; then total mod weight.</summary>
@@ -609,6 +621,33 @@ public static class VoyagePlacementRules
 
         return t2 >= 1 || t1 >= 2;
     }
+
+    /// <summary>
+    /// Reroll highlight: 3× T1, or 1× T2 + 1× T1, or 2× T2 (or any stronger mix).
+    /// Highlight-only — does not lock charts.
+    /// </summary>
+    public static bool IsStrongTreasureAnchors(IEnumerable<string> borderNames)
+    {
+        var t1 = 0;
+        var t2 = 0;
+        if (borderNames == null)
+            return false;
+
+        foreach (var name in borderNames)
+        {
+            if (string.IsNullOrEmpty(name))
+                continue;
+            if (name.Equals(TreasureAnchors1, StringComparison.OrdinalIgnoreCase))
+                t1++;
+            else if (name.Equals(TreasureAnchors2, StringComparison.OrdinalIgnoreCase))
+                t2++;
+        }
+
+        return t2 >= 2 || (t2 >= 1 && t1 >= 1) || t1 >= 3;
+    }
+
+    public static bool IsStrongTreasureAnchors(IReadOnlyList<BorderEffect> borders) =>
+        IsStrongTreasureAnchors(borders?.Select(b => b.Name));
 
     /// <summary>Divine=3, Annul=2, Ancient=1, none=0.</summary>
     public static int OrbPriority(IReadOnlyList<BorderEffect> borders)

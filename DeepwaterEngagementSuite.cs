@@ -1,4 +1,4 @@
-﻿using DeepwaterEngagementSuite.PathPlannerData;
+using DeepwaterEngagementSuite.PathPlannerData;
 using DeepwaterEngagementSuite.VoyagePlannerData;
 using ExileCore;
 using ExileCore.PoEMemory;
@@ -71,15 +71,12 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
 
     public DeepwaterEngagementSuite()
     {
-        // ExileCore sorts plugins by Order ascending for Tick/Render.
-        // Higher Order renders later → our icons draw on top of MinimapIcons / other overlays.
         Order = 10_000;
     }
 
     public override bool Initialise()
     {
         InitOnce();
-        // Re-apply in case the host resets Order after construction.
         Order = 10_000;
         _profilesDirectory = Path.Combine(ConfigDirectory, "profiles");
         Directory.CreateDirectory(_profilesDirectory);
@@ -196,7 +193,6 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
         "Metadata/Chests/StrongBoxes/Arcanist" => IconPickerIndex.StrongboxArcanist,
         var p when p.Contains("BottledItemChest", StringComparison.Ordinal) => IconPickerIndex.BottledItemChest,
         var p when p.Contains("ClamTreasureChest", StringComparison.Ordinal) => IconPickerIndex.ClamTreasureChest,
-        // Opulent before generic CurrencyTreasureChest (substring match).
         var p when p.Contains("CurrencyTreasureChestOpulent", StringComparison.Ordinal) => IconPickerIndex.CurrencyTreasureChestOpulent,
         var p when p.Contains("CurrencyTreasureChest", StringComparison.Ordinal) => IconPickerIndex.CurrencyTreasureChest,
         var p when p.Contains("CurrencyGemcuttersChest", StringComparison.Ordinal) => IconPickerIndex.CurrencyGemcuttersChest,
@@ -622,8 +618,6 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
                     case ExpeditionEntityType.Marker:
                     {
                         var chestType = GetChestType(e.Path);
-                        // Hidden icons still count as known markers via _cachedEntities
-                        // so GetUnknownPointerTargets will not re-add pointer stand-ins.
                         var icons = Settings.IconSettings;
                         if (!icons.IsIconEnabled(chestType))
                         {
@@ -652,7 +646,6 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
                 }
             }
 
-            // Stand-in only for pointer targets with no nearby known/typed marker entity.
             if (_largeMapOpen && Settings.IconSettings.IsIconEnabled(IconPickerIndex.PointerTarget))
             {
                 foreach (var target in GetUnknownPointerTargets())

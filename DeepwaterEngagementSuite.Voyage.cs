@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -81,9 +81,6 @@ public partial class DeepwaterEngagementSuite
     private static bool BoardIsClear(VoyageWindow tree) =>
         tree.Tiles.All(t => !TileHasChart(t));
 
-    /// <summary>
-    /// ImGui "Place" steals focus; a tiny cursor wiggle makes the game accept hover again.
-    /// </summary>
     private static async SyncTask<bool> WiggleCursorToFocus(Vector2 screenPos)
     {
         const float delta = 4f;
@@ -106,8 +103,6 @@ public partial class DeepwaterEngagementSuite
             var winOrigin = GameController.Window.GetWindowRectangleTimeCache.TopLeft.ToVector2Num();
             var needsFocusWiggle = true;
 
-            // Only clear when something is actually placed. Empty board: Clear never
-            // shiny-highlights and ItemContainer often stays non-null without a chart.
             if (!BoardIsClear(tree))
             {
                 var clearPos = winOrigin + tree.ClearButton.GetClientRectCache.Center.ToVector2Num();
@@ -251,7 +246,6 @@ public partial class DeepwaterEngagementSuite
                 {
                     var chartModOffset = -10f;
 
-                    // Specialty room (Pelagic / Clam / Anchorfield) first.
                     if (VoyagePlacementRules.TrySpecialtyRoomLabel(chart.Room.Name, out var roomLabel))
                     {
                         var roomText = roomLabel;
@@ -267,8 +261,6 @@ public partial class DeepwaterEngagementSuite
                         if (!VoyagePlacementRules.IsSpecialtyComboModifier(im.RawName))
                             continue;
 
-                        // Only label combos present in the profile chart list with a visible highlight.
-                        // Missing/blacked-out entries must not fall back to a pink default name.
                         var chartMod = Settings.VoyageSettings.ChartModifiers.Content
                             .FirstOrDefault(cm => cm.Id.Value.Equals(im.RawName, StringComparison.OrdinalIgnoreCase));
                         if (chartMod?.HighlightColor.Value is not { A: > 0 } color)
@@ -287,8 +279,6 @@ public partial class DeepwaterEngagementSuite
                     }
                 }
 
-                // Strategy borders: orbs / scarabs always; strong treasure-anchor combos (reroll highlight);
-                // no-consume remains strategy-only for farm locks and is not labeled.
                 var strongTreasureAnchors = VoyagePlacementRules.IsStrongTreasureAnchors(
                     mods.Select(m => m.RawName));
                 tileCenter = tileCenter + new Vector2(0, 10);
@@ -313,8 +303,6 @@ public partial class DeepwaterEngagementSuite
                 }
             }
 
-            // Inventory: compact "!" only on saved combo charts (no slot index labels).
-            // Starfish/boxes: top 6 by ItemMod.Value1 only — not every specialty-named chart.
             var charts = GetAvailableCharts();
             var specialtyIndices = GetInventorySpecialtyIndices(charts);
             foreach (var i in specialtyIndices)
@@ -384,7 +372,6 @@ public partial class DeepwaterEngagementSuite
                 var tileBorders = BuildTileBorders(tree);
                 var timeLimitSetting = Settings.VoyageSettings.SolverTimeLimitSeconds.Value;
 
-                // Single entrypoint: strategies lock/save specialty charts, planner fills the rest.
                 var session = new VoyageSolve();
                 _voyageSolve = session;
 
@@ -575,10 +562,6 @@ public partial class DeepwaterEngagementSuite
         ImGui.End();
     }
 
-    /// <summary>
-    /// Per-tile justification of the selected solution's score: every contribution landing on a
-    /// tile, where it came from, and which border multipliers applied to it.
-    /// </summary>
     private void DrawScoreDetails(VoyageSolution solution)
     {
         if (_uiScorer == null)
@@ -635,8 +618,6 @@ public partial class DeepwaterEngagementSuite
                         ImGui.TableNextColumn();
                         ImGui.Text($"{row.Weight:F1}");
                         ImGui.TableNextColumn();
-                        // For locals: chart-side x tile-side multipliers. For globals the tile
-                        // factor is the sum of matching multipliers over all 9 tiles.
                         ImGui.Text(row.SourcePieceId < 0
                             ? $"x{row.TileFactor:F2}"
                             : row.IsGlobal
@@ -731,7 +712,6 @@ public partial class DeepwaterEngagementSuite
                     _ => '.',
                 };
 
-                // Match indicator
                 var tileIdx = (2 - r) * 3 + c;
                 bool matches = false;
                 if (tileIdx < tiles.Count)
@@ -874,10 +854,6 @@ public partial class DeepwaterEngagementSuite
             DebugWindow.LogMsg($"Voyage: {placement.Locks.Count} strategy lock(s), solver fills the rest", 5);
     }
 
-    /// <summary>
-    /// Indices into <paramref name="charts"/> that should show inventory "!" —
-    /// specialty rooms + uncapped saves, starfish/boxes capped at 6 by Value1.
-    /// </summary>
     private static HashSet<int> GetInventorySpecialtyIndices(List<NormalInventoryItem> charts)
     {
         var roomNames = new List<string>(charts.Count);

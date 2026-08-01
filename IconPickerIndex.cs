@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
 namespace DeepwaterEngagementSuite;
@@ -11,9 +11,7 @@ public enum IconPickerIndex
     GoldTreasureChest,
     ClamTreasureChest,
     CurrencyTreasureChest,
-    /// <summary>Opulent currency chest (divine-tier) — Metadata/.../CurrencyTreasureChestOpulent.</summary>
     CurrencyTreasureChestOpulent,
-    /// <summary>Gemcutter's Prism currency chest — Metadata/.../CurrencyGemcuttersChest1.</summary>
     CurrencyGemcuttersChest,
     UniqueWeaponChest,
     UniqueArmourChest,
@@ -24,7 +22,6 @@ public enum IconPickerIndex
     AllflameEmbersChest,
     CursedDucatDrop,
     RandomDucatChest,
-    /// <summary>Hazard boat chest — Metadata/Chests/LeagueDeepwater/DeepwaterChestHazardBoat.</summary>
     HazardBoatChest,
     IzaroObject,
     AltarCrab,

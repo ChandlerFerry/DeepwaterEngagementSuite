@@ -29,10 +29,9 @@ public class VoyagePlanner
     private VoyageScorer _scorer;
     private bool _cancelled;
     private int _filledCount;
-    // piece list index required on a cell, or -1. Solvers may still pick any rotation unless fixed.
     private int[,] _lockedPieceAt;
     private int?[,] _lockedRotationAt;
-    private int[] _pieceLockedToCell; // pieceIdx -> cell index 0..8, or -1
+    private int[] _pieceLockedToCell;
 
     // Precomputed: for each piece, all (rotation, connections) pairs.
     private record struct PieceOption(int PieceIdx, int Rotation, Direction Connections);
@@ -96,8 +95,6 @@ public class VoyagePlanner
             .OrderByDescending(i => puzzle.AvailablePieces[i].LocalModifier + puzzle.AvailablePieces[i].GlobalModifier)
             .ToArray();
 
-        // Locked placements: constrain which piece (and optionally rotation) a cell may use.
-        // Fixed-rotation locks are placed immediately; free-rotation locks are enforced in search.
         _lockedPieceAt = new int[GridSize, GridSize];
         _lockedRotationAt = new int?[GridSize, GridSize];
         _pieceLockedToCell = Enumerable.Repeat(-1, puzzle.AvailablePieces.Count).ToArray();
@@ -277,7 +274,6 @@ public class VoyagePlanner
             if (_pieceLockedToCell[i] >= 0 && _pieceLockedToCell[i] != cellIndex) continue;
 
             var g = _pieceToGroup[i];
-            // Locked pieces must use that exact piece (no group symmetry swap).
             if (requiredPiece < 0 && !triedGroups.Add(g)) continue;
 
             var piece = _puzzle.AvailablePieces[i];

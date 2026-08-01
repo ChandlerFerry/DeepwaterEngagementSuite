@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Windows.Forms;
@@ -25,24 +25,21 @@ public class DeepwaterEngagementSuiteSettings : ISettings
     public const MapIconsIndex DefaultGoldTreasureChestIcon = MapIconsIndex.LootFilterSmallYellowCircle;
     public const MapIconsIndex DefaultClamTreasureChestIcon = MapIconsIndex.LootFilterLargeYellowStar;
     public const MapIconsIndex DefaultCurrencyTreasureChestIcon = MapIconsIndex.RewardCurrency;
-    // Divine-tier loot filter star — large, high-contrast, not the normal currency reward icon.
     public const MapIconsIndex DefaultCurrencyTreasureChestOpulentIcon = MapIconsIndex.LootFilterLargeYellowStar;
     public const MapIconsIndex DefaultCurrencyGemcuttersChestIcon = MapIconsIndex.RewardChestGems;
     public const MapIconsIndex DefaultUniqueWeaponChestIcon = MapIconsIndex.RewardWeapons;
     public const MapIconsIndex DefaultUniqueArmourChestIcon = MapIconsIndex.RewardArmour;
     public const MapIconsIndex DefaultUniqueJewelleryChestIcon = MapIconsIndex.RewardJewellery;
-    public static readonly Color UniqueItemTint = new Color(175, 96, 37); // PoE unique orange
+    public static readonly Color UniqueItemTint = new Color(175, 96, 37);
     public const MapIconsIndex DefaultScarabChestIcon = MapIconsIndex.RewardScarabs;
     public const MapIconsIndex DefaultStackedDecksChestIcon = MapIconsIndex.RewardDivinationCards;
     public const MapIconsIndex DefaultMapsChestIcon = MapIconsIndex.RewardMaps;
-    // Small glowing orb (Allflame-style); not Essence.
     public const MapIconsIndex DefaultAllflameEmbersChestIcon = MapIconsIndex.SanctumGoldConvert;
     public const MapIconsIndex DefaultCursedDucatDropIcon = MapIconsIndex.RewardPerandus;
     public const MapIconsIndex DefaultIzaroObjectIcon = MapIconsIndex.RewardLabyrinth;
     public const MapIconsIndex DefaultAltarCrabIcon = MapIconsIndex.RewardBestiary;
     public const MapIconsIndex DefaultAltarOctopusIcon = MapIconsIndex.RewardBreach;
     public const MapIconsIndex DefaultTormentedSpiritEncounterIcon = MapIconsIndex.LootFilterSmallGreenCircle;
-    // DeepwaterLantern is blank in Icons.png; BlightPortalFire is a visible fire-style stand-in.
     public const MapIconsIndex DefaultLanternReplenishEncounterIcon = MapIconsIndex.BlightPortalFire;
 
     public ToggleNode Enable { get; set; } = new ToggleNode(false);
@@ -101,7 +98,6 @@ public class DeepwaterEngagementSuiteSettings : ISettings
         _ => null,
     };
 
-    /// <summary>Per-type icon size multiplier (1 = WorldIconSize / MapIconSize as configured).</summary>
     public static float GetDefaultIconSizeScale(IconPickerIndex index) => index switch
     {
         IconPickerIndex.CurrencyTreasureChestOpulent => 2.0f,
@@ -126,7 +122,6 @@ public class IconSettings
     public RangeNode<int> WorldIconSize { get; set; } = new RangeNode<int>(50, 25, 200);
     public RangeNode<int> MapIconSize { get; set; } = new RangeNode<int>(30, 15, 200);
 
-    // --- High-value loot (default on) ---
     [Menu("Show Bottled Item icons")]
     public ToggleNode ShowBottledItemIcons { get; set; } = new ToggleNode(true);
 
@@ -190,7 +185,6 @@ public class IconSettings
         "Undiscovered pointer targets on the large map.")]
     public ToggleNode ShowPointerTargetIcons { get; set; } = new ToggleNode(true);
 
-    // --- Quiet by default ---
     [Menu("Show Ducat icons",
         "Cursed ducat drops, random ducat chests, and hazard boats. Off by default.")]
     public ToggleNode ShowDucatIcons { get; set; } = new ToggleNode(false);
@@ -215,7 +209,6 @@ public class IconSettings
         "Off by default to reduce clutter.")]
     public ToggleNode ShowScarabStrongboxIcons { get; set; } = new ToggleNode(false);
 
-    /// <summary>Whether map/world icons of this type should be drawn.</summary>
     public bool IsIconEnabled(IconPickerIndex index) => index switch
     {
         IconPickerIndex.BottledItemChest => ShowBottledItemIcons.Value,
@@ -389,7 +382,6 @@ public class CurrencyReminderSettings
 [Submenu(CollapsedByDefault = true)]
 public class PlannerSettings
 {
-    // Planner weights (default 1 via ChestSettings). High-value targets are weighted higher.
     public Dictionary<IconPickerIndex, ChestSettings> ChestSettingsMap = new()
     {
         [IconPickerIndex.BottledItemChest] = new ChestSettings { Weight = 30 },
@@ -442,7 +434,6 @@ public class PlannerSettings
     public RangeNode<float> NewRandomPathInjectionRate { get; set; } = new RangeNode<float>(1f, 0, 2);
     public RangeNode<int> PathGenerationSize { get; set; } = new RangeNode<int>(100, 1, 1000);
     public RangeNode<int> ValidatedIntermediatePoints { get; set; } = new RangeNode<int>(1, 0, 5);
-
 
     public ToggleNode ShowScoreHistory { get; set; } = new ToggleNode(false);
     public ToggleNode ShowScoreHistoryAfterSearchEnds { get; set; } = new ToggleNode(false);
@@ -521,7 +512,6 @@ public class VoyageSettings
     [Menu("Solver time limit (seconds)", "Max time the solver runs before returning the best solution found so far. 0 = no limit.")]
     public RangeNode<int> SolverTimeLimitSeconds { get; set; } = new RangeNode<int>(5, 1, 120);
 
-    // exact second solver, opt-in until it's proven in game; ignores per-connection borders for now
     [Menu("Use fast solver (exact, experimental)", "Exact branch-and-bound solver. Ignores the time limit. Per-connection border mods are ignored for now, so scores on those boards are approximate.")]
     public ToggleNode UseFastSolver { get; set; } = new ToggleNode(false);
     public RangeNode<float> BorderHighlightThreshold { get; set; } = new RangeNode<float>(1.01f, 0, 10);

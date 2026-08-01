@@ -3,11 +3,6 @@ using DeepwaterEngagementSuite.VoyagePlannerData;
 
 namespace DeepwaterEngagementSuite;
 
-/// <summary>
-/// Single Solve entrypoint used by the optimizer UI.
-/// Applies hard placement strategies first, then runs the chosen planner on whatever
-/// cells/pieces remain unconstrained. Cancel is honored for the timed planner.
-/// </summary>
 public sealed class VoyageSolve
 {
     private VoyagePlanner _slowPlanner;
@@ -18,9 +13,6 @@ public sealed class VoyageSolve
 
     public void Cancel() => _slowPlanner?.Cancel();
 
-    /// <summary>
-    /// Strategy pass + solver. Yields intermediate results the same way the planners do.
-    /// </summary>
     public IEnumerable<VoyageSolutionResult> Run(
         List<MapPiece> pieces,
         IReadOnlyList<BorderEffect>[,] tileBorders,
@@ -30,12 +22,10 @@ public sealed class VoyageSolve
         settings ??= new VoyagePlannerSettings();
         _slowPlanner = null;
 
-        // 1) Hard strategies: locks + hold specialty charts off the board
         Placement = VoyagePlacementRules.Apply(pieces, tileBorders);
         Puzzle = new VoyagePuzzle(Placement.Pieces, tileBorders, Placement.Locks);
         Scorer = new VoyageScorer(Puzzle);
 
-        // 2) Planner optimizes free cells / remaining pieces under those constraints
         if (useFastSolver)
             return new VoyagePlannerFast().Solve(Puzzle, settings);
 

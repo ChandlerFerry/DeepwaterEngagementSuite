@@ -125,9 +125,8 @@ public class IconSettings
     [Menu("Show Bottled Item icons")]
     public ToggleNode ShowBottledItemIcons { get; set; } = new ToggleNode(true);
 
-    [Menu("Show Gold Treasure icons",
-        "Off by default.")]
-    public ToggleNode ShowGoldTreasureIcons { get; set; } = new ToggleNode(false);
+    [Menu("Show Gold Treasure icons")]
+    public ToggleNode ShowGoldTreasureIcons { get; set; } = new ToggleNode(true);
 
     [Menu("Show Clam Treasure icons")]
     public ToggleNode ShowClamTreasureIcons { get; set; } = new ToggleNode(true);
@@ -513,7 +512,7 @@ public class VoyageSettings
     public RangeNode<int> SolverTimeLimitSeconds { get; set; } = new RangeNode<int>(5, 1, 120);
 
     [Menu("Use fast solver (exact, experimental)", "Exact branch-and-bound solver. Ignores the time limit. Per-connection border mods are ignored for now, so scores on those boards are approximate.")]
-    public ToggleNode UseFastSolver { get; set; } = new ToggleNode(false);
+    public ToggleNode UseFastSolver { get; set; } = new ToggleNode(true);
     public RangeNode<float> BorderHighlightThreshold { get; set; } = new RangeNode<float>(1.01f, 0, 10);
     public RangeNode<float> ChartHighlightThreshold { get; set; } = new RangeNode<float>(1.0f, 0, 10);
     public ListNode ProfileSelector { get; set; } = new ListNode();

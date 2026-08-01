@@ -8,6 +8,8 @@ namespace DeepwaterEngagementSuite.VoyagePlannerData;
 /// Hard placement preferences for the voyage board.
 /// Priority (high → low): Divine → Annul → Scarab farm → Ancient → no-consume farm →
 /// Lost Message center-only.
+/// Unused farm rooms (Anchorfield / Clam) are held off the solver pool so they only land
+/// on strong no-consume tiles via locks — never as free-solver filler.
 /// Chart names come from DeepwaterChart.Room.Name.
 /// </summary>
 public static class VoyagePlacementRules
@@ -60,6 +62,7 @@ public static class VoyagePlacementRules
         List<MapPiece> Pieces,
         List<LockedPlacement> Locks,
         int SavedPelagicCount,
+        int SavedFarmCount,
         int SavedStrongboxCount,
         int SavedStarfishCount,
         int SavedRareVoyageCount,
@@ -271,8 +274,10 @@ public static class VoyagePlacementRules
         // --- 9. Save leftovers (never drop below 9 pieces for the solver) ---
         // Combo pieces for orb / scarab boards: hold off the pool so the solver cannot
         // waste them on filler tiles (or on boards with no matching border).
+        // Farm rooms (Anchorfield / Clam): reserved for no-consume only — never free-solver filler.
         // Strongboxes/Diviner/Arcanist: top 6 by Value1 (Divine pool).
         // Operative boxes: scarab pool — save all leftovers. Voyage rare globals: save all.
+        var savedFarm = RemoveUnused(working, usedPieceIds, IsFarmChart, FarmPriority);
         var savedStrongbox = RemoveUnused(working, usedPieceIds, IsStrongboxCountChart,
             BoxValue1Score, maxSave: MaxSavedBoxes);
         var savedStarfish = RemoveUnused(working, usedPieceIds, IsStarfishChart,
@@ -285,7 +290,7 @@ public static class VoyagePlacementRules
 
         return new Result(
             working, locks,
-            savedPelagic, savedStrongbox, savedStarfish, savedRareVoyage,
+            savedPelagic, savedFarm, savedStrongbox, savedStarfish, savedRareVoyage,
             savedAdjacentRare, savedOperative, savedLostMessage, savedKishara);
     }
 

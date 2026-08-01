@@ -64,7 +64,7 @@ public class DeepwaterEngagementSuiteSettings : ISettings
         "Map/world icons for Tormented Spirit encounters. Off by default to reduce clutter.")]
     public ToggleNode ShowTormentedSpiritIcons { get; set; } = new ToggleNode(false);
 
-    public ToggleNode ShowLootWindow { get; set; } = new ToggleNode(true);
+    public ToggleNode ShowLootWindow { get; set; } = new ToggleNode(false);
 
     public CurrencyReminderSettings CurrencyReminderSettings { get; set; } = new CurrencyReminderSettings();
     public BubbleSettings BubbleSettings { get; set; } = new BubbleSettings();

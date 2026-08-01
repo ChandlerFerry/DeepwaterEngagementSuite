@@ -534,7 +534,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
             return;
         }
 
-        if (!largePanelsOpen && Settings.ShowLootWindow)
+        if (!largePanelsOpen && Settings.LootWindowSettings.ShowLootWindow)
         {
             DrawLootWindow();
         }
@@ -622,27 +622,15 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
                     case ExpeditionEntityType.Marker:
                     {
                         var chestType = GetChestType(e.Path);
-                        // Hidden optional icons still count as known markers via _cachedEntities
+                        // Hidden icons still count as known markers via _cachedEntities
                         // so GetUnknownPointerTargets will not re-add pointer stand-ins.
-                        if (DeepwaterEngagementSuiteSettings.IsDucatIconType(chestType) &&
-                            !Settings.ShowDucatIcons.Value)
+                        var icons = Settings.IconSettings;
+                        if (!icons.IsIconEnabled(chestType))
                         {
                             continue;
                         }
 
-                        if (chestType == IconPickerIndex.GoldenLanternEncounter &&
-                            !Settings.ShowGoldenLanternIcons.Value)
-                        {
-                            continue;
-                        }
-
-                        if (chestType == IconPickerIndex.TormentedSpiritEncounter &&
-                            !Settings.ShowTormentedSpiritIcons.Value)
-                        {
-                            continue;
-                        }
-
-                        var mapSettings = Settings.IconMapping.GetValueOrDefault(chestType, new IconDisplaySettings());
+                        var mapSettings = icons.IconMapping.GetValueOrDefault(chestType, new IconDisplaySettings());
                         var icon = mapSettings.Icon ?? DeepwaterEngagementSuiteSettings.GetDefaultIcon(chestType);
                         var tint = mapSettings.Tint ?? DeepwaterEngagementSuiteSettings.GetDefaultTint(chestType);
                         var sizeScale = mapSettings.SizeScale ?? DeepwaterEngagementSuiteSettings.GetDefaultIconSizeScale(chestType);
@@ -665,7 +653,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
             }
 
             // Stand-in only for pointer targets with no nearby known/typed marker entity.
-            if (_largeMapOpen)
+            if (_largeMapOpen && Settings.IconSettings.IsIconEnabled(IconPickerIndex.PointerTarget))
             {
                 foreach (var target in GetUnknownPointerTargets())
                 {
@@ -677,7 +665,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
                         hideCaptured: true,
                         plannerCapturedFrameColor: Color.White,
                         frameThickness: 1,
-                        iconSize: Settings.MapIconSize.Value);
+                        iconSize: Settings.IconSettings.MapIconSize.Value);
                 }
             }
         }
@@ -974,7 +962,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
     {
         if (_largeMapOpen)
         {
-            var iconSize = Settings.MapIconSize.Value * sizeScale;
+            var iconSize = Settings.IconSettings.MapIconSize.Value * sizeScale;
             var halfsize = iconSize / 2.0f;
             var point = GetEntityPosOnMapScreen(entity) + offset * halfsize * 2;
             var entityPos = entity.Pos;
@@ -990,7 +978,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
 
     private void DrawIconInWorld(EntityCacheItem entity, MapIconsIndex icon, Color? color, Vector2 offset, float sizeScale = 1f)
     {
-        var iconSize = Settings.WorldIconSize.Value * sizeScale;
+        var iconSize = Settings.IconSettings.WorldIconSize.Value * sizeScale;
         var halfsize = iconSize / 2.0f;
         var entityPos = entity.Pos;
         var entityPos2 = new Vector2(entityPos.X, entityPos.Y);

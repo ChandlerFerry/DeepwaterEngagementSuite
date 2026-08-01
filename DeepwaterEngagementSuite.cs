@@ -475,33 +475,40 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
 
         if (!largePanelsOpen)
         {
-            // Draw markers from live entities (not _cachedEntities). Cache can lag/drop when chests
-            // enter range or merge a sticky IsOpened, which leaves only the pointer stand-in.
+            // Grid positions where we already draw a typed marker icon — pointer placeholders must not stack on these.
             var drawnMarkerGridPositions = new List<Vector2>();
-            foreach (var entity in new[] { EntityType.Chest, EntityType.Terrain, EntityType.IngameIcon }
-                         .SelectMany(t => GameController.EntityListWrapper.ValidEntitiesByType[t]))
+            foreach (var e in _cachedEntities.Values)
             {
-                if (entity.IsOpened || GetEntityType(entity.Path) != ExpeditionEntityType.Marker)
+                if (e.IsOpened)
                     continue;
 
-                var chestType = GetChestType(entity.Path);
-                var mapSettings = Settings.IconMapping.GetValueOrDefault(chestType, new IconDisplaySettings());
-                var icon = mapSettings.Icon ?? DeepwaterEngagementSuiteSettings.GetDefaultIcon(chestType);
-                var tint = mapSettings.Tint ?? DeepwaterEngagementSuiteSettings.GetDefaultTint(chestType);
-                var sizeScale = mapSettings.SizeScale ?? DeepwaterEngagementSuiteSettings.GetDefaultIconSizeScale(chestType);
-                var drawOnMap = mapSettings.ShowOnMap;
-                var drawInWorld = mapSettings.ShowInWorld;
-                if (!drawOnMap && !drawInWorld)
-                    continue;
+                switch (GetEntityType(e.Path))
+                {
+                    case ExpeditionEntityType.Marker:
+                    {
+                        var chestType = GetChestType(e.Path);
+                        var mapSettings = Settings.IconMapping.GetValueOrDefault(chestType, new IconDisplaySettings());
+                        var icon = mapSettings.Icon ?? DeepwaterEngagementSuiteSettings.GetDefaultIcon(chestType);
+                        var tint = mapSettings.Tint ?? DeepwaterEngagementSuiteSettings.GetDefaultTint(chestType);
+                        var sizeScale = mapSettings.SizeScale ?? DeepwaterEngagementSuiteSettings.GetDefaultIconSizeScale(chestType);
+                        var drawOnMap = mapSettings.ShowOnMap;
+                        var drawInWorld = mapSettings.ShowInWorld;
+                        if (drawOnMap || drawInWorld)
+                            drawnMarkerGridPositions.Add(e.GridPos);
 
-                var cacheItem = BuildCacheItem(entity);
-                drawnMarkerGridPositions.Add(cacheItem.GridPos);
+                        if (drawOnMap)
+                        {
+                            DrawIconOnMap(e, icon, tint, Vector2.Zero, sizeScale);
+                        }
 
-                if (drawOnMap)
-                    DrawIconOnMap(cacheItem, icon, tint, Vector2.Zero, sizeScale);
+                        if (drawInWorld)
+                        {
+                            DrawIconInWorld(e, icon, tint, Vector2.Zero, sizeScale);
+                        }
 
-                if (drawInWorld)
-                    DrawIconInWorld(cacheItem, icon, tint, Vector2.Zero, sizeScale);
+                        continue;
+                    }
+                }
             }
 
             // Stand-in for pointer targets that don't already have a real marker icon nearby.

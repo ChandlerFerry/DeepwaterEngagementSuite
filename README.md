@@ -1,4 +1,4 @@
-# ExpeditionIcons
+# DeepwaterEngagementSuite
 
 If you like it, you can donate via:
 

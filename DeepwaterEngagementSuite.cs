@@ -25,6 +25,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Chest = ExileCore.PoEMemory.Components.Chest;
 using Color = SharpDX.Color;
 using Direction = DeepwaterEngagementSuite.VoyagePlannerData.Direction;
 using Vector2 = System.Numerics.Vector2;
@@ -161,6 +162,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
         _editedIndex = null;
         _editedPathEval = null;
         _cachedEntities.Clear();
+        ResetTrailTracking();
         _zoneCleared = false;
         _pathfindingData = GameController.IngameState.Data.RawPathfindingData;
         _areaDimensions = GameController.IngameState.Data.AreaDimensions;
@@ -171,6 +173,9 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
     {
         return _entityTypeCache.GetOrAdd(path, p => p switch
         {
+            "Metadata/Chests/StrongBoxes/StrongboxDivination" => ExpeditionEntityType.Marker,
+            "Metadata/Chests/StrongBoxes/StrongboxScarab" => ExpeditionEntityType.Marker,
+            "Metadata/Chests/StrongBoxes/Arcanist" => ExpeditionEntityType.Marker,
             var a when a.StartsWith("Metadata/Chests/LeagueDeepwater/", StringComparison.Ordinal) => ExpeditionEntityType.Marker,
             var a when a.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterIzaroObject", StringComparison.Ordinal) => ExpeditionEntityType.Marker,
             var a when a.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterAltarCrab", StringComparison.Ordinal) => ExpeditionEntityType.Marker,
@@ -179,12 +184,16 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
             var a when a.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterCursedDucatDrop", StringComparison.Ordinal) => ExpeditionEntityType.Marker,
             var a when a.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterLanternReplenishEncounter", StringComparison.Ordinal) => ExpeditionEntityType.Marker,
             var a when a.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterGoldenLantern", StringComparison.Ordinal) => ExpeditionEntityType.Marker,
+            var a when a.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterBrineCoralEncounter", StringComparison.Ordinal) => ExpeditionEntityType.Marker,
             _ => ExpeditionEntityType.None,
         });
     }
 
     private static IconPickerIndex GetChestType(string path) => path switch
     {
+        "Metadata/Chests/StrongBoxes/StrongboxDivination" => IconPickerIndex.StrongboxDivination,
+        "Metadata/Chests/StrongBoxes/StrongboxScarab" => IconPickerIndex.StrongboxScarab,
+        "Metadata/Chests/StrongBoxes/Arcanist" => IconPickerIndex.StrongboxArcanist,
         var p when p.Contains("BottledItemChest", StringComparison.Ordinal) => IconPickerIndex.BottledItemChest,
         var p when p.Contains("ClamTreasureChest", StringComparison.Ordinal) => IconPickerIndex.ClamTreasureChest,
         // Opulent before generic CurrencyTreasureChest (substring match).
@@ -208,6 +217,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
         var p when p.Contains("DeepwaterTormentedSpiritEncounter", StringComparison.Ordinal) => IconPickerIndex.TormentedSpiritEncounter,
         var p when p.Contains("DeepwaterLanternReplenishEncounter", StringComparison.Ordinal) => IconPickerIndex.LanternReplenishEncounter,
         var p when p.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterGoldenLantern", StringComparison.Ordinal) => IconPickerIndex.GoldenLanternEncounter,
+        var p when p.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterBrineCoralEncounter", StringComparison.Ordinal) => IconPickerIndex.InfusedCoralEncounter,
         _ => IconPickerIndex.OtherChests,
     };
 
@@ -289,13 +299,13 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
 
         _bubbleRadius = Settings.BubbleSettings.BubbleRadiusOverride.Value is > 0 and var o ? o : Bubbles.Min(x => x.Radius);
 
-        foreach (var entity in new[] { EntityType.Chest, EntityType.Terrain, EntityType.IngameIcon }
+        foreach (var entity in new[] { EntityType.Chest, EntityType.Terrain, EntityType.IngameIcon, }
                      .SelectMany(x => GameController.EntityListWrapper.ValidEntitiesByType[x]))
         {
             if (GetEntityType(entity.Path) == ExpeditionEntityType.None)
                 continue;
 
-            if (entity.IsOpened)
+            if (IsEntityCompleted(entity, GetChestType(entity.Path)))
             {
                 _cachedEntities.Remove(entity.Id);
                 continue;
@@ -307,6 +317,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
                 : newValue;
         }
 
+        UpdateTrailTracking();
         return null;
     }
 
@@ -353,6 +364,123 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
         return items.Where(x => x.TryGetComponent<Base>(out var @base) && bit.Equals(@base?.Info?.BaseItemTypeDat))
             .Select(x => x.TryGetComponent<Stack>(out var stack) ? stack.Size : 0)
             .Sum();
+    }
+
+    private void DrawLootWindow()
+    {
+        if (Handler.MaxLanternCount < 10 &&
+            Handler.PlacedLanternCount == Handler.MaxLanternCount)
+        {
+            return;
+        }
+
+        ImGui.SetNextWindowSizeConstraints(new Vector2(500, 0), new Vector2(float.MaxValue, float.MaxValue));
+        ImGui.SetNextWindowSize(new Vector2(500, 0), ImGuiCond.FirstUseEver);
+        var settingsWindowOpen = GameController.Settings.CoreSettings.Enable.Value;
+        if (!ImGui.Begin("Deepwater Loot", ImGuiWindowFlags.AlwaysAutoResize |
+                                           (settingsWindowOpen ? 0 : ImGuiWindowFlags.NoInputs | ImGuiWindowFlags.NoDecoration)))
+        {
+            ImGui.End();
+            return;
+        }
+
+        var maxLanterns = Handler.MaxLanternCount;
+        var placedLanterns = Handler.PlacedLanternCount;
+        var remainingLanterns = Math.Max(0, maxLanterns - placedLanterns);
+        ImGui.TextColored(new Vector4(0.4f, 0.8f, 1f, 1f),
+            $"Lanterns: {placedLanterns}/{maxLanterns}  |  Remaining: {remainingLanterns}");
+        ImGui.Separator();
+
+        var entries = _cachedEntities.Values
+            .Select(x => (
+                Type: GetChestType(x.Path),
+                Distance: Vector2.Distance(x.GridPos, _playerGridPos),
+                Reachable: IsEntityInBubble(x.GridPos)))
+            .Concat(GetUnknownPointerTargets().Select(x => (
+                Type: IconPickerIndex.PointerTarget,
+                Distance: Vector2.Distance(x, _playerGridPos),
+                Reachable: IsEntityInBubble(x))))
+            .ToList();
+
+        if (entries.Count == 0)
+        {
+            ImGui.TextColored(new Vector4(0.5f, 0.5f, 0.5f, 1f), "No targets discovered yet");
+            ImGui.End();
+            return;
+        }
+
+        var grouped = entries
+            .GroupBy(x => x.Type)
+            .Select(x => (
+                Type: x.Key,
+                Total: x.Count(),
+                Reachable: x.Count(y => y.Reachable),
+                NeedsLantern: x.Count(y => !y.Reachable),
+                Nearest: x.Min(y => y.Distance)))
+            .OrderByDescending(x => x.NeedsLantern)
+            .ThenBy(x => x.Nearest)
+            .ToList();
+
+        ImGui.Text($"Found: {entries.Count} ({entries.Count(x => x.Reachable)} reachable, {entries.Count(x => !x.Reachable)} need pylon)");
+        ImGui.Separator();
+
+        if (ImGui.BeginTable("DeepwaterLootTable", 4, ImGuiTableFlags.None))
+        {
+            ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed, 220);
+            ImGui.TableSetupColumn("Out of\nbubble", ImGuiTableColumnFlags.WidthFixed, 55);
+            ImGui.TableSetupColumn("In\nbubble", ImGuiTableColumnFlags.WidthFixed, 55);
+            ImGui.TableSetupColumn("Distance", ImGuiTableColumnFlags.WidthFixed, 75);
+            ImGui.TableHeadersRow();
+
+            foreach (var group in grouped)
+            {
+                ImGui.TableNextRow();
+                ImGui.TableNextColumn();
+                ImGui.TextColored(
+                    group.NeedsLantern > 0
+                        ? new Vector4(1f, 0.7f, 0.2f, 1f)
+                        : new Vector4(0.3f, 0.9f, 0.3f, 1f),
+                    GetEntityDisplayName(group.Type));
+
+                ImGui.TableNextColumn();
+                ImGui.TextColored(
+                    group.NeedsLantern > 0
+                        ? new Vector4(1f, 0.4f, 0.4f, 1f)
+                        : new Vector4(0.3f, 0.3f, 0.3f, 1f),
+                    group.NeedsLantern > 0 ? $"{group.NeedsLantern}" : "-");
+
+                ImGui.TableNextColumn();
+                ImGui.TextColored(new Vector4(0.3f, 0.9f, 0.3f, 1f),
+                    group.Reachable > 0 ? $"{group.Reachable}" : "-");
+
+                ImGui.TableNextColumn();
+                ImGui.Text($"{group.Nearest:0}");
+            }
+
+            ImGui.EndTable();
+        }
+
+        ImGui.End();
+    }
+
+    private IEnumerable<Vector2i> GetUnknownPointerTargets()
+    {
+        var knownEntityPositions = _cachedEntities.Values.Where(x => !x.IsOpened).Select(x => x.GridPos).ToList();
+        foreach (var e in GameController.EntityListWrapper.ValidEntitiesByType[EntityType.Terrain]
+                     .Where(x => x.Path == "Metadata/Terrain/Leagues/Deepwater/Objects/Pointer"))
+        {
+            if (!e.TryGetComponent(out Pointer pointer))
+                continue;
+
+            foreach (var target in pointer.Targets)
+            {
+                const float pointerOccupiedGridRadius = 8f;
+                if (knownEntityPositions.Any(p => p.DistanceLessThanOrEqual(target, pointerOccupiedGridRadius)))
+                    continue;
+
+                yield return target;
+            }
+        }
     }
 
     public override void Render()
@@ -405,6 +533,13 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
         {
             return;
         }
+
+        if (!largePanelsOpen && Settings.ShowLootWindow)
+        {
+            DrawLootWindow();
+        }
+
+        RenderTrailOverlay(largePanelsOpen);
 
         if (!largePanelsOpen && (Settings.BubbleSettings.ShowBubblesOnMap ||
                                  Settings.BubbleSettings.ShowBubblesInWorld))
@@ -477,8 +612,6 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
 
         if (!largePanelsOpen)
         {
-            // Grid positions where we already draw a typed marker icon — pointer placeholders must not stack on these.
-            var drawnMarkerGridPositions = new List<Vector2>();
             foreach (var e in _cachedEntities.Values)
             {
                 if (e.IsOpened)
@@ -489,25 +622,23 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
                     case ExpeditionEntityType.Marker:
                     {
                         var chestType = GetChestType(e.Path);
-                        // Hidden optional icons still count as known markers (no pointer stand-in).
+                        // Hidden optional icons still count as known markers via _cachedEntities
+                        // so GetUnknownPointerTargets will not re-add pointer stand-ins.
                         if (DeepwaterEngagementSuiteSettings.IsDucatIconType(chestType) &&
                             !Settings.ShowDucatIcons.Value)
                         {
-                            drawnMarkerGridPositions.Add(e.GridPos);
                             continue;
                         }
 
                         if (chestType == IconPickerIndex.GoldenLanternEncounter &&
                             !Settings.ShowGoldenLanternIcons.Value)
                         {
-                            drawnMarkerGridPositions.Add(e.GridPos);
                             continue;
                         }
 
                         if (chestType == IconPickerIndex.TormentedSpiritEncounter &&
                             !Settings.ShowTormentedSpiritIcons.Value)
                         {
-                            drawnMarkerGridPositions.Add(e.GridPos);
                             continue;
                         }
 
@@ -517,8 +648,6 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
                         var sizeScale = mapSettings.SizeScale ?? DeepwaterEngagementSuiteSettings.GetDefaultIconSizeScale(chestType);
                         var drawOnMap = mapSettings.ShowOnMap;
                         var drawInWorld = mapSettings.ShowInWorld;
-                        if (drawOnMap || drawInWorld)
-                            drawnMarkerGridPositions.Add(e.GridPos);
 
                         if (drawOnMap)
                         {
@@ -535,32 +664,20 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
                 }
             }
 
-            // Stand-in for pointer targets that don't already have a real marker icon nearby.
-            // Match radius > 1: pointer targets are often a few grid units off the chest entity.
-            const float pointerOccupiedGridRadius = 8f;
+            // Stand-in only for pointer targets with no nearby known/typed marker entity.
             if (_largeMapOpen)
             {
-                foreach (var e in GameController.EntityListWrapper.ValidEntitiesByType[EntityType.Terrain]
-                             .Where(x => x.Path == "Metadata/Terrain/Leagues/Deepwater/Objects/Pointer"))
+                foreach (var target in GetUnknownPointerTargets())
                 {
-                    if (!e.TryGetComponent(out Pointer pointer))
-                        continue;
-
-                    foreach (var target in pointer.Targets)
-                    {
-                        if (drawnMarkerGridPositions.Any(p => p.DistanceLessThanOrEqual(target, pointerOccupiedGridRadius)))
-                            continue;
-
-                        DrawIcon(
-                            MapIconsIndex.AncestralEnemyTotem,
-                            Color.White,
-                            Graphics.GridToMap(target, target),
-                            target.GridToWorld(),
-                            hideCaptured: true,
-                            plannerCapturedFrameColor: Color.White,
-                            frameThickness: 1,
-                            iconSize: Settings.MapIconSize.Value);
-                    }
+                    DrawIcon(
+                        MapIconsIndex.AncestralEnemyTotem,
+                        Color.White,
+                        Graphics.GridToMap(target, target),
+                        target.GridToWorld(),
+                        hideCaptured: true,
+                        plannerCapturedFrameColor: Color.White,
+                        frameThickness: 1,
+                        iconSize: Settings.MapIconSize.Value);
                 }
             }
         }
@@ -963,9 +1080,10 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
     {
         if ((entity.Type is EntityType.Chest or EntityType.Terrain or EntityType.IngameIcon)
             && GetEntityType(entity.Path) != ExpeditionEntityType.None
-            && !entity.IsOpened)
+            && !IsEntityCompleted(entity, GetChestType(entity.Path)))
         {
             _cachedEntities[entity.Id] = BuildCacheItem(entity);
+            TrackTrailEntity(entity);
         }
     }
 
@@ -985,6 +1103,63 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
             entity.GetComponent<Render>()?.Z,
             entity.GetComponent<Render>()?.BoundsNum is { } b ? Math.Min(b.X, b.Y) : null,
             entity.GetComponent<MinimapIcon>()?.IsHide,
-            entity.IsOpened);
+            IsEntityCompleted(entity, GetChestType(entity.Path)));
+    }
+
+    private bool IsEntityInBubble(Vector2 gridPos)
+    {
+        var target = gridPos.TruncateToVector2I();
+        return Bubbles.Any(x => x.Position.DistanceLessThanOrEqual(target, x.Radius));
+    }
+
+    private static string GetEntityDisplayName(IconPickerIndex type) => type switch
+    {
+        IconPickerIndex.BottledItemChest => "Bottled Item",
+        IconPickerIndex.GoldTreasureChest => "Gold Treasure",
+        IconPickerIndex.ClamTreasureChest => "Clam Treasure",
+        IconPickerIndex.CurrencyTreasureChest => "Currency",
+        IconPickerIndex.CurrencyTreasureChestOpulent => "Opulent Currency",
+        IconPickerIndex.UniqueWeaponChest => "Unique Weapon",
+        IconPickerIndex.UniqueArmourChest => "Unique Armour",
+        IconPickerIndex.UniqueJewelleryChest => "Unique Jewellery",
+        IconPickerIndex.ScarabChest => "Scarabs",
+        IconPickerIndex.StackedDecksChest => "Stacked Decks",
+        IconPickerIndex.MapsChest => "Maps",
+        IconPickerIndex.AllflameEmbersChest => "Allflame Embers",
+        IconPickerIndex.CursedDucatDrop => "Cursed Ducat",
+        IconPickerIndex.RandomDucatChest => "Random Ducat",
+        IconPickerIndex.HazardBoatChest => "Hazard Boat",
+        IconPickerIndex.IzaroObject => "Izaro",
+        IconPickerIndex.AltarCrab => "Altar (Crab)",
+        IconPickerIndex.AltarOctopus => "Altar (Octopus)",
+        IconPickerIndex.TormentedSpiritEncounter => "Tormented Spirit",
+        IconPickerIndex.LanternReplenishEncounter => "Lantern Replenish",
+        IconPickerIndex.GoldenLanternEncounter => "Golden Lantern",
+        IconPickerIndex.InfusedCoralEncounter => "Infused Coral",
+        IconPickerIndex.StrongboxDivination => "Card box",
+        IconPickerIndex.StrongboxScarab => "Scarab box",
+        IconPickerIndex.StrongboxArcanist => "Currency box",
+        IconPickerIndex.PointerTarget => "Undiscovered Target",
+        _ => "Other",
+    };
+
+    private static bool IsEntityCompleted(Entity entity, IconPickerIndex type)
+    {
+        if (entity.IsOpened)
+            return true;
+
+        if (entity.TryGetComponent(out Chest chest) && chest.IsOpened)
+            return true;
+
+        var softCompletedType = type is
+            IconPickerIndex.CursedDucatDrop or
+            IconPickerIndex.LanternReplenishEncounter or
+            IconPickerIndex.InfusedCoralEncounter or
+            IconPickerIndex.AltarOctopus or
+            IconPickerIndex.AltarCrab;
+
+        return softCompletedType &&
+               entity.TryGetComponent(out StateMachine stateMachine) &&
+               stateMachine.States.Any(x => x.Name == "activated" && x.Value == 1);
     }
 }

@@ -526,48 +526,51 @@ public partial class DeepwaterEngagementSuite
             }
         }
 
-        var cellScores = _uiScorer?.CellScores(currentSolution.Grid);
-
-        if (ImGui.BeginTable("ScoreBreakdown", 5, ImGuiTableFlags.Borders | ImGuiTableFlags.SizingStretchSame))
+        if (Settings.VoyageSettings.ShowScoreDebugDetails.Value)
         {
-            ImGui.TableSetupColumn("Tile", ImGuiTableColumnFlags.WidthFixed, 25);
-            ImGui.TableSetupColumn("Piece", ImGuiTableColumnFlags.WidthFixed, 20);
-            ImGui.TableSetupColumn("Type", ImGuiTableColumnFlags.WidthFixed, 100);
-            ImGui.TableSetupColumn("Score", ImGuiTableColumnFlags.WidthFixed, 50);
-            ImGui.TableSetupColumn("Mods");
-            ImGui.TableHeadersRow();
+            var cellScores = _uiScorer?.CellScores(currentSolution.Grid);
 
-            for (int i = 0; i < 9; i++)
+            if (ImGui.BeginTable("ScoreBreakdown", 5, ImGuiTableFlags.Borders | ImGuiTableFlags.SizingStretchSame))
             {
-                var r = i / 3;
-                var c = i % 3;
-                var placement = currentSolution.Grid[r, c];
+                ImGui.TableSetupColumn("Tile", ImGuiTableColumnFlags.WidthFixed, 25);
+                ImGui.TableSetupColumn("Piece", ImGuiTableColumnFlags.WidthFixed, 20);
+                ImGui.TableSetupColumn("Type", ImGuiTableColumnFlags.WidthFixed, 100);
+                ImGui.TableSetupColumn("Score", ImGuiTableColumnFlags.WidthFixed, 50);
+                ImGui.TableSetupColumn("Mods");
+                ImGui.TableHeadersRow();
 
-                ImGui.TableNextRow();
-                ImGui.PushID($"tile{i}");
-                ImGui.TableNextColumn();
-                ImGui.Text($"{r},{c}");
-                ImGui.TableNextColumn();
-                ImGui.Text($"#{placement.Piece.Id}");
-                ImGui.TableNextColumn();
-                ImGui.Text($"{placement.Piece.Type}");
-                ImGui.TableNextColumn();
-                ImGui.Text(cellScores != null ? $"{cellScores[r, c]:F1}" : "-");
-                ImGui.TableNextColumn();
-                var modText = string.Join(", ", placement.Piece.Modifiers.Where(m => m.Name != "Default").Select(m =>
+                for (int i = 0; i < 9; i++)
                 {
-                    var displayName = TrimChartPrefix(m.Name);
-                    var prefix = m.IsGlobal ? "[Global] " : "";
-                    return $"{prefix}{displayName}({m.Weight:F1})";
-                }));
-                ImGui.Text(string.IsNullOrEmpty(modText) ? "-" : modText);
-                ImGui.PopID();
+                    var r = i / 3;
+                    var c = i % 3;
+                    var placement = currentSolution.Grid[r, c];
+
+                    ImGui.TableNextRow();
+                    ImGui.PushID($"tile{i}");
+                    ImGui.TableNextColumn();
+                    ImGui.Text($"{r},{c}");
+                    ImGui.TableNextColumn();
+                    ImGui.Text($"#{placement.Piece.Id}");
+                    ImGui.TableNextColumn();
+                    ImGui.Text($"{placement.Piece.Type}");
+                    ImGui.TableNextColumn();
+                    ImGui.Text(cellScores != null ? $"{cellScores[r, c]:F1}" : "-");
+                    ImGui.TableNextColumn();
+                    var modText = string.Join(", ", placement.Piece.Modifiers.Where(m => m.Name != "Default").Select(m =>
+                    {
+                        var displayName = TrimChartPrefix(m.Name);
+                        var prefix = m.IsGlobal ? "[Global] " : "";
+                        return $"{prefix}{displayName}({m.Weight:F1})";
+                    }));
+                    ImGui.Text(string.IsNullOrEmpty(modText) ? "-" : modText);
+                    ImGui.PopID();
+                }
+
+                ImGui.EndTable();
             }
 
-            ImGui.EndTable();
+            DrawScoreDetails(currentSolution);
         }
-
-        DrawScoreDetails(currentSolution);
 
         ImGui.End();
     }

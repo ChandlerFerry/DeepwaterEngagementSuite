@@ -64,8 +64,11 @@ public class DeepwaterEngagementSuiteSettings : ISettings
         "Map/world icons for Tormented Spirit encounters. Off by default to reduce clutter.")]
     public ToggleNode ShowTormentedSpiritIcons { get; set; } = new ToggleNode(false);
 
+    public ToggleNode ShowLootWindow { get; set; } = new ToggleNode(true);
+
     public CurrencyReminderSettings CurrencyReminderSettings { get; set; } = new CurrencyReminderSettings();
     public BubbleSettings BubbleSettings { get; set; } = new BubbleSettings();
+    public TrailSettings TrailSettings { get; set; } = new TrailSettings();
 
     [Menu("Bubble planner settings")]
     public PlannerSettings PlannerSettings { get; set; } = new PlannerSettings();
@@ -95,12 +98,19 @@ public class DeepwaterEngagementSuiteSettings : ISettings
         IconPickerIndex.TormentedSpiritEncounter => DefaultTormentedSpiritEncounterIcon,
         IconPickerIndex.LanternReplenishEncounter => DefaultLanternReplenishEncounterIcon,
         IconPickerIndex.GoldenLanternEncounter => MapIconsIndex.LabyrinthGoldKey,
+        IconPickerIndex.InfusedCoralEncounter => MapIconsIndex.RewardBreach,
+        IconPickerIndex.StrongboxDivination => MapIconsIndex.CorpseTypeUndead,
+        IconPickerIndex.StrongboxScarab => MapIconsIndex.CorpseTypeEldritch,
+        IconPickerIndex.StrongboxArcanist => MapIconsIndex.CorpseTypeBeast,
+        IconPickerIndex.PointerTarget => MapIconsIndex.AncestralEnemyTotem,
         _ => DefaultOtherChestIcon,
     };
 
     public static Color? GetDefaultTint(IconPickerIndex index) => index switch
     {
         IconPickerIndex.UniqueWeaponChest or IconPickerIndex.UniqueArmourChest or IconPickerIndex.UniqueJewelleryChest => UniqueItemTint,
+        IconPickerIndex.InfusedCoralEncounter => new Color(255, 90, 180),
+        IconPickerIndex.PointerTarget => Color.White,
         _ => null,
     };
 
@@ -116,6 +126,131 @@ public class DeepwaterEngagementSuiteSettings : ISettings
         IconPickerIndex.CursedDucatDrop or
         IconPickerIndex.RandomDucatChest or
         IconPickerIndex.HazardBoatChest;
+}
+
+[Submenu(CollapsedByDefault = true)]
+public class TrailSettings
+{
+    public ToggleNode Enabled { get; set; } = new ToggleNode(false);
+    public ToggleNode DrawOnLargeMap { get; set; } = new ToggleNode(true);
+    public ToggleNode DrawInWorld { get; set; } = new ToggleNode(false);
+    public ToggleNode OnlyUnreachable { get; set; } = new ToggleNode(false);
+    public ToggleNode ShowLabels { get; set; } = new ToggleNode(true);
+    public RangeNode<int> MaxDistance { get; set; } = new RangeNode<int>(500, 10, 1000);
+    public RangeNode<int> MapLineWidth { get; set; } = new RangeNode<int>(3, 1, 20);
+    public RangeNode<int> WorldLineWidth { get; set; } = new RangeNode<int>(5, 1, 20);
+    public ColorNode DefaultMapColor { get; set; } = new Color(255, 140, 0, 200);
+    public ColorNode DefaultWorldColor { get; set; } = new Color(255, 140, 0, 200);
+    public ToggleNode ShowUndiscoveredTargets { get; set; } = new ToggleNode(true);
+    public ColorNode UndiscoveredColor { get; set; } = new Color(255, 255, 255, 220);
+    public TrailColorSettings Colors { get; set; } = new TrailColorSettings();
+}
+
+[Submenu(CollapsedByDefault = true)]
+public class TrailColorSettings
+{
+    public ToggleNode ShowBottledItem { get; set; } = new ToggleNode(true);
+    public ColorNode BottledItem { get; set; } = new Color(255, 215, 0, 255);
+    public ToggleNode ShowGoldTreasure { get; set; } = new ToggleNode(true);
+    public ColorNode GoldTreasure { get; set; } = new Color(255, 215, 0, 255);
+    public ToggleNode ShowClamTreasure { get; set; } = new ToggleNode(true);
+    public ColorNode ClamTreasure { get; set; } = new Color(255, 255, 100, 255);
+    public ToggleNode ShowCurrency { get; set; } = new ToggleNode(true);
+    public ColorNode Currency { get; set; } = new Color(255, 255, 255, 255);
+    public ToggleNode ShowOpulentCurrency { get; set; } = new ToggleNode(true);
+    public ColorNode OpulentCurrency { get; set; } = new Color(255, 170, 0, 255);
+    public ToggleNode ShowUniqueWeapon { get; set; } = new ToggleNode(true);
+    public ColorNode UniqueWeapon { get; set; } = new Color(175, 96, 37, 255);
+    public ToggleNode ShowUniqueArmour { get; set; } = new ToggleNode(true);
+    public ColorNode UniqueArmour { get; set; } = new Color(175, 96, 37, 255);
+    public ToggleNode ShowUniqueJewellery { get; set; } = new ToggleNode(true);
+    public ColorNode UniqueJewellery { get; set; } = new Color(175, 96, 37, 255);
+    public ToggleNode ShowScarabs { get; set; } = new ToggleNode(true);
+    public ColorNode Scarabs { get; set; } = new Color(200, 150, 255, 255);
+    public ToggleNode ShowStackedDecks { get; set; } = new ToggleNode(true);
+    public ColorNode StackedDecks { get; set; } = new Color(100, 200, 255, 255);
+    public ToggleNode ShowMaps { get; set; } = new ToggleNode(true);
+    public ColorNode Maps { get; set; } = new Color(200, 200, 200, 255);
+    public ToggleNode ShowAllflameEmbers { get; set; } = new ToggleNode(true);
+    public ColorNode AllflameEmbers { get; set; } = new Color(255, 100, 50, 255);
+    public ToggleNode ShowCursedDucat { get; set; } = new ToggleNode(true);
+    public ColorNode CursedDucat { get; set; } = new Color(255, 200, 50, 255);
+    public ToggleNode ShowRandomDucat { get; set; } = new ToggleNode(true);
+    public ColorNode RandomDucat { get; set; } = new Color(255, 200, 50, 255);
+    public ToggleNode ShowHazardBoat { get; set; } = new ToggleNode(true);
+    public ColorNode HazardBoat { get; set; } = new Color(255, 200, 50, 255);
+    public ToggleNode ShowIzaro { get; set; } = new ToggleNode(true);
+    public ColorNode Izaro { get; set; } = new Color(255, 255, 0, 255);
+    public ToggleNode ShowAltarCrab { get; set; } = new ToggleNode(true);
+    public ColorNode AltarCrab { get; set; } = new Color(50, 200, 50, 255);
+    public ToggleNode ShowAltarOctopus { get; set; } = new ToggleNode(true);
+    public ColorNode AltarOctopus { get; set; } = new Color(150, 50, 255, 255);
+    public ToggleNode ShowTormentedSpirit { get; set; } = new ToggleNode(true);
+    public ColorNode TormentedSpirit { get; set; } = new Color(0, 255, 100, 255);
+    public ToggleNode ShowLanternReplenish { get; set; } = new ToggleNode(true);
+    public ColorNode LanternReplenish { get; set; } = new Color(100, 200, 255, 255);
+    public ToggleNode ShowGoldenLantern { get; set; } = new ToggleNode(true);
+    public ColorNode GoldenLantern { get; set; } = new Color(255, 215, 0, 255);
+    public ToggleNode ShowInfusedCoral { get; set; } = new ToggleNode(true);
+    public ColorNode InfusedCoral { get; set; } = new Color(255, 90, 180, 255);
+    public ToggleNode ShowOther { get; set; } = new ToggleNode(true);
+    public ColorNode Other { get; set; } = new Color(180, 180, 180, 255);
+
+    public bool IsEnabled(IconPickerIndex type) => type switch
+    {
+        IconPickerIndex.BottledItemChest => ShowBottledItem.Value,
+        IconPickerIndex.GoldTreasureChest => ShowGoldTreasure.Value,
+        IconPickerIndex.ClamTreasureChest => ShowClamTreasure.Value,
+        IconPickerIndex.CurrencyTreasureChest => ShowCurrency.Value,
+        IconPickerIndex.CurrencyTreasureChestOpulent => ShowOpulentCurrency.Value,
+        IconPickerIndex.UniqueWeaponChest => ShowUniqueWeapon.Value,
+        IconPickerIndex.UniqueArmourChest => ShowUniqueArmour.Value,
+        IconPickerIndex.UniqueJewelleryChest => ShowUniqueJewellery.Value,
+        IconPickerIndex.ScarabChest => ShowScarabs.Value,
+        IconPickerIndex.StackedDecksChest => ShowStackedDecks.Value,
+        IconPickerIndex.MapsChest => ShowMaps.Value,
+        IconPickerIndex.AllflameEmbersChest => ShowAllflameEmbers.Value,
+        IconPickerIndex.CursedDucatDrop => ShowCursedDucat.Value,
+        IconPickerIndex.RandomDucatChest => ShowRandomDucat.Value,
+        IconPickerIndex.HazardBoatChest => ShowHazardBoat.Value,
+        IconPickerIndex.IzaroObject => ShowIzaro.Value,
+        IconPickerIndex.AltarCrab => ShowAltarCrab.Value,
+        IconPickerIndex.AltarOctopus => ShowAltarOctopus.Value,
+        IconPickerIndex.TormentedSpiritEncounter => ShowTormentedSpirit.Value,
+        IconPickerIndex.LanternReplenishEncounter => ShowLanternReplenish.Value,
+        IconPickerIndex.GoldenLanternEncounter => ShowGoldenLantern.Value,
+        IconPickerIndex.InfusedCoralEncounter => ShowInfusedCoral.Value,
+        IconPickerIndex.OtherChests => ShowOther.Value,
+        _ => true,
+    };
+
+    public Color Get(IconPickerIndex type, Color fallback) => type switch
+    {
+        IconPickerIndex.BottledItemChest => BottledItem.Value,
+        IconPickerIndex.GoldTreasureChest => GoldTreasure.Value,
+        IconPickerIndex.ClamTreasureChest => ClamTreasure.Value,
+        IconPickerIndex.CurrencyTreasureChest => Currency.Value,
+        IconPickerIndex.CurrencyTreasureChestOpulent => OpulentCurrency.Value,
+        IconPickerIndex.UniqueWeaponChest => UniqueWeapon.Value,
+        IconPickerIndex.UniqueArmourChest => UniqueArmour.Value,
+        IconPickerIndex.UniqueJewelleryChest => UniqueJewellery.Value,
+        IconPickerIndex.ScarabChest => Scarabs.Value,
+        IconPickerIndex.StackedDecksChest => StackedDecks.Value,
+        IconPickerIndex.MapsChest => Maps.Value,
+        IconPickerIndex.AllflameEmbersChest => AllflameEmbers.Value,
+        IconPickerIndex.CursedDucatDrop => CursedDucat.Value,
+        IconPickerIndex.RandomDucatChest => RandomDucat.Value,
+        IconPickerIndex.HazardBoatChest => HazardBoat.Value,
+        IconPickerIndex.IzaroObject => Izaro.Value,
+        IconPickerIndex.AltarCrab => AltarCrab.Value,
+        IconPickerIndex.AltarOctopus => AltarOctopus.Value,
+        IconPickerIndex.TormentedSpiritEncounter => TormentedSpirit.Value,
+        IconPickerIndex.LanternReplenishEncounter => LanternReplenish.Value,
+        IconPickerIndex.GoldenLanternEncounter => GoldenLantern.Value,
+        IconPickerIndex.InfusedCoralEncounter => InfusedCoral.Value,
+        IconPickerIndex.OtherChests => Other.Value,
+        _ => fallback,
+    };
 }
 
 [Submenu(CollapsedByDefault = true)]
@@ -255,6 +390,11 @@ public class VoyageSettings
         "(orbs, scarabs, strong treasure anchors). No-consume borders are used for strategy but not labeled. " +
         "Turn off for a clean voyage UI.")]
     public ToggleNode DrawComboLabels { get; set; } = new ToggleNode(true);
+
+    [Menu("Show score debug details",
+        "Verbose optimizer tables: per-tile (row,col) score breakdown and contribution sources. " +
+        "Off by default — strategy labels stay available without this noise.")]
+    public ToggleNode ShowScoreDebugDetails { get; set; } = new ToggleNode(false);
 
     [Menu("Solver time limit (seconds)", "Max time the solver runs before returning the best solution found so far. 0 = no limit.")]
     public RangeNode<int> SolverTimeLimitSeconds { get; set; } = new RangeNode<int>(5, 1, 120);

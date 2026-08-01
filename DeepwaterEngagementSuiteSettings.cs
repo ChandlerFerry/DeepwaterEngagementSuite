@@ -516,6 +516,7 @@ public class VoyageSettings
 
     public ToggleNode ShowAllBorderModifiers { get; set; } = new ToggleNode(true);
     public ToggleNode ShowAllChartModifiers { get; set; } = new ToggleNode(true);
+    public ToggleNode ShowChartInventoryInformation { get; set; } = new ToggleNode(true);
 
     public ListNode ProfileSelector { get; set; } = new ListNode();
     [JsonIgnore] public ButtonNode AddProfile { get; set; } = new ButtonNode();

@@ -201,6 +201,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
         var p when p.Contains("GoldTreasureChest", StringComparison.Ordinal) => IconPickerIndex.GoldTreasureChest,
         var p when p.Contains("DeepwaterCursedDucatDrop", StringComparison.Ordinal) => IconPickerIndex.CursedDucatDrop,
         var p when p.Contains("RandomDucatChest", StringComparison.Ordinal) => IconPickerIndex.RandomDucatChest,
+        var p when p.Contains("DeepwaterChestHazardBoat", StringComparison.Ordinal) => IconPickerIndex.HazardBoatChest,
         var p when p.Contains("DeepwaterIzaroObject", StringComparison.Ordinal) => IconPickerIndex.IzaroObject,
         var p when p.Contains("DeepwaterAltarCrab", StringComparison.Ordinal) => IconPickerIndex.AltarCrab,
         var p when p.Contains("DeepwaterAltarOctopus", StringComparison.Ordinal) => IconPickerIndex.AltarOctopus,
@@ -488,6 +489,28 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
                     case ExpeditionEntityType.Marker:
                     {
                         var chestType = GetChestType(e.Path);
+                        // Hidden optional icons still count as known markers (no pointer stand-in).
+                        if (DeepwaterEngagementSuiteSettings.IsDucatIconType(chestType) &&
+                            !Settings.ShowDucatIcons.Value)
+                        {
+                            drawnMarkerGridPositions.Add(e.GridPos);
+                            continue;
+                        }
+
+                        if (chestType == IconPickerIndex.GoldenLanternEncounter &&
+                            !Settings.ShowGoldenLanternIcons.Value)
+                        {
+                            drawnMarkerGridPositions.Add(e.GridPos);
+                            continue;
+                        }
+
+                        if (chestType == IconPickerIndex.TormentedSpiritEncounter &&
+                            !Settings.ShowTormentedSpiritIcons.Value)
+                        {
+                            drawnMarkerGridPositions.Add(e.GridPos);
+                            continue;
+                        }
+
                         var mapSettings = Settings.IconMapping.GetValueOrDefault(chestType, new IconDisplaySettings());
                         var icon = mapSettings.Icon ?? DeepwaterEngagementSuiteSettings.GetDefaultIcon(chestType);
                         var tint = mapSettings.Tint ?? DeepwaterEngagementSuiteSettings.GetDefaultTint(chestType);

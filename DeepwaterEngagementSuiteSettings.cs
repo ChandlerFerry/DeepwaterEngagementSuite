@@ -52,6 +52,18 @@ public class DeepwaterEngagementSuiteSettings : ISettings
     public RangeNode<int> WorldIconSize { get; set; } = new RangeNode<int>(50, 25, 200);
     public RangeNode<int> MapIconSize { get; set; } = new RangeNode<int>(30, 15, 200);
 
+    [Menu("Show Ducat icons",
+        "Map/world icons for cursed ducat drops, random ducat chests, and hazard boats. Off by default to reduce clutter.")]
+    public ToggleNode ShowDucatIcons { get; set; } = new ToggleNode(false);
+
+    [Menu("Show Golden Lantern icons",
+        "Map/world icons for Golden Lantern encounters. Off by default to reduce clutter.")]
+    public ToggleNode ShowGoldenLanternIcons { get; set; } = new ToggleNode(false);
+
+    [Menu("Show Tormented Spirit icons",
+        "Map/world icons for Tormented Spirit encounters. Off by default to reduce clutter.")]
+    public ToggleNode ShowTormentedSpiritIcons { get; set; } = new ToggleNode(false);
+
     public CurrencyReminderSettings CurrencyReminderSettings { get; set; } = new CurrencyReminderSettings();
     public BubbleSettings BubbleSettings { get; set; } = new BubbleSettings();
 
@@ -76,6 +88,7 @@ public class DeepwaterEngagementSuiteSettings : ISettings
         IconPickerIndex.AllflameEmbersChest => DefaultAllflameEmbersChestIcon,
         IconPickerIndex.CursedDucatDrop => DefaultCursedDucatDropIcon,
         IconPickerIndex.RandomDucatChest => DefaultCursedDucatDropIcon,
+        IconPickerIndex.HazardBoatChest => DefaultCursedDucatDropIcon,
         IconPickerIndex.IzaroObject => DefaultIzaroObjectIcon,
         IconPickerIndex.AltarCrab => DefaultAltarCrabIcon,
         IconPickerIndex.AltarOctopus => DefaultAltarOctopusIcon,
@@ -97,6 +110,12 @@ public class DeepwaterEngagementSuiteSettings : ISettings
         IconPickerIndex.CurrencyTreasureChestOpulent => 2.0f,
         _ => 1f,
     };
+
+    /// <summary>Ducat markers gated by <see cref="ShowDucatIcons"/> (off by default).</summary>
+    public static bool IsDucatIconType(IconPickerIndex index) => index is
+        IconPickerIndex.CursedDucatDrop or
+        IconPickerIndex.RandomDucatChest or
+        IconPickerIndex.HazardBoatChest;
 }
 
 [Submenu(CollapsedByDefault = true)]

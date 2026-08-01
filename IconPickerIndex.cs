@@ -24,6 +24,8 @@ public enum IconPickerIndex
     AllflameEmbersChest,
     CursedDucatDrop,
     RandomDucatChest,
+    /// <summary>Hazard boat chest — Metadata/Chests/LeagueDeepwater/DeepwaterChestHazardBoat.</summary>
+    HazardBoatChest,
     IzaroObject,
     AltarCrab,
     AltarOctopus,

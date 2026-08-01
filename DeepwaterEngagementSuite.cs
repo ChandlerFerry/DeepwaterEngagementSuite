@@ -1118,7 +1118,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
     {
         return entity.IsOpened ||
                entity.TryGetComponent(out Chest chest) && chest.IsOpened || 
-               type == IconPickerIndex.CursedDucatDrop &&
+               type is IconPickerIndex.CursedDucatDrop or IconPickerIndex.LanternReplenishEncounter or IconPickerIndex.InfusedCoralEncounter or IconPickerIndex.AltarOctopus or IconPickerIndex.AltarCrab &&
                entity.TryGetComponent(out StateMachine stateMachine) &&
                stateMachine.States.Any(x => x.Name == "activated" && x.Value == 1);
     }

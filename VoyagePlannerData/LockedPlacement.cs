@@ -4,4 +4,4 @@ public record LockedPlacement(
     int Row,
     int Col,
     int PieceId,
-    int Rotation);
+    int? Rotation = null);

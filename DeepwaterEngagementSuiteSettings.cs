@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Windows.Forms;
@@ -29,28 +29,26 @@ public class DeepwaterEngagementSuiteSettings : ISettings
     public const MapIconsIndex DefaultCurrencyGemcuttersChestIcon = MapIconsIndex.RewardChestGems;
     public const MapIconsIndex DefaultUniqueWeaponChestIcon = MapIconsIndex.RewardWeapons;
     public const MapIconsIndex DefaultUniqueArmourChestIcon = MapIconsIndex.RewardArmour;
-    public static readonly Color UniqueItemTint = new Color(175, 96, 37); // PoE unique orange
+    public const MapIconsIndex DefaultUniqueJewelleryChestIcon = MapIconsIndex.RewardJewellery;
+    public static readonly Color UniqueItemTint = new Color(175, 96, 37);
     public const MapIconsIndex DefaultScarabChestIcon = MapIconsIndex.RewardScarabs;
     public const MapIconsIndex DefaultStackedDecksChestIcon = MapIconsIndex.RewardDivinationCards;
     public const MapIconsIndex DefaultMapsChestIcon = MapIconsIndex.RewardMaps;
-    // Small glowing orb (Allflame-style); not Essence.
     public const MapIconsIndex DefaultAllflameEmbersChestIcon = MapIconsIndex.SanctumGoldConvert;
     public const MapIconsIndex DefaultCursedDucatDropIcon = MapIconsIndex.RewardPerandus;
     public const MapIconsIndex DefaultIzaroObjectIcon = MapIconsIndex.RewardLabyrinth;
     public const MapIconsIndex DefaultAltarCrabIcon = MapIconsIndex.RewardBestiary;
     public const MapIconsIndex DefaultAltarOctopusIcon = MapIconsIndex.RewardBreach;
     public const MapIconsIndex DefaultTormentedSpiritEncounterIcon = MapIconsIndex.LootFilterSmallGreenCircle;
-    // DeepwaterLantern is blank in Icons.png; BlightPortalFire is a visible fire-style stand-in.
     public const MapIconsIndex DefaultLanternReplenishEncounterIcon = MapIconsIndex.BlightPortalFire;
-
-    public Dictionary<IconPickerIndex, IconDisplaySettings> IconMapping = new();
 
     public ToggleNode Enable { get; set; } = new ToggleNode(false);
 
-    public RangeNode<int> WorldIconSize { get; set; } = new RangeNode<int>(50, 25, 200);
-    public RangeNode<int> MapIconSize { get; set; } = new RangeNode<int>(30, 15, 200);
+    [Menu("Icon Settings")]
+    public IconSettings IconSettings { get; set; } = new IconSettings();
 
-    public ToggleNode ShowLootWindow { get; set; } = new ToggleNode(true);
+    [Menu("Loot Window Settings")]
+    public LootWindowSettings LootWindowSettings { get; set; } = new LootWindowSettings();
 
     public CurrencyReminderSettings CurrencyReminderSettings { get; set; } = new CurrencyReminderSettings();
     public BubbleSettings BubbleSettings { get; set; } = new BubbleSettings();
@@ -70,12 +68,14 @@ public class DeepwaterEngagementSuiteSettings : ISettings
         IconPickerIndex.CurrencyGemcuttersChest => DefaultCurrencyGemcuttersChestIcon,
         IconPickerIndex.UniqueWeaponChest => DefaultUniqueWeaponChestIcon,
         IconPickerIndex.UniqueArmourChest => DefaultUniqueArmourChestIcon,
+        IconPickerIndex.UniqueJewelleryChest => DefaultUniqueJewelleryChestIcon,
         IconPickerIndex.ScarabChest => DefaultScarabChestIcon,
         IconPickerIndex.StackedDecksChest => DefaultStackedDecksChestIcon,
         IconPickerIndex.MapsChest => DefaultMapsChestIcon,
         IconPickerIndex.AllflameEmbersChest => DefaultAllflameEmbersChestIcon,
         IconPickerIndex.CursedDucatDrop => DefaultCursedDucatDropIcon,
         IconPickerIndex.RandomDucatChest => DefaultCursedDucatDropIcon,
+        IconPickerIndex.HazardBoatChest => DefaultCursedDucatDropIcon,
         IconPickerIndex.IzaroObject => DefaultIzaroObjectIcon,
         IconPickerIndex.AltarCrab => DefaultAltarCrabIcon,
         IconPickerIndex.AltarOctopus => DefaultAltarOctopusIcon,
@@ -92,7 +92,7 @@ public class DeepwaterEngagementSuiteSettings : ISettings
 
     public static Color? GetDefaultTint(IconPickerIndex index) => index switch
     {
-        IconPickerIndex.UniqueWeaponChest or IconPickerIndex.UniqueArmourChest => UniqueItemTint,
+        IconPickerIndex.UniqueWeaponChest or IconPickerIndex.UniqueArmourChest or IconPickerIndex.UniqueJewelleryChest => UniqueItemTint,
         IconPickerIndex.InfusedCoralEncounter => new Color(255, 90, 180),
         IconPickerIndex.PointerTarget => Color.White,
         _ => null,
@@ -102,6 +102,143 @@ public class DeepwaterEngagementSuiteSettings : ISettings
     {
         IconPickerIndex.CurrencyTreasureChestOpulent => 2.0f,
         _ => 1f,
+    };
+
+}
+
+[Submenu(CollapsedByDefault = true)]
+public class LootWindowSettings
+{
+    [Menu("Show loot window",
+        "Summary window of discovered Deepwater targets. Off by default.")]
+    public ToggleNode ShowLootWindow { get; set; } = new ToggleNode(false);
+}
+
+[Submenu(CollapsedByDefault = true)]
+public class IconSettings
+{
+    public Dictionary<IconPickerIndex, IconDisplaySettings> IconMapping = new();
+
+    public RangeNode<int> WorldIconSize { get; set; } = new RangeNode<int>(50, 25, 200);
+    public RangeNode<int> MapIconSize { get; set; } = new RangeNode<int>(30, 15, 200);
+
+    [Menu("Show Bottled Item icons")]
+    public ToggleNode ShowBottledItemIcons { get; set; } = new ToggleNode(true);
+
+    [Menu("Show Gold Treasure icons")]
+    public ToggleNode ShowGoldTreasureIcons { get; set; } = new ToggleNode(true);
+
+    [Menu("Show Clam Treasure icons")]
+    public ToggleNode ShowClamTreasureIcons { get; set; } = new ToggleNode(true);
+
+    [Menu("Show Currency chest icons")]
+    public ToggleNode ShowCurrencyChestIcons { get; set; } = new ToggleNode(true);
+
+    [Menu("Show Opulent Currency icons")]
+    public ToggleNode ShowOpulentCurrencyIcons { get; set; } = new ToggleNode(true);
+
+    [Menu("Show Gemcutter chest icons")]
+    public ToggleNode ShowGemcutterChestIcons { get; set; } = new ToggleNode(true);
+
+    [Menu("Show Unique Weapon icons")]
+    public ToggleNode ShowUniqueWeaponIcons { get; set; } = new ToggleNode(true);
+
+    [Menu("Show Unique Armour icons")]
+    public ToggleNode ShowUniqueArmourIcons { get; set; } = new ToggleNode(true);
+
+    [Menu("Show Unique Jewellery icons")]
+    public ToggleNode ShowUniqueJewelleryIcons { get; set; } = new ToggleNode(true);
+
+    [Menu("Show Scarab chest icons")]
+    public ToggleNode ShowScarabChestIcons { get; set; } = new ToggleNode(true);
+
+    [Menu("Show Stacked Deck icons")]
+    public ToggleNode ShowStackedDeckIcons { get; set; } = new ToggleNode(true);
+
+    [Menu("Show Maps chest icons",
+        "Cartography / map chests. Off by default.")]
+    public ToggleNode ShowMapsChestIcons { get; set; } = new ToggleNode(false);
+
+    [Menu("Show Allflame Embers icons")]
+    public ToggleNode ShowAllflameEmbersIcons { get; set; } = new ToggleNode(true);
+
+    [Menu("Show Izaro icons")]
+    public ToggleNode ShowIzaroIcons { get; set; } = new ToggleNode(true);
+
+    [Menu("Show Altar (Crab) icons")]
+    public ToggleNode ShowAltarCrabIcons { get; set; } = new ToggleNode(true);
+
+    [Menu("Show Altar (Octopus) icons")]
+    public ToggleNode ShowAltarOctopusIcons { get; set; } = new ToggleNode(true);
+
+    [Menu("Show Lantern Replenish icons")]
+    public ToggleNode ShowLanternReplenishIcons { get; set; } = new ToggleNode(true);
+
+    [Menu("Show Infused Coral icons")]
+    public ToggleNode ShowInfusedCoralIcons { get; set; } = new ToggleNode(true);
+
+    [Menu("Show other chest icons")]
+    public ToggleNode ShowOtherChestIcons { get; set; } = new ToggleNode(true);
+
+    [Menu("Show pointer stand-in icons",
+        "Undiscovered pointer targets on the large map.")]
+    public ToggleNode ShowPointerTargetIcons { get; set; } = new ToggleNode(true);
+
+    [Menu("Show Ducat icons",
+        "Cursed ducat drops, random ducat chests, and hazard boats. Off by default.")]
+    public ToggleNode ShowDucatIcons { get; set; } = new ToggleNode(false);
+
+    [Menu("Show Golden Lantern icons",
+        "Off by default to reduce clutter.")]
+    public ToggleNode ShowGoldenLanternIcons { get; set; } = new ToggleNode(false);
+
+    [Menu("Show Tormented Spirit icons",
+        "Off by default to reduce clutter.")]
+    public ToggleNode ShowTormentedSpiritIcons { get; set; } = new ToggleNode(false);
+
+    [Menu("Show Arcanist strongbox icons",
+        "Off by default to reduce clutter.")]
+    public ToggleNode ShowArcanistStrongboxIcons { get; set; } = new ToggleNode(false);
+
+    [Menu("Show Diviner strongbox icons",
+        "Off by default to reduce clutter.")]
+    public ToggleNode ShowDivinerStrongboxIcons { get; set; } = new ToggleNode(false);
+
+    [Menu("Show Scarab strongbox icons",
+        "Off by default to reduce clutter.")]
+    public ToggleNode ShowScarabStrongboxIcons { get; set; } = new ToggleNode(false);
+
+    public bool IsIconEnabled(IconPickerIndex index) => index switch
+    {
+        IconPickerIndex.BottledItemChest => ShowBottledItemIcons.Value,
+        IconPickerIndex.GoldTreasureChest => ShowGoldTreasureIcons.Value,
+        IconPickerIndex.ClamTreasureChest => ShowClamTreasureIcons.Value,
+        IconPickerIndex.CurrencyTreasureChest => ShowCurrencyChestIcons.Value,
+        IconPickerIndex.CurrencyTreasureChestOpulent => ShowOpulentCurrencyIcons.Value,
+        IconPickerIndex.CurrencyGemcuttersChest => ShowGemcutterChestIcons.Value,
+        IconPickerIndex.UniqueWeaponChest => ShowUniqueWeaponIcons.Value,
+        IconPickerIndex.UniqueArmourChest => ShowUniqueArmourIcons.Value,
+        IconPickerIndex.UniqueJewelleryChest => ShowUniqueJewelleryIcons.Value,
+        IconPickerIndex.ScarabChest => ShowScarabChestIcons.Value,
+        IconPickerIndex.StackedDecksChest => ShowStackedDeckIcons.Value,
+        IconPickerIndex.MapsChest => ShowMapsChestIcons.Value,
+        IconPickerIndex.AllflameEmbersChest => ShowAllflameEmbersIcons.Value,
+        IconPickerIndex.CursedDucatDrop or
+            IconPickerIndex.RandomDucatChest or
+            IconPickerIndex.HazardBoatChest => ShowDucatIcons.Value,
+        IconPickerIndex.IzaroObject => ShowIzaroIcons.Value,
+        IconPickerIndex.AltarCrab => ShowAltarCrabIcons.Value,
+        IconPickerIndex.AltarOctopus => ShowAltarOctopusIcons.Value,
+        IconPickerIndex.TormentedSpiritEncounter => ShowTormentedSpiritIcons.Value,
+        IconPickerIndex.LanternReplenishEncounter => ShowLanternReplenishIcons.Value,
+        IconPickerIndex.GoldenLanternEncounter => ShowGoldenLanternIcons.Value,
+        IconPickerIndex.InfusedCoralEncounter => ShowInfusedCoralIcons.Value,
+        IconPickerIndex.StrongboxDivination => ShowDivinerStrongboxIcons.Value,
+        IconPickerIndex.StrongboxScarab => ShowScarabStrongboxIcons.Value,
+        IconPickerIndex.StrongboxArcanist => ShowArcanistStrongboxIcons.Value,
+        IconPickerIndex.PointerTarget => ShowPointerTargetIcons.Value,
+        IconPickerIndex.OtherChests => ShowOtherChestIcons.Value,
+        _ => true,
     };
 }
 
@@ -140,6 +277,8 @@ public class TrailColorSettings
     public ColorNode UniqueWeapon { get; set; } = new Color(175, 96, 37, 255);
     public ToggleNode ShowUniqueArmour { get; set; } = new ToggleNode(true);
     public ColorNode UniqueArmour { get; set; } = new Color(175, 96, 37, 255);
+    public ToggleNode ShowUniqueJewellery { get; set; } = new ToggleNode(true);
+    public ColorNode UniqueJewellery { get; set; } = new Color(175, 96, 37, 255);
     public ToggleNode ShowScarabs { get; set; } = new ToggleNode(true);
     public ColorNode Scarabs { get; set; } = new Color(200, 150, 255, 255);
     public ToggleNode ShowStackedDecks { get; set; } = new ToggleNode(true);
@@ -152,6 +291,8 @@ public class TrailColorSettings
     public ColorNode CursedDucat { get; set; } = new Color(255, 200, 50, 255);
     public ToggleNode ShowRandomDucat { get; set; } = new ToggleNode(true);
     public ColorNode RandomDucat { get; set; } = new Color(255, 200, 50, 255);
+    public ToggleNode ShowHazardBoat { get; set; } = new ToggleNode(true);
+    public ColorNode HazardBoat { get; set; } = new Color(255, 200, 50, 255);
     public ToggleNode ShowIzaro { get; set; } = new ToggleNode(true);
     public ColorNode Izaro { get; set; } = new Color(255, 255, 0, 255);
     public ToggleNode ShowAltarCrab { get; set; } = new ToggleNode(true);
@@ -178,12 +319,14 @@ public class TrailColorSettings
         IconPickerIndex.CurrencyTreasureChestOpulent => ShowOpulentCurrency.Value,
         IconPickerIndex.UniqueWeaponChest => ShowUniqueWeapon.Value,
         IconPickerIndex.UniqueArmourChest => ShowUniqueArmour.Value,
+        IconPickerIndex.UniqueJewelleryChest => ShowUniqueJewellery.Value,
         IconPickerIndex.ScarabChest => ShowScarabs.Value,
         IconPickerIndex.StackedDecksChest => ShowStackedDecks.Value,
         IconPickerIndex.MapsChest => ShowMaps.Value,
         IconPickerIndex.AllflameEmbersChest => ShowAllflameEmbers.Value,
         IconPickerIndex.CursedDucatDrop => ShowCursedDucat.Value,
         IconPickerIndex.RandomDucatChest => ShowRandomDucat.Value,
+        IconPickerIndex.HazardBoatChest => ShowHazardBoat.Value,
         IconPickerIndex.IzaroObject => ShowIzaro.Value,
         IconPickerIndex.AltarCrab => ShowAltarCrab.Value,
         IconPickerIndex.AltarOctopus => ShowAltarOctopus.Value,
@@ -204,12 +347,14 @@ public class TrailColorSettings
         IconPickerIndex.CurrencyTreasureChestOpulent => OpulentCurrency.Value,
         IconPickerIndex.UniqueWeaponChest => UniqueWeapon.Value,
         IconPickerIndex.UniqueArmourChest => UniqueArmour.Value,
+        IconPickerIndex.UniqueJewelleryChest => UniqueJewellery.Value,
         IconPickerIndex.ScarabChest => Scarabs.Value,
         IconPickerIndex.StackedDecksChest => StackedDecks.Value,
         IconPickerIndex.MapsChest => Maps.Value,
         IconPickerIndex.AllflameEmbersChest => AllflameEmbers.Value,
         IconPickerIndex.CursedDucatDrop => CursedDucat.Value,
         IconPickerIndex.RandomDucatChest => RandomDucat.Value,
+        IconPickerIndex.HazardBoatChest => HazardBoat.Value,
         IconPickerIndex.IzaroObject => Izaro.Value,
         IconPickerIndex.AltarCrab => AltarCrab.Value,
         IconPickerIndex.AltarOctopus => AltarOctopus.Value,
@@ -225,7 +370,7 @@ public class TrailColorSettings
 [Submenu(CollapsedByDefault = true)]
 public class CurrencyReminderSettings
 {
-    public ToggleNode Enabled { get; set; } = new ToggleNode(true);
+    public ToggleNode Enabled { get; set; } = new ToggleNode(false);
     public RangeNode<int> RequiredExaltedOrbs { get; set; } = new RangeNode<int>(20, 0, 20);
     public RangeNode<int> RequiredAlchemyOrbs { get; set; } = new RangeNode<int>(20, 0, 20);
     public RangeNode<int> RequiredChaosOrbs { get; set; } = new RangeNode<int>(20, 0, 20);
@@ -236,7 +381,6 @@ public class CurrencyReminderSettings
 [Submenu(CollapsedByDefault = true)]
 public class PlannerSettings
 {
-    // Planner weights (default 1 via ChestSettings). High-value targets are weighted higher.
     public Dictionary<IconPickerIndex, ChestSettings> ChestSettingsMap = new()
     {
         [IconPickerIndex.BottledItemChest] = new ChestSettings { Weight = 30 },
@@ -289,7 +433,6 @@ public class PlannerSettings
     public RangeNode<float> NewRandomPathInjectionRate { get; set; } = new RangeNode<float>(1f, 0, 2);
     public RangeNode<int> PathGenerationSize { get; set; } = new RangeNode<int>(100, 1, 1000);
     public RangeNode<int> ValidatedIntermediatePoints { get; set; } = new RangeNode<int>(1, 0, 5);
-
 
     public ToggleNode ShowScoreHistory { get; set; } = new ToggleNode(false);
     public ToggleNode ShowScoreHistoryAfterSearchEnds { get; set; } = new ToggleNode(false);
@@ -354,14 +497,22 @@ public class VoyageSettings
     [Menu("Show optimizer window")]
     public ToggleNode ShowOptimizerWindow { get; set; } = new ToggleNode(true);
 
+    [Menu("Draw combo labels",
+        "Overlay specialty combo pieces (Pelagic/farm rooms, starfish, rares, boxes, Lost Message) and strategy borders " +
+        "(orbs, scarabs, strong treasure anchors). No-consume borders are used for strategy but not labeled. " +
+        "Turn off for a clean voyage UI.")]
+    public ToggleNode DrawComboLabels { get; set; } = new ToggleNode(true);
+
+    [Menu("Show score debug details",
+        "Verbose optimizer tables: per-tile (row,col) score breakdown and contribution sources. " +
+        "Off by default — strategy labels stay available without this noise.")]
+    public ToggleNode ShowScoreDebugDetails { get; set; } = new ToggleNode(false);
+
     [Menu("Solver time limit (seconds)", "Max time the solver runs before returning the best solution found so far. 0 = no limit.")]
     public RangeNode<int> SolverTimeLimitSeconds { get; set; } = new RangeNode<int>(5, 1, 120);
 
-    // exact second solver, opt-in until it's proven in game; ignores per-connection borders for now
     [Menu("Use fast solver (exact, experimental)", "Exact branch-and-bound solver. Ignores the time limit. Per-connection border mods are ignored for now, so scores on those boards are approximate.")]
-    public ToggleNode UseFastSolver { get; set; } = new ToggleNode(false);
-    public RangeNode<float> BorderHighlightThreshold { get; set; } = new RangeNode<float>(1.01f, 0, 10);
-    public RangeNode<float> ChartHighlightThreshold { get; set; } = new RangeNode<float>(1.0f, 0, 10);
+    public ToggleNode UseFastSolver { get; set; } = new ToggleNode(true);
     public ListNode ProfileSelector { get; set; } = new ListNode();
     [JsonIgnore] public ButtonNode AddProfile { get; set; } = new ButtonNode();
     [JsonIgnore] public ButtonNode ReloadProfiles { get; set; } = new ButtonNode();

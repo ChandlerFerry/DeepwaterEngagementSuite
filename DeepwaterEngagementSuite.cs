@@ -1,4 +1,4 @@
-﻿using DeepwaterEngagementSuite.PathPlannerData;
+using DeepwaterEngagementSuite.PathPlannerData;
 using DeepwaterEngagementSuite.VoyagePlannerData;
 using ExileCore;
 using ExileCore.PoEMemory;
@@ -198,6 +198,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
         var p when p.Contains("CurrencyGemcuttersChest", StringComparison.Ordinal) => IconPickerIndex.CurrencyGemcuttersChest,
         var p when p.Contains("DeepwaterAnchorUniqueWeapon", StringComparison.Ordinal) => IconPickerIndex.UniqueWeaponChest,
         var p when p.Contains("DeepwaterAnchorUniqueArmour", StringComparison.Ordinal) => IconPickerIndex.UniqueArmourChest,
+        var p when p.Contains("DeepwaterAnchorUniqueJewellery", StringComparison.Ordinal) => IconPickerIndex.UniqueJewelleryChest,
         var p when p.Contains("DeepwaterChestScarabs", StringComparison.Ordinal) => IconPickerIndex.ScarabChest,
         var p when p.Contains("DeepwaterChestStackedDecks", StringComparison.Ordinal) => IconPickerIndex.StackedDecksChest,
         var p when p.Contains("DeepwaterChestMaps", StringComparison.Ordinal) => IconPickerIndex.MapsChest,
@@ -205,6 +206,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
         var p when p.Contains("GoldTreasureChest", StringComparison.Ordinal) => IconPickerIndex.GoldTreasureChest,
         var p when p.Contains("DeepwaterCursedDucatDrop", StringComparison.Ordinal) => IconPickerIndex.CursedDucatDrop,
         var p when p.Contains("RandomDucatChest", StringComparison.Ordinal) => IconPickerIndex.RandomDucatChest,
+        var p when p.Contains("DeepwaterChestHazardBoat", StringComparison.Ordinal) => IconPickerIndex.HazardBoatChest,
         var p when p.Contains("DeepwaterIzaroObject", StringComparison.Ordinal) => IconPickerIndex.IzaroObject,
         var p when p.Contains("DeepwaterAltarCrab", StringComparison.Ordinal) => IconPickerIndex.AltarCrab,
         var p when p.Contains("DeepwaterAltarOctopus", StringComparison.Ordinal) => IconPickerIndex.AltarOctopus,
@@ -528,7 +530,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
             return;
         }
 
-        if (!largePanelsOpen && Settings.ShowLootWindow)
+        if (!largePanelsOpen && Settings.LootWindowSettings.ShowLootWindow)
         {
             DrawLootWindow();
         }
@@ -616,7 +618,13 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
                     case ExpeditionEntityType.Marker:
                     {
                         var chestType = GetChestType(e.Path);
-                        var mapSettings = Settings.IconMapping.GetValueOrDefault(chestType, new IconDisplaySettings());
+                        var icons = Settings.IconSettings;
+                        if (!icons.IsIconEnabled(chestType))
+                        {
+                            continue;
+                        }
+
+                        var mapSettings = icons.IconMapping.GetValueOrDefault(chestType, new IconDisplaySettings());
                         var icon = mapSettings.Icon ?? DeepwaterEngagementSuiteSettings.GetDefaultIcon(chestType);
                         var tint = mapSettings.Tint ?? DeepwaterEngagementSuiteSettings.GetDefaultTint(chestType);
                         var sizeScale = mapSettings.SizeScale ?? DeepwaterEngagementSuiteSettings.GetDefaultIconSizeScale(chestType);
@@ -638,7 +646,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
                 }
             }
 
-            if (_largeMapOpen)
+            if (_largeMapOpen && Settings.IconSettings.IsIconEnabled(IconPickerIndex.PointerTarget))
             {
                 foreach (var target in GetUnknownPointerTargets())
                 {
@@ -650,7 +658,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
                         hideCaptured: true,
                         plannerCapturedFrameColor: Color.White,
                         frameThickness: 1,
-                        iconSize: Settings.MapIconSize.Value);
+                        iconSize: Settings.IconSettings.MapIconSize.Value);
                 }
             }
         }
@@ -947,7 +955,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
     {
         if (_largeMapOpen)
         {
-            var iconSize = Settings.MapIconSize.Value * sizeScale;
+            var iconSize = Settings.IconSettings.MapIconSize.Value * sizeScale;
             var halfsize = iconSize / 2.0f;
             var point = GetEntityPosOnMapScreen(entity) + offset * halfsize * 2;
             var entityPos = entity.Pos;
@@ -963,7 +971,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
 
     private void DrawIconInWorld(EntityCacheItem entity, MapIconsIndex icon, Color? color, Vector2 offset, float sizeScale = 1f)
     {
-        var iconSize = Settings.WorldIconSize.Value * sizeScale;
+        var iconSize = Settings.IconSettings.WorldIconSize.Value * sizeScale;
         var halfsize = iconSize / 2.0f;
         var entityPos = entity.Pos;
         var entityPos2 = new Vector2(entityPos.X, entityPos.Y);
@@ -1094,12 +1102,14 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
         IconPickerIndex.CurrencyTreasureChestOpulent => "Opulent Currency",
         IconPickerIndex.UniqueWeaponChest => "Unique Weapon",
         IconPickerIndex.UniqueArmourChest => "Unique Armour",
+        IconPickerIndex.UniqueJewelleryChest => "Unique Jewellery",
         IconPickerIndex.ScarabChest => "Scarabs",
         IconPickerIndex.StackedDecksChest => "Stacked Decks",
         IconPickerIndex.MapsChest => "Maps",
         IconPickerIndex.AllflameEmbersChest => "Allflame Embers",
         IconPickerIndex.CursedDucatDrop => "Cursed Ducat",
         IconPickerIndex.RandomDucatChest => "Random Ducat",
+        IconPickerIndex.HazardBoatChest => "Hazard Boat",
         IconPickerIndex.IzaroObject => "Izaro",
         IconPickerIndex.AltarCrab => "Altar (Crab)",
         IconPickerIndex.AltarOctopus => "Altar (Octopus)",
@@ -1116,9 +1126,20 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
 
     private static bool IsEntityCompleted(Entity entity, IconPickerIndex type)
     {
-        return entity.IsOpened ||
-               entity.TryGetComponent(out Chest chest) && chest.IsOpened || 
-               type is IconPickerIndex.CursedDucatDrop or IconPickerIndex.LanternReplenishEncounter or IconPickerIndex.InfusedCoralEncounter or IconPickerIndex.AltarOctopus or IconPickerIndex.AltarCrab &&
+        if (entity.IsOpened)
+            return true;
+
+        if (entity.TryGetComponent(out Chest chest) && chest.IsOpened)
+            return true;
+
+        var softCompletedType = type is
+            IconPickerIndex.CursedDucatDrop or
+            IconPickerIndex.LanternReplenishEncounter or
+            IconPickerIndex.InfusedCoralEncounter or
+            IconPickerIndex.AltarOctopus or
+            IconPickerIndex.AltarCrab;
+
+        return softCompletedType &&
                entity.TryGetComponent(out StateMachine stateMachine) &&
                stateMachine.States.Any(x => x.Name == "activated" && x.Value == 1);
     }

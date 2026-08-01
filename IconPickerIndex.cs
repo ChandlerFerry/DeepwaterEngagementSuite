@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
 namespace DeepwaterEngagementSuite;
@@ -12,16 +12,17 @@ public enum IconPickerIndex
     ClamTreasureChest,
     CurrencyTreasureChest,
     CurrencyTreasureChestOpulent,
-    /// <summary>Gemcutter's Prism currency chest — Metadata/.../CurrencyGemcuttersChest1.</summary>
     CurrencyGemcuttersChest,
     UniqueWeaponChest,
     UniqueArmourChest,
+    UniqueJewelleryChest,
     ScarabChest,
     StackedDecksChest,
     MapsChest,
     AllflameEmbersChest,
     CursedDucatDrop,
     RandomDucatChest,
+    HazardBoatChest,
     IzaroObject,
     AltarCrab,
     AltarOctopus,

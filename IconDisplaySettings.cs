@@ -1,4 +1,4 @@
-﻿using ExileCore.Shared.Enums;
+using ExileCore.Shared.Enums;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using SharpDX;

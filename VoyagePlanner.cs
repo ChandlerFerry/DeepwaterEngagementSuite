@@ -29,6 +29,9 @@ public class VoyagePlanner
     private VoyageScorer _scorer;
     private bool _cancelled;
     private int _filledCount;
+    private int[,] _lockedPieceAt;
+    private int?[,] _lockedRotationAt;
+    private int[] _pieceLockedToCell;
 
     // Precomputed: for each piece, all (rotation, connections) pairs.
     private record struct PieceOption(int PieceIdx, int Rotation, Direction Connections);
@@ -92,24 +95,33 @@ public class VoyagePlanner
             .OrderByDescending(i => puzzle.AvailablePieces[i].LocalModifier + puzzle.AvailablePieces[i].GlobalModifier)
             .ToArray();
 
-        // Handle locked placements
-        var lockedCells = puzzle.LockedPlacements
-            .Select(lp => (lp.Row, lp.Col))
-            .ToHashSet();
-        var lockedAssignments = puzzle.LockedPlacements
-            .ToDictionary(
-                lp => (lp.Row, lp.Col),
-                lp => (puzzle.AvailablePieces.IndexOf(puzzle.AvailablePieces.First(p => p.Id == lp.PieceId)), lp.Rotation));
+        _lockedPieceAt = new int[GridSize, GridSize];
+        _lockedRotationAt = new int?[GridSize, GridSize];
+        _pieceLockedToCell = Enumerable.Repeat(-1, puzzle.AvailablePieces.Count).ToArray();
+        for (var r = 0; r < GridSize; r++)
+        for (var c = 0; c < GridSize; c++)
+            _lockedPieceAt[r, c] = -1;
 
-        // Place locked cells first
-        foreach (var (r, c) in lockedCells)
+        var lockedCells = new HashSet<(int, int)>();
+        foreach (var lp in puzzle.LockedPlacements)
         {
-            var (pieceIdx, rotation) = lockedAssignments[(r, c)];
-            var piece = puzzle.AvailablePieces[pieceIdx];
-            var connections = piece.GetConnections(rotation);
-            _grid[r, c] = new MapPiecePlacement(piece, rotation, connections);
-            _pieceUsed[pieceIdx] = true;
-            _filledCount++;
+            var pieceIdx = puzzle.AvailablePieces.FindIndex(p => p.Id == lp.PieceId);
+            if (pieceIdx < 0)
+                continue;
+
+            lockedCells.Add((lp.Row, lp.Col));
+            _lockedPieceAt[lp.Row, lp.Col] = pieceIdx;
+            _lockedRotationAt[lp.Row, lp.Col] = lp.Rotation;
+            _pieceLockedToCell[pieceIdx] = lp.Row * GridSize + lp.Col;
+
+            if (lp.Rotation is { } fixedRot)
+            {
+                var piece = puzzle.AvailablePieces[pieceIdx];
+                var connections = piece.GetConnections(fixedRot);
+                _grid[lp.Row, lp.Col] = new MapPiecePlacement(piece, fixedRot, connections);
+                _pieceUsed[pieceIdx] = true;
+                _filledCount++;
+            }
         }
 
         var results = Search(settings, lockedCells);
@@ -251,19 +263,26 @@ public class VoyagePlanner
     {
         var result = new List<(int, int, Direction)>();
         var triedGroups = new HashSet<int>();
+        var requiredPiece = _lockedPieceAt[r, c];
+        var requiredRotation = _lockedRotationAt[r, c];
+        var cellIndex = r * GridSize + c;
 
         foreach (var i in _pieceScanOrder)
         {
             if (_pieceUsed[i]) continue;
-            var g = _pieceToGroup[i];
-            if (!triedGroups.Add(g)) continue;
+            if (requiredPiece >= 0 && i != requiredPiece) continue;
+            if (_pieceLockedToCell[i] >= 0 && _pieceLockedToCell[i] != cellIndex) continue;
 
-            foreach (var opt in _pieceOptionsByGroup[g])
+            var g = _pieceToGroup[i];
+            if (requiredPiece < 0 && !triedGroups.Add(g)) continue;
+
+            var piece = _puzzle.AvailablePieces[i];
+            for (var rot = 0; rot < piece.DistinctRotations; rot++)
             {
-                if (CheckAdjacency(r, c, opt.Connections))
-                {
-                    result.Add((i, opt.Rotation, opt.Connections));
-                }
+                if (requiredRotation is { } rr && rot != rr) continue;
+                var connections = piece.GetConnections(rot);
+                if (CheckAdjacency(r, c, connections))
+                    result.Add((i, rot, connections));
             }
         }
 

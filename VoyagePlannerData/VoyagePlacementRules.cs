@@ -73,7 +73,8 @@ public static class VoyagePlacementRules
         var savedKishara = 0;
         foreach (var boss in working.Where(IsKishara).Select(p => p.Id).ToList())
         {
-            working.RemoveAll(p => p.Id == boss);
+            if (!TrySavePiece(working, boss))
+                break;
             savedKishara++;
         }
 
@@ -116,9 +117,8 @@ public static class VoyagePlacementRules
                 LockCell(target.Row, target.Col, pelagic);
                 orbCenters.RemoveAll(c => c.Row == target.Row && c.Col == target.Col);
             }
-            else
+            else if (TrySavePiece(working, pelagic.Id))
             {
-                working.RemoveAll(p => p.Id == pelagic.Id);
                 savedPelagic++;
             }
         }
@@ -132,17 +132,6 @@ public static class VoyagePlacementRules
                               ?? TakeBest(working, usedPieceIds, IsOrbRareComboChart, OrbRareComboScore);
                 if (support == null) break;
                 LockCell(n.Row, n.Col, support);
-            }
-        }
-
-        if (divineCenters.Count > 0)
-        {
-            foreach (var cell in EnumerateCells().Where(c => CellFree(c.Row, c.Col)))
-            {
-                var rare = TakeBest(working, usedPieceIds, IsOrbRareGlobalChart, OrbRareComboScore);
-                if (rare == null)
-                    break;
-                LockCell(cell.Row, cell.Col, rare);
             }
         }
 
@@ -234,6 +223,17 @@ public static class VoyagePlacementRules
             var lost = TakeBest(working, usedPieceIds, IsLostMessageChart, LostMessageScore);
             if (lost != null)
                 LockCell(CenterRow, CenterCol, lost);
+        }
+
+        if (divineCenters.Count > 0)
+        {
+            foreach (var cell in EnumerateCells().Where(c => CellFree(c.Row, c.Col)))
+            {
+                var rare = TakeBest(working, usedPieceIds, IsOrbRareGlobalChart, OrbRareComboScore);
+                if (rare == null)
+                    break;
+                LockCell(cell.Row, cell.Col, rare);
+            }
         }
 
         var savedFarm = RemoveUnused(working, usedPieceIds, IsFarmChart, FarmPriority);
@@ -607,6 +607,13 @@ public static class VoyagePlacementRules
             .FirstOrDefault();
     }
 
+    private static bool TrySavePiece(List<MapPiece> working, int pieceId)
+    {
+        if (working.Count <= 9)
+            return false;
+        return working.RemoveAll(p => p.Id == pieceId) > 0;
+    }
+
     private static int RemoveUnused(
         List<MapPiece> working,
         HashSet<int> used,
@@ -629,9 +636,8 @@ public static class VoyagePlacementRules
         var removed = 0;
         foreach (var id in drop)
         {
-            if (working.Count <= 9)
+            if (!TrySavePiece(working, id))
                 break;
-            working.RemoveAll(p => p.Id == id);
             removed++;
         }
 

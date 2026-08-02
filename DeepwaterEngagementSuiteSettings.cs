@@ -512,6 +512,9 @@ public class VoyageSettings
     public ToggleNode ShowAllChartModifiers { get; set; } = new ToggleNode(false);
     public ToggleNode ShowChartInventoryInformation { get; set; } = new ToggleNode(false);
 
+    [Menu("Show Grid Coordinates", "Draw (row, col) labels on each Plan Your Voyage board tile.")]
+    public ToggleNode ShowGridCoordinates { get; set; } = new ToggleNode(false);
+
     public ListNode ProfileSelector { get; set; } = new ListNode();
     [JsonIgnore] public ButtonNode AddProfile { get; set; } = new ButtonNode();
     [JsonIgnore] public ButtonNode ReloadProfiles { get; set; } = new ButtonNode();

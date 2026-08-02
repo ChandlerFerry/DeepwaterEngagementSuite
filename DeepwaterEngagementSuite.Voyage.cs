@@ -280,8 +280,11 @@ public partial class DeepwaterEngagementSuite
         {
             var tile = tiles[index];
             var mods = modsPerTileIndex.GetValueOrDefault(index) ?? [];
-            var tileTopLeft = tile.GetClientRectCache.TopLeft.ToVector2Num();
-            Graphics.DrawTextWithBackground($"({index / 3}, {index % 3})", tileTopLeft, Color.Black);
+            if (settings.ShowGridCoordinates.Value)
+            {
+                var tileTopLeft = tile.GetClientRectCache.TopLeft.ToVector2Num();
+                Graphics.DrawTextWithBackground($"({index / 3}, {index % 3})", tileTopLeft, Color.Black);
+            }
             var tileCenter = tile.GetClientRectCache.Center.ToVector2Num();
             var chart = tile.ItemContainer?.Entity?.GetComponent<DeepwaterChart>();
             if (chart != null)

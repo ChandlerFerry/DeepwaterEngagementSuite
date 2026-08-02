@@ -588,6 +588,9 @@ public class VoyageStrategySettings
     [Menu("Save Fractured", "Hold charts with Fractured items out of the solver.")]
     public ToggleNode SaveFractured { get; set; } = new ToggleNode(true);
 
+    [Menu("Save Golden Lanterns", "Hold charts with Adjacent Golden Lanterns out of the solver.")]
+    public ToggleNode SaveGoldenLanterns { get; set; } = new ToggleNode(true);
+
     [Menu("Save Pantheon", "Hold charts with Pantheon items out of the solver.")]
     public ToggleNode SavePantheon { get; set; } = new ToggleNode(true);
 
@@ -608,6 +611,7 @@ public class VoyageStrategySettings
         SaveKishara: SaveKishara.Value,
         SaveNoEquipment: SaveNoEquipment.Value,
         SaveFractured: SaveFractured.Value,
+        SaveGoldenLanterns: SaveGoldenLanterns.Value,
         SavePantheon: SavePantheon.Value,
         SaveSoulEater: SaveSoulEater.Value,
         SaveRareFracture: SaveRareFracture.Value,

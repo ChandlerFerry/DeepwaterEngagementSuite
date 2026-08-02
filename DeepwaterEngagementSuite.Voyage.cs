@@ -1119,6 +1119,8 @@ public partial class DeepwaterEngagementSuite
             savedBits.Add($"{placement.SavedNoEquipmentCount} No Equipment");
         if (placement.SavedFracturedCount > 0)
             savedBits.Add($"{placement.SavedFracturedCount} Fractured");
+        if (placement.SavedGoldenLanternsCount > 0)
+            savedBits.Add($"{placement.SavedGoldenLanternsCount} Golden Lanterns");
         if (placement.SavedPantheonCount > 0)
             savedBits.Add($"{placement.SavedPantheonCount} Pantheon");
         if (placement.SavedSoulEaterCount > 0)

@@ -8,6 +8,7 @@ public sealed record VoyageStrategyOptions(
     bool SaveKishara = true,
     bool SaveNoEquipment = true,
     bool SaveFractured = true,
+    bool SaveGoldenLanterns = true,
     bool SavePantheon = true,
     bool SaveSoulEater = false,
     bool SaveRareFracture = true,

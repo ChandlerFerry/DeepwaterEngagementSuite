@@ -20,6 +20,7 @@ public static class VoyagePlacementRules
     public const string VoyageRareFracture = "MapDeepwaterChartVoyageRareFracture";
     public const string VoyageMonstersPossessed = "MapDeepwaterChartVoyageMonstersPossessed";
     public const string AdjacentFracturedPrefix = "MapDeepwaterChartAdjacentFractured";
+    public const string AdjacentGoldenLanternsPrefix = "MapDeepwaterChartAdjacentGoldenLanterns";
     public const string AdjacentPantheonPrefix = "MapDeepwaterChartAdjacentPantheon";
     public const string AdjacentStrongboxesPrefix = "MapDeepwaterChartAdjacentStrongboxes";
     public const string AdjacentStarfishPrefix = "MapDeepwaterChartAdjacentStarfish";
@@ -63,6 +64,7 @@ public static class VoyagePlacementRules
         int SavedKisharaCount,
         int SavedNoEquipmentCount,
         int SavedFracturedCount,
+        int SavedGoldenLanternsCount,
         int SavedPantheonCount,
         int SavedSoulEaterCount,
         int SavedRareFractureCount,
@@ -121,6 +123,7 @@ public static class VoyagePlacementRules
         var savedKishara = SaveByPredicate(options.SaveKishara, IsKishara);
         var savedNoEquipment = SaveByPredicate(options.SaveNoEquipment, IsNoEquipmentChart);
         var savedFractured = SaveByPredicate(options.SaveFractured, IsFracturedChart);
+        var savedGoldenLanterns = SaveByPredicate(options.SaveGoldenLanterns, IsGoldenLanternsChart);
         var savedPantheon = SaveByPredicate(options.SavePantheon, IsPantheonChart);
         var savedSoulEater = SaveByPredicate(options.SaveSoulEater, IsSoulEaterChart);
         var savedRareFracture = SaveByPredicate(options.SaveRareFracture, IsRareFractureChart);
@@ -393,7 +396,7 @@ public static class VoyagePlacementRules
             working, locks,
             savedPelagic, savedFarm, savedStrongbox, savedStarfish, savedRareVoyage,
             savedAdjacentRare, savedOperative, savedLostMessage, savedKishara,
-            savedNoEquipment, savedFractured, savedPantheon,
+            savedNoEquipment, savedFractured, savedGoldenLanterns, savedPantheon,
             savedSoulEater, savedRareFracture, savedRarePossessed,
             savedClam, savedUniqueAmulet,
             savedUniqueBelt, savedUniqueRing,
@@ -514,6 +517,9 @@ public static class VoyagePlacementRules
 
     public static bool IsFracturedChart(MapPiece piece) =>
         piece.Modifiers.Any(m => IsFamily(m.Name, AdjacentFracturedPrefix));
+
+    public static bool IsGoldenLanternsChart(MapPiece piece) =>
+        piece.Modifiers.Any(m => IsFamily(m.Name, AdjacentGoldenLanternsPrefix));
 
     public static bool IsPantheonChart(MapPiece piece) =>
         piece.Modifiers.Any(m => IsFamily(m.Name, AdjacentPantheonPrefix));

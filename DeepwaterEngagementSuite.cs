@@ -182,6 +182,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
             var a when a.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterLanternReplenishEncounter", StringComparison.Ordinal) => ExpeditionEntityType.Marker,
             var a when a.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterGoldenLantern", StringComparison.Ordinal) => ExpeditionEntityType.Marker,
             var a when a.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterBrineCoralEncounter", StringComparison.Ordinal) => ExpeditionEntityType.Marker,
+            var a when a.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/ResourceChest", StringComparison.Ordinal) => ExpeditionEntityType.Marker,
             _ => ExpeditionEntityType.None,
         });
     }
@@ -214,6 +215,10 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
         var p when p.Contains("DeepwaterLanternReplenishEncounter", StringComparison.Ordinal) => IconPickerIndex.LanternReplenishEncounter,
         var p when p.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterGoldenLantern", StringComparison.Ordinal) => IconPickerIndex.GoldenLanternEncounter,
         var p when p.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterBrineCoralEncounter", StringComparison.Ordinal) => IconPickerIndex.InfusedCoralEncounter,
+        var p when p.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/ResourceChestSmall", StringComparison.Ordinal) => IconPickerIndex.DeadMansSulphurSmall,
+        var p when p.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/ResourceChestBase", StringComparison.Ordinal) => IconPickerIndex.DeadMansSulphurBase,
+        var p when p.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/ResourceChestLarge", StringComparison.Ordinal) => IconPickerIndex.DeadMansSulphurLarge,
+        var p when p.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/ResourceChestHuge", StringComparison.Ordinal) => IconPickerIndex.DeadMansSulphurHuge,
         _ => IconPickerIndex.OtherChests,
     };
 
@@ -1137,10 +1142,15 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
             IconPickerIndex.LanternReplenishEncounter or
             IconPickerIndex.InfusedCoralEncounter or
             IconPickerIndex.AltarOctopus or
-            IconPickerIndex.AltarCrab;
+            IconPickerIndex.AltarCrab or
+            IconPickerIndex.DeadMansSulphurSmall or
+            IconPickerIndex.DeadMansSulphurBase or
+            IconPickerIndex.DeadMansSulphurLarge or
+            IconPickerIndex.DeadMansSulphurHuge
+            ;
 
         return softCompletedType &&
                entity.TryGetComponent(out StateMachine stateMachine) &&
-               stateMachine.States.Any(x => x.Name == "activated" && x.Value == 1);
+               stateMachine.States.Any(x => (x.Name == "activated" || x.Name == "collected") && x.Value == 1);
     }
 }

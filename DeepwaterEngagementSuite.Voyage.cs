@@ -61,18 +61,9 @@ public partial class DeepwaterEngagementSuite
                 return charts;
             }
 
-            var chartSize = charts[0].GetClientRectCache.Size;
-            var containerRect = voyageWindow.ChartContainer.GetClientRectCache;
-            var containerSize = containerRect.Size;
-            var inventorySize = new Vector2i(
-                (int)Math.Round(containerSize.Width/chartSize.Width),
-                (int)Math.Round(containerSize.Height / chartSize.Height));
             var filtered = charts.Select(x =>
                 {
-                    var coord = ((x.GetClientRectCache.TopLeft - containerRect.TopLeft).ToVector2Num()
-                                 / new Vector2(containerSize.Width, containerSize.Height)
-                                 * inventorySize)
-                        .RoundToVector2I();
+                    var coord = GetChartInventoryCoord(voyageWindow, x);
                     return (x, new ChartData(x.Item, GameController, coord));
                 })
                 .Where(x => !filters.Any(f => f.Matches(x.Item2)))
@@ -83,6 +74,46 @@ public partial class DeepwaterEngagementSuite
 
         return [];
     }
+
+    private static bool TryGetChartInventoryLayout(
+        VoyageWindow voyageWindow,
+        out RectangleF containerRect,
+        out Vector2 containerSize,
+        out Vector2i inventorySize)
+    {
+        containerRect = default;
+        containerSize = default;
+        inventorySize = default;
+        var charts = voyageWindow?.AvailableCharts;
+        if (charts is not { Count: > 0 })
+            return false;
+
+        var chartSize = charts[0].GetClientRectCache.Size;
+        containerRect = voyageWindow.ChartContainer.GetClientRectCache;
+        containerSize = new Vector2(containerRect.Size.Width, containerRect.Size.Height);
+        if (containerSize.X <= 0 || containerSize.Y <= 0 || chartSize.Width <= 0 || chartSize.Height <= 0)
+            return false;
+
+        inventorySize = new Vector2i(
+            (int)Math.Round(containerSize.X / chartSize.Width),
+            (int)Math.Round(containerSize.Y / chartSize.Height));
+        return inventorySize.X > 0 && inventorySize.Y > 0;
+    }
+
+    private static Vector2i GetChartInventoryCoord(
+        NormalInventoryItem chart,
+        RectangleF containerRect,
+        Vector2 containerSize,
+        Vector2i inventorySize) =>
+        ((chart.GetClientRectCache.TopLeft - containerRect.TopLeft).ToVector2Num()
+         / containerSize
+         * inventorySize)
+        .RoundToVector2I();
+
+    private static Vector2i GetChartInventoryCoord(VoyageWindow voyageWindow, NormalInventoryItem chart) =>
+        TryGetChartInventoryLayout(voyageWindow, out var containerRect, out var containerSize, out var inventorySize)
+            ? GetChartInventoryCoord(chart, containerRect, containerSize, inventorySize)
+            : default;
 
     private static bool TileHasChart(VoyageTileElement tile) =>
         tile?.ItemContainer?.Entity?.GetComponent<DeepwaterChart>() != null;
@@ -355,6 +386,13 @@ public partial class DeepwaterEngagementSuite
 
         var charts = GetAvailableCharts();
         var specialtyIndices = GetInventorySpecialtyIndices(charts);
+        var showInventoryInfo = Settings.VoyageSettings.ShowChartInventoryInformation;
+        RectangleF containerRect = default;
+        Vector2 containerSize = default;
+        Vector2i inventorySize = default;
+        var hasInventoryLayout = showInventoryInfo &&
+                                 TryGetChartInventoryLayout(tree, out containerRect, out containerSize,
+                                     out inventorySize);
 
         for (int i = 0; i < charts.Count; i++)
         {
@@ -365,9 +403,17 @@ public partial class DeepwaterEngagementSuite
                 pos.Y += exclSize.Y;
             }
 
-            if (Settings.VoyageSettings.ShowChartInventoryInformation)
+            if (showInventoryInfo)
             {
-                var size = Graphics.DrawTextWithBackground($"#{i}", pos, Color.Black);
+                Vector2 size;
+                if (hasInventoryLayout)
+                {
+                    var coord = GetChartInventoryCoord(charts[i], containerRect, containerSize, inventorySize);
+                    size = Graphics.DrawTextWithBackground($"{coord.X},{coord.Y}", pos, Color.Black);
+                    pos.Y += size.Y;
+                }
+
+                size = Graphics.DrawTextWithBackground($"#{i}", pos, Color.Black);
                 var chartMods = charts[i].Entity.GetComponent<Mods>()?.ImplicitMods ?? [];
 
                 foreach (var chartMod in chartMods)

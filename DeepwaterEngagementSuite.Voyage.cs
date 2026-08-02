@@ -280,7 +280,7 @@ public partial class DeepwaterEngagementSuite
         {
             var tile = tiles[index];
             var mods = modsPerTileIndex.GetValueOrDefault(index) ?? [];
-            if (settings.ShowGridCoordinates.Value)
+            if (settings.ShowScoreDebugDetails.Value)
             {
                 var tileTopLeft = tile.GetClientRectCache.TopLeft.ToVector2Num();
                 Graphics.DrawTextWithBackground($"({index / 3}, {index % 3})", tileTopLeft, Color.Black);

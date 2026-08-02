@@ -498,7 +498,8 @@ public class VoyageSettings
     public ToggleNode ShowOptimizerWindow { get; set; } = new ToggleNode(true);
 
     [Menu("Show score debug details",
-        "Verbose optimizer tables: per-tile (row,col) score breakdown and contribution sources. " +
+        "Verbose optimizer tables: per-tile (row,col) score breakdown and contribution sources, " +
+        "plus (row, col) labels on each Plan Your Voyage board tile. " +
         "Off by default — strategy labels stay available without this noise.")]
     public ToggleNode ShowScoreDebugDetails { get; set; } = new ToggleNode(false);
 
@@ -511,9 +512,6 @@ public class VoyageSettings
     public ToggleNode ShowAllBorderModifiers { get; set; } = new ToggleNode(false);
     public ToggleNode ShowAllChartModifiers { get; set; } = new ToggleNode(false);
     public ToggleNode ShowChartInventoryInformation { get; set; } = new ToggleNode(false);
-
-    [Menu("Show Grid Coordinates", "Draw (row, col) labels on each Plan Your Voyage board tile.")]
-    public ToggleNode ShowGridCoordinates { get; set; } = new ToggleNode(false);
 
     public ListNode ProfileSelector { get; set; } = new ListNode();
     [JsonIgnore] public ButtonNode AddProfile { get; set; } = new ButtonNode();

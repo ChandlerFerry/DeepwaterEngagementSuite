@@ -17,12 +17,13 @@ public sealed class VoyageSolve
         List<MapPiece> pieces,
         IReadOnlyList<BorderEffect>[,] tileBorders,
         bool useFastSolver,
-        VoyagePlannerSettings settings = null)
+        VoyagePlannerSettings settings = null,
+        VoyageStrategyOptions strategyOptions = null)
     {
         settings ??= new VoyagePlannerSettings();
         _slowPlanner = null;
 
-        Placement = VoyagePlacementRules.Apply(pieces, tileBorders);
+        Placement = VoyagePlacementRules.Apply(pieces, tileBorders, strategyOptions);
         Puzzle = new VoyagePuzzle(Placement.Pieces, tileBorders, Placement.Locks);
         Scorer = new VoyageScorer(Puzzle);
 

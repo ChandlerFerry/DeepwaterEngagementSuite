@@ -513,6 +513,11 @@ public class VoyageSettings
 
     [Menu("Use fast solver (exact, experimental)", "Exact branch-and-bound solver. Ignores the time limit. Per-connection border mods are ignored for now, so scores on those boards are approximate.")]
     public ToggleNode UseFastSolver { get; set; } = new ToggleNode(true);
+
+    [Menu("Placement strategies",
+        "Enable or disable individual voyage placement strategies. Disabled strategies neither lock cells nor save charts for later.")]
+    public VoyageStrategySettings Strategies { get; set; } = new VoyageStrategySettings();
+
     public ListNode ProfileSelector { get; set; } = new ListNode();
     [JsonIgnore] public ButtonNode AddProfile { get; set; } = new ButtonNode();
     [JsonIgnore] public ButtonNode ReloadProfiles { get; set; } = new ButtonNode();
@@ -545,6 +550,80 @@ public class VoyageSettings
         ItemFactory = () => new VoyageChartModifier(),
         ItemFilter = (o, s) => o.Id.Value.Contains(s, StringComparison.OrdinalIgnoreCase),
     };
+}
+
+[Submenu(CollapsedByDefault = true)]
+public class VoyageStrategySettings
+{
+    [Menu("Save Kishara", "Hold Kishara's Rest charts out of the solver (place boss yourself).")]
+    public ToggleNode SaveKishara { get; set; } = new ToggleNode(true);
+
+    [Menu("Pelagic on orbs", "Lock Pelagic Abyss on Divine/Annul/Ancient orb tiles; otherwise save unused Pelagic.")]
+    public ToggleNode PelagicOnOrbs { get; set; } = new ToggleNode(true);
+
+    [Menu("Unique Amulet2 + Clams cross", "Lock Unique Amulet2 at center with four Clam-infested Shelf charts on the orthogonal cross.")]
+    public ToggleNode UniqueAmuletClamCross { get; set; } = new ToggleNode(true);
+
+    [Menu("Divine support ring", "Fill Divine orb neighbors with boxes, then starfish, then rare combo charts.")]
+    public ToggleNode DivineSupportRing { get; set; } = new ToggleNode(true);
+
+    [Menu("Annul support ring", "Fill Annulment orb neighbors with starfish, then rare combo charts.")]
+    public ToggleNode AnnulSupportRing { get; set; } = new ToggleNode(true);
+
+    [Menu("Ancient support ring", "Fill Ancient orb neighbors with starfish, then rare combo charts.")]
+    public ToggleNode AncientSupportRing { get; set; } = new ToggleNode(true);
+
+    [Menu("No-consume Anchorfield", "Lock Anchorfield on strong no-consume border tiles.")]
+    public ToggleNode NoConsumeAnchorfield { get; set; } = new ToggleNode(true);
+
+    [Menu("Center specialty", "Prefer Operative box, Lost Message, or Unique Amulet1 on the center tile when free.")]
+    public ToggleNode CenterSpecialty { get; set; } = new ToggleNode(true);
+
+    [Menu("Divine rare fill", "When any Divine orb exists, fill remaining free tiles with voyage-rare charts.")]
+    public ToggleNode DivineRareFill { get; set; } = new ToggleNode(true);
+
+    [Menu("Save Anchorfield", "Hold unused Anchorfield charts out of the solver for better borders later.")]
+    public ToggleNode SaveAnchorfield { get; set; } = new ToggleNode(true);
+
+    [Menu("Save strongboxes", "Hold unused Strongboxes/Diviner/Arcanist charts (capped).")]
+    public ToggleNode SaveStrongboxes { get; set; } = new ToggleNode(true);
+
+    [Menu("Save starfish", "Hold unused starfish charts (capped).")]
+    public ToggleNode SaveStarfish { get; set; } = new ToggleNode(true);
+
+    [Menu("Save adjacent rare T2+", "Hold unused adjacent increased-rare T2+ charts.")]
+    public ToggleNode SaveAdjacentRare { get; set; } = new ToggleNode(true);
+
+    [Menu("Save voyage rares", "Hold unused MapDeepwaterChartVoyageIncreasedRareMonsters charts (capped at 5).")]
+    public ToggleNode SaveRareVoyage { get; set; } = new ToggleNode(true);
+
+    [Menu("Save Operative boxes", "Hold unused Operative box charts.")]
+    public ToggleNode SaveOperative { get; set; } = new ToggleNode(true);
+
+    [Menu("Save Lost Message", "Hold unused Lost Message charts.")]
+    public ToggleNode SaveLostMessage { get; set; } = new ToggleNode(true);
+
+    [Menu("Save Unique Amulet2 + Clams", "Hold one Unique Amulet2 and up to four Clams until the cross combo is ready.")]
+    public ToggleNode SaveUniqueAmuletAndClams { get; set; } = new ToggleNode(true);
+
+    public VoyageStrategyOptions ToOptions() => new(
+        SaveKishara: SaveKishara.Value,
+        PelagicOnOrbs: PelagicOnOrbs.Value,
+        UniqueAmuletClamCross: UniqueAmuletClamCross.Value,
+        DivineSupportRing: DivineSupportRing.Value,
+        AnnulSupportRing: AnnulSupportRing.Value,
+        AncientSupportRing: AncientSupportRing.Value,
+        NoConsumeAnchorfield: NoConsumeAnchorfield.Value,
+        CenterSpecialty: CenterSpecialty.Value,
+        DivineRareFill: DivineRareFill.Value,
+        SaveAnchorfield: SaveAnchorfield.Value,
+        SaveStrongboxes: SaveStrongboxes.Value,
+        SaveStarfish: SaveStarfish.Value,
+        SaveAdjacentRare: SaveAdjacentRare.Value,
+        SaveRareVoyage: SaveRareVoyage.Value,
+        SaveOperative: SaveOperative.Value,
+        SaveLostMessage: SaveLostMessage.Value,
+        SaveUniqueAmuletAndClams: SaveUniqueAmuletAndClams.Value);
 }
 
 [Submenu(CollapsedByDefault = true)]

@@ -236,6 +236,10 @@ public partial class DeepwaterEngagementSuite
         var tiles = tree.Tiles;
         if (settings.DrawComboLabels.Value)
         {
+            // Rare chart mods only label when Divine/Annul/Ancient orbs make rare strategy relevant.
+            var boardHasStrategyOrb = modsPerTileIndex.Values
+                .Any(tileMods => VoyagePlacementRules.HasStrategyOrb(tileMods.Select(m => m.RawName)));
+
             for (var index = 0; index < tiles.Count; index++)
             {
                 var tile = tiles[index];
@@ -258,7 +262,10 @@ public partial class DeepwaterEngagementSuite
                     var chartMods = tile.ItemContainer.Entity.GetComponent<Mods>()?.ImplicitMods ?? [];
                     foreach (var im in chartMods)
                     {
-                        if (!VoyagePlacementRules.IsSpecialtyComboModifier(im.RawName))
+                        var show = VoyagePlacementRules.IsSpecialtyComboModifier(im.RawName)
+                                   || (boardHasStrategyOrb &&
+                                       VoyagePlacementRules.IsIncreasedRareStrategyModifier(im.RawName));
+                        if (!show)
                             continue;
 
                         var chartMod = Settings.VoyageSettings.ChartModifiers.Content
@@ -379,7 +386,8 @@ public partial class DeepwaterEngagementSuite
                              pieces,
                              tileBorders,
                              useFastSolver: Settings.VoyageSettings.UseFastSolver.Value,
-                             settings: new VoyagePlannerSettings(TimeLimitSeconds: timeLimitSetting)))
+                             settings: new VoyagePlannerSettings(TimeLimitSeconds: timeLimitSetting),
+                             strategyOptions: Settings.VoyageSettings.Strategies.ToOptions()))
                 {
                     _result = r;
                     _voyageNodesExplored = r.NodesExplored;

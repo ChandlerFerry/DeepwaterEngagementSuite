@@ -40,6 +40,8 @@ public partial class DeepwaterEngagementSuite
     private long _voyageNodesPruned;
     private double _voyageElapsed;
     private System.Diagnostics.Stopwatch _voyageStopwatch;
+    private string _voyageBoardFingerprint;
+    private int _voyageSolveGeneration;
 
     private const int VoyageChartStableFramesRequired = 12;
 
@@ -237,6 +239,8 @@ public partial class DeepwaterEngagementSuite
             _voyageAutoSolvePending = false;
             _voyageLastReadyChartCount = -1;
             _voyageReadyChartStableFrames = 0;
+            _voyageBoardFingerprint = null;
+            InvalidateVoyageSolveState(clearResults: true);
             return;
         }
 
@@ -245,6 +249,17 @@ public partial class DeepwaterEngagementSuite
         if (!_voyageWindowWasOpen)
         {
             _voyageWindowWasOpen = true;
+            _voyageAutoSolvePending = true;
+            _voyageLastReadyChartCount = -1;
+            _voyageReadyChartStableFrames = 0;
+            _voyageBoardFingerprint = null;
+        }
+
+        var boardFingerprint = BuildVoyageBoardFingerprint(tree);
+        if (!string.Equals(boardFingerprint, _voyageBoardFingerprint, StringComparison.Ordinal))
+        {
+            _voyageBoardFingerprint = boardFingerprint;
+            InvalidateVoyageSolveState(clearResults: true);
             _voyageAutoSolvePending = true;
             _voyageLastReadyChartCount = -1;
             _voyageReadyChartStableFrames = 0;
@@ -478,7 +493,11 @@ public partial class DeepwaterEngagementSuite
         if (tree is not { IsValid: true, IsVisible: true })
             return;
         if (_run is { IsCompleted: false })
+        {
+            _voyageSolve?.Cancel();
+            _voyageAutoSolvePending = true;
             return;
+        }
 
         _voyageAutoSolvePending = false;
         _voyageSolve?.Cancel();
@@ -497,12 +516,16 @@ public partial class DeepwaterEngagementSuite
         var timeLimitSetting = Settings.VoyageSettings.SolverTimeLimitSeconds.Value;
         var useFastSolver = Settings.VoyageSettings.UseFastSolver.Value;
         var strategyOptions = Settings.VoyageSettings.Strategies.ToOptions();
+        var generation = ++_voyageSolveGeneration;
 
         _run = Task.Run(() =>
         {
             try
             {
                 var session = new VoyageSolve();
+                if (generation != _voyageSolveGeneration)
+                    return;
+
                 _voyageSolve = session;
 
                 foreach (var r in session.Run(
@@ -512,11 +535,16 @@ public partial class DeepwaterEngagementSuite
                              settings: new VoyagePlannerSettings(TimeLimitSeconds: timeLimitSetting),
                              strategyOptions: strategyOptions))
                 {
+                    if (generation != _voyageSolveGeneration)
+                        return;
                     _result = r;
                     _voyageNodesExplored = r.NodesExplored;
                     _voyageNodesPruned = r.NodesPruned;
                     _uiScorer = session.Scorer;
                 }
+
+                if (generation != _voyageSolveGeneration)
+                    return;
 
                 _uiScorer = session.Scorer;
                 _lastPlacement = session.Placement;
@@ -527,9 +555,62 @@ public partial class DeepwaterEngagementSuite
             }
             finally
             {
-                _voyageSolving = false;
+                if (generation == _voyageSolveGeneration)
+                    _voyageSolving = false;
             }
         });
+    }
+
+    private void InvalidateVoyageSolveState(bool clearResults)
+    {
+        _voyageSolveGeneration++;
+        _voyageSolve?.Cancel();
+        if (!clearResults)
+            return;
+
+        _result = null;
+        _lastPlacement = null;
+        _uiScorer = null;
+        _selectedSolutionIndex = 0;
+        _voyageNodesExplored = 0;
+        _voyageNodesPruned = 0;
+        _voyageElapsed = 0;
+        _voyageTimedOut = false;
+        if (_run is not { IsCompleted: false })
+            _voyageSolving = false;
+    }
+
+    private static string BuildVoyageBoardFingerprint(VoyageWindow tree)
+    {
+        var parts = new List<string>();
+        var borders = tree?.Data?.BorderMods;
+        if (borders != null)
+        {
+            foreach (var mod in borders)
+                parts.Add(mod?.RawName ?? "");
+        }
+
+        var charts = tree?.AvailableCharts;
+        if (charts != null)
+        {
+            foreach (var chart in charts)
+            {
+                if (chart?.Item == null)
+                {
+                    parts.Add("-");
+                    continue;
+                }
+
+                var room = chart.Item.TryGetComponent(out DeepwaterChart dc) ? dc.Room.Name ?? "" : "";
+                var mods = chart.Item.GetComponent<Mods>()?.ImplicitMods;
+                var modNames = mods == null
+                    ? ""
+                    : string.Join(',', mods.Select(m => m.RawName));
+                parts.Add(room + "|" + modNames);
+            }
+        }
+
+        return string.Join('\n', parts);
     }
 
     private void ShowVoyageOptimizerWindow(VoyageWindow tree, List<VoyageTileElement> tiles)

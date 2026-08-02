@@ -72,7 +72,8 @@ public static class VoyagePlacementRules
         int SavedUniqueBeltCount,
         int SavedUniqueRingCount,
         bool AmuletClamHubActive = false,
-        bool PreferClamsAdjacentToAmulet = false);
+        bool PreferClamsAdjacentToAmulet = false,
+        bool NoConsumeActive = false);
 
     public const double ClamAdjacentToAmuletMultiplier = 1_000_000d;
 
@@ -247,11 +248,11 @@ public static class VoyagePlacementRules
                 LockCell(CenterRow, CenterCol, centerPiece);
         }
 
+        var noConsumeActive = false;
         if (options.NoConsumeAnchorfield &&
             !strongTreasure &&
             !hasOrbs &&
-            !amuletCrossLocked &&
-            locks.Count == 0)
+            !amuletCrossLocked)
         {
             foreach (var cell in EnumerateCells().Where(c =>
                          CellFree(c.Row, c.Col) &&
@@ -263,6 +264,7 @@ public static class VoyagePlacementRules
                     farm = TakeBest(working, usedPieceIds, IsClamChart, ClamScore);
                 if (farm == null) break;
                 LockCell(cell.Row, cell.Col, farm);
+                noConsumeActive = true;
             }
         }
 
@@ -370,7 +372,8 @@ public static class VoyagePlacementRules
             savedClam, savedUniqueAmulet,
             savedUniqueBelt, savedUniqueRing,
             AmuletClamHubActive: amuletCrossLocked,
-            PreferClamsAdjacentToAmulet: preferClamsAdjacentToAmulet);
+            PreferClamsAdjacentToAmulet: preferClamsAdjacentToAmulet,
+            NoConsumeActive: noConsumeActive);
     }
 
     private static bool BoardHasStrongTreasureAnchors(IReadOnlyList<BorderEffect>[,] tileBorders)

@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using DeepwaterEngagementSuite.VoyagePlannerData;
 using ExileCore;
-using ExileCore.PoEMemory;
 using ExileCore.PoEMemory.Components;
 using ExileCore.PoEMemory.Elements;
 using ExileCore.PoEMemory.Elements.InventoryElements;
@@ -377,6 +376,7 @@ public partial class DeepwaterEngagementSuite
         }
     }
 
+    // TODO: move this overlay to the voyage compass at VoyageWindow → 34 → 3 → 7 once that path draws reliably.
     private void DrawStrategyOnCompass(VoyageWindow tree)
     {
         var placement = _lastPlacement ?? _voyageSolve?.Placement;
@@ -387,28 +387,20 @@ public partial class DeepwaterEngagementSuite
         if (names.Count == 0)
             return;
 
-        Element compass;
-        try
-        {
-            compass = tree.GetChildFromIndices(34, 3, 7);
-        }
-        catch
-        {
-            return;
-        }
-
-        if (compass is not { IsValid: true })
+        var clear = tree.ClearButton;
+        if (clear == null)
             return;
 
-        var rect = compass.GetClientRectCache;
+        var rect = clear.GetClientRectCache;
         if (rect.Width <= 0 || rect.Height <= 0)
             return;
 
-        var pos = rect.Center.ToVector2Num();
+        var pos = new Vector2(rect.Center.X, rect.Top);
         foreach (var name in names)
         {
-            var size = Graphics.DrawTextWithBackground(name, pos, Color.Orange, FontAlign.Center, Color.Black);
-            pos.Y += size.Y;
+            var size = Graphics.MeasureText(name);
+            pos.Y -= size.Y;
+            Graphics.DrawTextWithBackground(name, pos, Color.Orange, FontAlign.Center, Color.Black);
         }
     }
 
@@ -1008,7 +1000,7 @@ public partial class DeepwaterEngagementSuite
         }
 
         foreach (var name in names)
-            ImGui.TextColored(Color.Blue.ToImguiVec4(), name);
+            ImGui.TextColored(Color.Orange.ToImguiVec4(), name);
     }
 
     private static List<string> DescribeActiveStrategies(VoyagePlacementRules.Result placement)
@@ -1019,7 +1011,7 @@ public partial class DeepwaterEngagementSuite
 
         var byId = placement.Pieces?.ToDictionary(p => p.Id) ?? new Dictionary<int, MapPiece>();
         var pelagic = false;
-        var noConsume = false;
+        var noConsume = placement.NoConsumeActive;
         var amuletCenter = false;
         var other = false;
 

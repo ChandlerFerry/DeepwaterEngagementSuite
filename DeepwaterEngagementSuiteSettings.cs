@@ -562,8 +562,11 @@ public class VoyageStrategySettings
     public ToggleNode PelagicOnOrbs { get; set; } = new ToggleNode(true);
 
     [Menu("Unique Amulet2 + Clams hub",
-        "Lock Unique Amulet2 at center with three Clam-infested Shelf charts on orthogonal neighbors. " +
-        "Priority: strong treasure / orbs > this hub > no-consume. Skipped when strong treasure or orbs are present.")]
+        "On: hard-lock Clam-infested Shelf charts on orthogonal neighbors around center Unique Amulet2 " +
+        "(3 clams when the amulet has 3–4 connections; only 2 when it has 1–2 — a third forced clam is unsolvable). " +
+        "Priority: strong treasure / orbs > this hub > no-consume. Skipped when strong treasure or orbs are present. " +
+        "Off: still put Unique Amulet2 on center only, and soft-prioritize Clams on its orthogonal neighbors " +
+        "with a very large score multiplier.")]
     public ToggleNode UniqueAmuletClamCross { get; set; } = new ToggleNode(true);
 
     [Menu("Divine support ring", "Fill Divine orb neighbors with boxes, then starfish, then rare combo charts.")]

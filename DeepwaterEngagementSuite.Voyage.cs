@@ -936,63 +936,64 @@ public partial class DeepwaterEngagementSuite
         if (placement == null)
             return;
 
-        var active = DescribeActiveStrategies(placement);
-        if (active.Count == 0)
+        var names = DescribeActiveStrategies(placement);
+        if (names.Count == 0)
         {
-            ImGui.TextColored(Color.Gray.ToImguiVec4(), "Strategy: none (free solve)");
+            ImGui.TextColored(Color.Gray.ToImguiVec4(), "Free");
             return;
         }
 
-        ImGui.TextColored(Color.Cyan.ToImguiVec4(), "Strategy:");
-        foreach (var line in active)
-            ImGui.TextColored(Color.Cyan.ToImguiVec4(), $"- {line}");
+        foreach (var name in names)
+            ImGui.TextColored(Color.Blue.ToImguiVec4(), name);
     }
 
     private static List<string> DescribeActiveStrategies(VoyagePlacementRules.Result placement)
     {
-        var lines = new List<string>();
+        var names = new List<string>();
         if (placement == null)
-            return lines;
-
-        if (placement.AmuletClamHubActive)
-            lines.Add("Unique Amulet2 + Clams hub");
+            return names;
 
         var byId = placement.Pieces?.ToDictionary(p => p.Id) ?? new Dictionary<int, MapPiece>();
-        var pelagic = 0;
-        var anchorfield = 0;
-        var clam = 0;
-        var otherLocks = 0;
+        var pelagic = false;
+        var noConsume = false;
+        var amuletCenter = false;
+        var other = false;
 
         foreach (var lp in placement.Locks ?? [])
         {
             if (!byId.TryGetValue(lp.PieceId, out var piece))
             {
-                otherLocks++;
+                other = true;
                 continue;
             }
 
             if (VoyagePlacementRules.IsPelagic(piece))
-                pelagic++;
+                pelagic = true;
             else if (VoyagePlacementRules.IsAnchorfieldChart(piece))
-                anchorfield++;
+                noConsume = true;
             else if (VoyagePlacementRules.IsClamChart(piece))
-                clam++;
-            else if (!placement.AmuletClamHubActive || !VoyagePlacementRules.IsUniqueAmulet2Chart(piece))
-                otherLocks++;
+            {
+                if (!placement.AmuletClamHubActive)
+                    noConsume = true;
+            }
+            else if (VoyagePlacementRules.IsUniqueAmulet2Chart(piece))
+                amuletCenter = true;
+            else
+                other = true;
         }
 
-        if (pelagic > 0)
-            lines.Add($"Pelagic on orbs ({pelagic})");
-        if (anchorfield > 0)
-            lines.Add($"No-consume farm ({anchorfield})");
-        if (clam > 0 && !placement.AmuletClamHubActive)
-            lines.Add($"Clam on no-consume ({clam})");
-        if (otherLocks > 0)
-            lines.Add($"Other locks ({otherLocks})");
-        if (placement.Locks is { Count: > 0 })
-            lines.Add($"{placement.Locks.Count} cell lock(s) total");
+        if (placement.AmuletClamHubActive)
+            names.Add("Amulet Hub");
+        else if (amuletCenter)
+            names.Add(placement.PreferClamsAdjacentToAmulet ? "Amulet Soft" : "Amulet");
+        if (pelagic)
+            names.Add("Pelagic");
+        if (noConsume)
+            names.Add("No-consume");
+        if (other)
+            names.Add("Locks");
 
-        return lines;
+        return names;
     }
 
     private void DrawStrategyReservationHint()

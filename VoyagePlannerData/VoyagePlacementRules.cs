@@ -55,7 +55,14 @@ public static class VoyagePlacementRules
         int SavedKisharaCount,
         int SavedClamCount,
         int SavedUniqueAmuletCount,
-        bool AmuletClamHubActive = false);
+        bool AmuletClamHubActive = false,
+        bool PreferClamsAdjacentToAmulet = false);
+
+    /// <summary>
+    /// Soft preference when the hard clam hub is off: multiply (weight+1) for Clam charts on
+    /// center-orthogonal cells so they outrank normal placements while keeping relative order.
+    /// </summary>
+    public const double ClamAdjacentToAmuletMultiplier = 1_000_000d;
 
     public static readonly (int Row, int Col)[] SacrificeCorners = [(2, 0), (2, 2), (0, 2)];
 
@@ -120,14 +127,23 @@ public static class VoyagePlacementRules
         var hasOrbs = orbCenters.Count > 0;
         var strongTreasure = BoardHasStrongTreasureAnchors(tileBorders);
 
+        // Unique Amulet2 is always center-only (solver hard rule). The toggle only
+        // enables the hard clam-neighbor hub; when off we still lock the amulet on center
+        // and soft-prefer Clams on its orthogonal neighbors via a large score multiplier.
         var amuletCrossLocked = false;
-        if (options.UniqueAmuletClamCross &&
-            !strongTreasure &&
-            !hasOrbs &&
-            CellFree(CenterRow, CenterCol))
+        var preferClamsAdjacentToAmulet = false;
+        if (CellFree(CenterRow, CenterCol))
         {
-            amuletCrossLocked = TryLockAmuletClamHub(
-                working, usedPieceIds, CellFree, LockCell);
+            if (options.UniqueAmuletClamCross && !strongTreasure && !hasOrbs)
+            {
+                amuletCrossLocked = TryLockAmuletClamHub(
+                    working, usedPieceIds, CellFree, LockCell);
+            }
+            else if (!options.UniqueAmuletClamCross)
+            {
+                preferClamsAdjacentToAmulet = TryLockUniqueAmulet2Center(
+                    working, usedPieceIds, LockCell);
+            }
         }
 
         var savedPelagic = 0;
@@ -273,19 +289,42 @@ public static class VoyagePlacementRules
             ? RemoveUnused(working, usedPieceIds, IsLostMessageChart)
             : 0;
 
+        // Hold amulet + clams for the hub only while that strategy is enabled and not already locked.
+        // When the strategy is off, Unique Amulet2 stays in the pool (center-only) or was locked above.
         var savedUniqueAmulet = 0;
         var savedClam = 0;
-        savedUniqueAmulet = RemoveUnused(working, usedPieceIds, IsUniqueAmulet2Chart,
-            UniqueAmuletScore, force: true);
         if (options.SaveUniqueAmuletAndClams && options.UniqueAmuletClamCross && !amuletCrossLocked)
         {
+            savedUniqueAmulet = RemoveUnused(working, usedPieceIds, IsUniqueAmulet2Chart,
+                UniqueAmuletScore, maxSave: MaxSavedUniqueAmulet2, force: true);
             savedClam = RemoveUnused(working, usedPieceIds, IsClamChart, ClamScore,
                 maxSave: MaxSavedClamsForAmulet, force: true);
         }
 
         if (surplusClams)
         {
-            savedClam += RemoveUnused(working, usedPieceIds, IsClamChart, ClamScore, force: true);
+            // Soft-prefer mode needs free Clams for the solver; keep enough for center neighbors.
+            if (preferClamsAdjacentToAmulet)
+            {
+                var freeOrtho = FreeNeighbors(CenterRow, CenterCol, CellFree).Count();
+                var keep = Math.Max(0, freeOrtho);
+                var clamCandidates = working
+                    .Where(p => !usedPieceIds.Contains(p.Id) && IsClamChart(p))
+                    .OrderByDescending(ClamScore)
+                    .ThenByDescending(p => p.LocalModifier + p.GlobalModifier)
+                    .Select(p => p.Id)
+                    .ToList();
+                foreach (var id in clamCandidates.Skip(keep))
+                {
+                    if (!TrySavePiece(working, id, force: true))
+                        break;
+                    savedClam++;
+                }
+            }
+            else
+            {
+                savedClam += RemoveUnused(working, usedPieceIds, IsClamChart, ClamScore, force: true);
+            }
         }
 
         return new Result(
@@ -293,7 +332,8 @@ public static class VoyagePlacementRules
             savedPelagic, savedFarm, savedStrongbox, savedStarfish, savedRareVoyage,
             savedAdjacentRare, savedOperative, savedLostMessage, savedKishara,
             savedClam, savedUniqueAmulet,
-            AmuletClamHubActive: amuletCrossLocked);
+            AmuletClamHubActive: amuletCrossLocked,
+            PreferClamsAdjacentToAmulet: preferClamsAdjacentToAmulet);
     }
 
     private static bool BoardHasStrongTreasureAnchors(IReadOnlyList<BorderEffect>[,] tileBorders)
@@ -314,6 +354,29 @@ public static class VoyagePlacementRules
         return IsStrongTreasureAnchorsCounts(treasureT1, treasureT2);
     }
 
+    // 1–2 arm Unique Amulet2 can only force 2 clams; a third forced clam is unsolvable.
+    public static int ClamHubCountForAmulet(MapPiece amulet2)
+    {
+        var connections = amulet2.BaseConnections.CountConnections();
+        if (connections <= 0)
+            return 0;
+        if (connections <= 2)
+            return 2;
+        return MaxSavedClamsForAmulet;
+    }
+
+    private static bool TryLockUniqueAmulet2Center(
+        List<MapPiece> working,
+        HashSet<int> usedPieceIds,
+        Action<int, int, MapPiece, int?> lockCell)
+    {
+        var amulet2 = TakeBest(working, usedPieceIds, IsUniqueAmulet2Chart, UniqueAmuletScore);
+        if (amulet2 == null)
+            return false;
+        lockCell(CenterRow, CenterCol, amulet2, null);
+        return true;
+    }
+
     private static bool TryLockAmuletClamHub(
         List<MapPiece> working,
         HashSet<int> usedPieceIds,
@@ -324,26 +387,30 @@ public static class VoyagePlacementRules
         if (amulet2 == null)
             return false;
 
+        var clamCount = ClamHubCountForAmulet(amulet2);
+        if (clamCount <= 0)
+            return false;
+
         var freeOrtho = FreeNeighbors(CenterRow, CenterCol, cellFree).ToList();
-        if (freeOrtho.Count < MaxSavedClamsForAmulet)
+        if (freeOrtho.Count < clamCount)
             return false;
 
         var clamSlots = freeOrtho
             .OrderBy(c => c.Row == CenterRow - 1 && c.Col == CenterCol ? 1 : 0)
-            .Take(MaxSavedClamsForAmulet)
+            .Take(clamCount)
             .ToList();
 
         var clams = working
             .Where(p => !usedPieceIds.Contains(p.Id) && IsClamChart(p))
             .OrderByDescending(ClamScore)
             .ThenByDescending(p => p.LocalModifier + p.GlobalModifier)
-            .Take(MaxSavedClamsForAmulet)
+            .Take(clamCount)
             .ToList();
-        if (clams.Count < MaxSavedClamsForAmulet)
+        if (clams.Count < clamCount)
             return false;
 
         lockCell(CenterRow, CenterCol, amulet2, null);
-        for (var i = 0; i < MaxSavedClamsForAmulet; i++)
+        for (var i = 0; i < clamCount; i++)
             lockCell(clamSlots[i].Row, clamSlots[i].Col, clams[i], null);
         return true;
     }

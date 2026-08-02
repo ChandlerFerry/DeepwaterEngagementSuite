@@ -269,6 +269,9 @@ public class VoyagePlannerFast
             }
         }
 
+        if (puzzle.PreferClamsAdjacentToAmulet)
+            ApplyClamAdjacentToAmuletPreference(pieces, weight);
+
         ApplyLocks(puzzle, pieces, weight, eligible, rotation);
 
         if (puzzle.AllowSacrificeCornerBorderDeadEnds)
@@ -463,6 +466,33 @@ public class VoyagePlannerFast
                     if (rotation[i][slot] == byte.MaxValue)
                         rotation[i][slot] = (byte)rot;
                 }
+            }
+        }
+    }
+
+    private static void ApplyClamAdjacentToAmuletPreference(List<MapPiece> pieces, double[][] weight)
+    {
+        var mult = VoyagePlacementRules.ClamAdjacentToAmuletMultiplier;
+        var adj = new bool[Cells];
+        foreach (var (_, dr, dc) in Dirs)
+        {
+            var nr = VoyagePlacementRules.CenterRow + dr;
+            var nc = VoyagePlacementRules.CenterCol + dc;
+            if (nr is < 0 or >= GridSize || nc is < 0 or >= GridSize)
+                continue;
+            adj[nr * GridSize + nc] = true;
+        }
+
+        for (var i = 0; i < pieces.Count; i++)
+        {
+            if (!VoyagePlacementRules.IsClamChart(pieces[i]))
+                continue;
+            for (var cell = 0; cell < Cells; cell++)
+            {
+                if (!adj[cell] || double.IsNegativeInfinity(weight[i][cell]))
+                    continue;
+                // (w+1)*mult keeps relative order and still boosts zero-mod Clams.
+                weight[i][cell] = (Math.Max(0, weight[i][cell]) + 1.0) * mult;
             }
         }
     }

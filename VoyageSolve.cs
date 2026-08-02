@@ -28,7 +28,8 @@ public sealed class VoyageSolve
             Placement.Pieces,
             tileBorders,
             Placement.Locks,
-            AllowSacrificeCornerBorderDeadEnds: Placement.AmuletClamHubActive);
+            AllowSacrificeCornerBorderDeadEnds: Placement.AmuletClamHubActive,
+            PreferClamsAdjacentToAmulet: Placement.PreferClamsAdjacentToAmulet);
         Scorer = new VoyageScorer(Puzzle);
 
         if (useFastSolver)

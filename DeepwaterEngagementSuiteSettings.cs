@@ -497,12 +497,6 @@ public class VoyageSettings
     [Menu("Show optimizer window")]
     public ToggleNode ShowOptimizerWindow { get; set; } = new ToggleNode(true);
 
-    [Menu("Draw combo labels",
-        "Overlay specialty combo pieces (Pelagic/farm rooms, starfish, rares, boxes, Lost Message) and strategy borders " +
-        "(orbs, strong treasure anchors board-wide: 1×T2+2×T1, 3×T1, or 2×T2). No-consume is not labeled. " +
-        "Turn off for a clean voyage UI.")]
-    public ToggleNode DrawComboLabels { get; set; } = new ToggleNode(true);
-
     [Menu("Show score debug details",
         "Verbose optimizer tables: per-tile (row,col) score breakdown and contribution sources. " +
         "Off by default — strategy labels stay available without this noise.")]
@@ -514,9 +508,9 @@ public class VoyageSettings
     [Menu("Use fast solver (exact, experimental)", "Exact branch-and-bound solver. Ignores the time limit. Per-connection border mods are ignored for now, so scores on those boards are approximate.")]
     public ToggleNode UseFastSolver { get; set; } = new ToggleNode(true);
 
-    public ToggleNode ShowAllBorderModifiers { get; set; } = new ToggleNode(true);
-    public ToggleNode ShowAllChartModifiers { get; set; } = new ToggleNode(true);
-    public ToggleNode ShowChartInventoryInformation { get; set; } = new ToggleNode(true);
+    public ToggleNode ShowAllBorderModifiers { get; set; } = new ToggleNode(false);
+    public ToggleNode ShowAllChartModifiers { get; set; } = new ToggleNode(false);
+    public ToggleNode ShowChartInventoryInformation { get; set; } = new ToggleNode(false);
 
     public ListNode ProfileSelector { get; set; } = new ListNode();
     [JsonIgnore] public ButtonNode AddProfile { get; set; } = new ButtonNode();

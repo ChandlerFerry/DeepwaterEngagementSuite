@@ -34,4 +34,8 @@ public enum IconPickerIndex
     StrongboxScarab,
     StrongboxArcanist,
     PointerTarget,
+    DeadMansSulphurSmall,
+    DeadMansSulphurBase,
+    DeadMansSulphurLarge,
+    DeadMansSulphurHuge,
 }

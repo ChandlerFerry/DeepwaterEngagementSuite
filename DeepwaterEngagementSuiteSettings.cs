@@ -41,6 +41,10 @@ public class DeepwaterEngagementSuiteSettings : ISettings
     public const MapIconsIndex DefaultAltarOctopusIcon = MapIconsIndex.RewardBreach;
     public const MapIconsIndex DefaultTormentedSpiritEncounterIcon = MapIconsIndex.LootFilterSmallGreenCircle;
     public const MapIconsIndex DefaultLanternReplenishEncounterIcon = MapIconsIndex.BlightPortalFire;
+    public const MapIconsIndex DefaultDeadmansSulphurSmallIcon = MapIconsIndex.LootFilterSmallGreenRaindrop;
+    public const MapIconsIndex DefaultDeadmansSulphurBaseIcon = MapIconsIndex.LootFilterSmallGreenRaindrop;
+    public const MapIconsIndex DefaultDeadmansSulphurLargeIcon = MapIconsIndex.LootFilterMediumGreenRaindrop;
+    public const MapIconsIndex DefaultDeadmansSulphurHugeIcon = MapIconsIndex.LootFilterLargeGreenRaindrop;
 
     public ToggleNode Enable { get; set; } = new ToggleNode(false);
 
@@ -87,6 +91,10 @@ public class DeepwaterEngagementSuiteSettings : ISettings
         IconPickerIndex.StrongboxScarab => MapIconsIndex.CorpseTypeEldritch,
         IconPickerIndex.StrongboxArcanist => MapIconsIndex.CorpseTypeBeast,
         IconPickerIndex.PointerTarget => MapIconsIndex.AncestralEnemyTotem,
+        IconPickerIndex.DeadMansSulphurSmall => DefaultDeadmansSulphurSmallIcon,
+        IconPickerIndex.DeadMansSulphurBase => DefaultDeadmansSulphurBaseIcon,
+        IconPickerIndex.DeadMansSulphurLarge => DefaultDeadmansSulphurLargeIcon,
+        IconPickerIndex.DeadMansSulphurHuge => DefaultDeadmansSulphurHugeIcon,
         _ => DefaultOtherChestIcon,
     };
 
@@ -101,6 +109,7 @@ public class DeepwaterEngagementSuiteSettings : ISettings
     public static float GetDefaultIconSizeScale(IconPickerIndex index) => index switch
     {
         IconPickerIndex.CurrencyTreasureChestOpulent => 2.0f,
+        IconPickerIndex.DeadMansSulphurSmall => 0.5f,
         _ => 1f,
     };
 
@@ -208,6 +217,10 @@ public class IconSettings
         "Off by default to reduce clutter.")]
     public ToggleNode ShowScarabStrongboxIcons { get; set; } = new ToggleNode(false);
 
+    [Menu("Show Sulphur icons",
+    "Off by default to reduce clutter.")]
+    public ToggleNode ShowDeadmansSulphurIcons { get; set; } = new ToggleNode(false);
+
     public bool IsIconEnabled(IconPickerIndex index) => index switch
     {
         IconPickerIndex.BottledItemChest => ShowBottledItemIcons.Value,
@@ -237,6 +250,10 @@ public class IconSettings
         IconPickerIndex.StrongboxScarab => ShowScarabStrongboxIcons.Value,
         IconPickerIndex.StrongboxArcanist => ShowArcanistStrongboxIcons.Value,
         IconPickerIndex.PointerTarget => ShowPointerTargetIcons.Value,
+        IconPickerIndex.DeadMansSulphurSmall => ShowDeadmansSulphurIcons.Value,
+        IconPickerIndex.DeadMansSulphurBase => ShowDeadmansSulphurIcons.Value,
+        IconPickerIndex.DeadMansSulphurLarge => ShowDeadmansSulphurIcons.Value,
+        IconPickerIndex.DeadMansSulphurHuge => ShowDeadmansSulphurIcons.Value,
         IconPickerIndex.OtherChests => ShowOtherChestIcons.Value,
         _ => true,
     };

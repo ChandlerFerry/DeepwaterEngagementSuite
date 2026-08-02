@@ -245,11 +245,26 @@ public class VoyagePlannerFast
                 var conn = (int)piece.GetConnections(rot);
                 for (var cell = 0; cell < Cells; cell++)
                 {
+                    if (VoyagePlacementRules.IsUniqueAmulet2Chart(piece) &&
+                        cell != VoyagePlacementRules.CenterRow * GridSize + VoyagePlacementRules.CenterCol)
+                        continue;
+
                     var inGrid = conn & InGrid[cell];
                     var slot = cell * 16 + inGrid;
                     if (rotation[i][slot] != byte.MaxValue) continue;
                     eligible[i][cell] |= 1 << inGrid;
                     rotation[i][slot] = (byte)rot;
+                }
+            }
+
+            if (VoyagePlacementRules.IsUniqueAmulet2Chart(piece))
+            {
+                for (var cell = 0; cell < Cells; cell++)
+                {
+                    if (cell == VoyagePlacementRules.CenterRow * GridSize + VoyagePlacementRules.CenterCol)
+                        continue;
+                    weight[i][cell] = double.NegativeInfinity;
+                    eligible[i][cell] = 0;
                 }
             }
         }

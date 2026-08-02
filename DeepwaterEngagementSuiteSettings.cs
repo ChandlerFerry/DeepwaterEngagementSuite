@@ -499,7 +499,7 @@ public class VoyageSettings
 
     [Menu("Draw combo labels",
         "Overlay specialty combo pieces (Pelagic/farm rooms, starfish, rares, boxes, Lost Message) and strategy borders " +
-        "(orbs, scarabs 2–3, any treasure anchors). No-consume borders are used for strategy but not labeled. " +
+        "(orbs, strong treasure anchors board-wide: 1×T2+2×T1, 3×T1, or 2×T2). No-consume is not labeled. " +
         "Turn off for a clean voyage UI.")]
     public ToggleNode DrawComboLabels { get; set; } = new ToggleNode(true);
 
@@ -563,7 +563,7 @@ public class VoyageStrategySettings
 
     [Menu("Unique Amulet2 + Clams hub",
         "Lock Unique Amulet2 at center with three Clam-infested Shelf charts on orthogonal neighbors. " +
-        "Skipped when the board has other strategies (orbs, scarabs, strong no-consume, strong treasure anchors) so those areas are fully cleared.")]
+        "Priority: strong treasure / orbs > this hub > no-consume. Skipped when strong treasure or orbs are present.")]
     public ToggleNode UniqueAmuletClamCross { get; set; } = new ToggleNode(true);
 
     [Menu("Divine support ring", "Fill Divine orb neighbors with boxes, then starfish, then rare combo charts.")]
@@ -575,7 +575,8 @@ public class VoyageStrategySettings
     [Menu("Ancient support ring", "Fill Ancient orb neighbors with starfish, then rare combo charts.")]
     public ToggleNode AncientSupportRing { get; set; } = new ToggleNode(true);
 
-    [Menu("No-consume Anchorfield", "Lock Anchorfield on strong no-consume border tiles.")]
+    [Menu("No-consume Anchorfield",
+        "Weakest strategy: lock Anchorfield (or surplus Clams) on strong no-consume tiles only when no higher strategy applies (no orbs, strong treasure, amulet hub, or other locks).")]
     public ToggleNode NoConsumeAnchorfield { get; set; } = new ToggleNode(true);
 
     [Menu("Center specialty", "Prefer Operative box, Lost Message, or Unique Amulet1 on the center tile when free.")]

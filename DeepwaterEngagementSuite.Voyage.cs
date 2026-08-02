@@ -260,6 +260,8 @@ public partial class DeepwaterEngagementSuite
         {
             var boardHasStrategyOrb = modsPerTileIndex.Values
                 .Any(tileMods => VoyagePlacementRules.HasStrategyOrb(tileMods.Select(m => m.RawName)));
+            var boardStrongTreasureAnchors = VoyagePlacementRules.IsStrongTreasureAnchors(
+                modsPerTileIndex.Values.SelectMany(tileMods => tileMods.Select(m => m.RawName)));
 
             for (var index = 0; index < tiles.Count; index++)
             {
@@ -311,7 +313,8 @@ public partial class DeepwaterEngagementSuite
                 foreach (var itemMod in mods)
                 {
                     var isStrategy = VoyagePlacementRules.IsStrategyBorder(itemMod.RawName);
-                    var isTreasure = VoyagePlacementRules.IsTreasureAnchorsBorder(itemMod.RawName);
+                    var isTreasure = boardStrongTreasureAnchors &&
+                                     VoyagePlacementRules.IsTreasureAnchorsBorder(itemMod.RawName);
                     if (!isStrategy && !isTreasure)
                         continue;
 
@@ -517,9 +520,10 @@ public partial class DeepwaterEngagementSuite
 
         ImGui.Spacing();
 
-        if (_voyageSolving || _result != null)
+        if (_voyageSolving || _result != null || _lastPlacement != null)
         {
             ImGui.Text($"Nodes: {_voyageNodesExplored:N0} explored, {_voyageNodesPruned:N0} pruned");
+            DrawStrategyStatus();
         }
 
         if (_result == null || _result.Solutions.Count == 0)
@@ -924,6 +928,71 @@ public partial class DeepwaterEngagementSuite
         }
 
         return tileBorders;
+    }
+
+    private void DrawStrategyStatus()
+    {
+        var placement = _lastPlacement ?? _voyageSolve?.Placement;
+        if (placement == null)
+            return;
+
+        var active = DescribeActiveStrategies(placement);
+        if (active.Count == 0)
+        {
+            ImGui.TextColored(Color.Gray.ToImguiVec4(), "Strategy: none (free solve)");
+            return;
+        }
+
+        ImGui.TextColored(Color.Cyan.ToImguiVec4(), "Strategy:");
+        foreach (var line in active)
+            ImGui.TextColored(Color.Cyan.ToImguiVec4(), $"- {line}");
+    }
+
+    private static List<string> DescribeActiveStrategies(VoyagePlacementRules.Result placement)
+    {
+        var lines = new List<string>();
+        if (placement == null)
+            return lines;
+
+        if (placement.AmuletClamHubActive)
+            lines.Add("Unique Amulet2 + Clams hub");
+
+        var byId = placement.Pieces?.ToDictionary(p => p.Id) ?? new Dictionary<int, MapPiece>();
+        var pelagic = 0;
+        var anchorfield = 0;
+        var clam = 0;
+        var otherLocks = 0;
+
+        foreach (var lp in placement.Locks ?? [])
+        {
+            if (!byId.TryGetValue(lp.PieceId, out var piece))
+            {
+                otherLocks++;
+                continue;
+            }
+
+            if (VoyagePlacementRules.IsPelagic(piece))
+                pelagic++;
+            else if (VoyagePlacementRules.IsAnchorfieldChart(piece))
+                anchorfield++;
+            else if (VoyagePlacementRules.IsClamChart(piece))
+                clam++;
+            else if (!placement.AmuletClamHubActive || !VoyagePlacementRules.IsUniqueAmulet2Chart(piece))
+                otherLocks++;
+        }
+
+        if (pelagic > 0)
+            lines.Add($"Pelagic on orbs ({pelagic})");
+        if (anchorfield > 0)
+            lines.Add($"No-consume farm ({anchorfield})");
+        if (clam > 0 && !placement.AmuletClamHubActive)
+            lines.Add($"Clam on no-consume ({clam})");
+        if (otherLocks > 0)
+            lines.Add($"Other locks ({otherLocks})");
+        if (placement.Locks is { Count: > 0 })
+            lines.Add($"{placement.Locks.Count} cell lock(s) total");
+
+        return lines;
     }
 
     private void DrawStrategyReservationHint()

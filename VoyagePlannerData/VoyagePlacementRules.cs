@@ -11,8 +11,6 @@ public static class VoyagePlacementRules
     public const string RareDivine = "DeepwaterBorderRareMonsterDivine";
     public const string RareAnnul = "DeepwaterBorderRareMonsterAnnulment";
     public const string RareAncient = "DeepwaterBorderRareMonsterAncient";
-    public const string MoreScarabs2 = "DeepwaterBorderMoreScarabs2";
-    public const string MoreScarabs3 = "DeepwaterBorderMoreScarabs3";
     public const string TreasureAnchors1 = "DeepwaterBorderTreasureAnchors1";
     public const string TreasureAnchors2 = "DeepwaterBorderTreasureAnchors2";
 
@@ -119,11 +117,13 @@ public static class VoyagePlacementRules
 
         var clamCountAtStart = working.Count(p => !usedPieceIds.Contains(p.Id) && IsClamChart(p));
         var surplusClams = clamCountAtStart > MaxSavedClamsForAmulet;
-        var boardHasOtherStrategy = BoardHasNonClamStrategy(tileBorders);
+        var hasOrbs = orbCenters.Count > 0;
+        var strongTreasure = BoardHasStrongTreasureAnchors(tileBorders);
 
         var amuletCrossLocked = false;
         if (options.UniqueAmuletClamCross &&
-            !boardHasOtherStrategy &&
+            !strongTreasure &&
+            !hasOrbs &&
             CellFree(CenterRow, CenterCol))
         {
             amuletCrossLocked = TryLockAmuletClamHub(
@@ -195,20 +195,6 @@ public static class VoyagePlacementRules
             }
         }
 
-        if (options.NoConsumeAnchorfield)
-        {
-            foreach (var cell in EnumerateCells().Where(c =>
-                         CellFree(c.Row, c.Col) &&
-                         IsStrongNoConsume(BordersAt(tileBorders, c.Row, c.Col))))
-            {
-                var farm = TakeBest(working, usedPieceIds, IsAnchorfieldChart, FarmPriority);
-                if (farm == null && surplusClams)
-                    farm = TakeBest(working, usedPieceIds, IsClamChart, ClamScore);
-                if (farm == null) break;
-                LockCell(cell.Row, cell.Col, farm);
-            }
-        }
-
         if (options.CenterSpecialty && CellFree(CenterRow, CenterCol))
         {
             var centerPiece = TakeBest(working, usedPieceIds, IsOperativeBoxChart, OperativeBoxScore)
@@ -226,6 +212,24 @@ public static class VoyagePlacementRules
                 if (rare == null)
                     break;
                 LockCell(cell.Row, cell.Col, rare);
+            }
+        }
+
+        if (options.NoConsumeAnchorfield &&
+            !strongTreasure &&
+            !hasOrbs &&
+            !amuletCrossLocked &&
+            locks.Count == 0)
+        {
+            foreach (var cell in EnumerateCells().Where(c =>
+                         CellFree(c.Row, c.Col) &&
+                         IsStrongNoConsume(BordersAt(tileBorders, c.Row, c.Col))))
+            {
+                var farm = TakeBest(working, usedPieceIds, IsAnchorfieldChart, FarmPriority);
+                if (farm == null && surplusClams)
+                    farm = TakeBest(working, usedPieceIds, IsClamChart, ClamScore);
+                if (farm == null) break;
+                LockCell(cell.Row, cell.Col, farm);
             }
         }
 
@@ -271,16 +275,12 @@ public static class VoyagePlacementRules
 
         var savedUniqueAmulet = 0;
         var savedClam = 0;
+        savedUniqueAmulet = RemoveUnused(working, usedPieceIds, IsUniqueAmulet2Chart,
+            UniqueAmuletScore, force: true);
         if (options.SaveUniqueAmuletAndClams && options.UniqueAmuletClamCross && !amuletCrossLocked)
         {
-            savedUniqueAmulet = RemoveUnused(working, usedPieceIds, IsUniqueAmulet2Chart,
-                UniqueAmuletScore, maxSave: MaxSavedUniqueAmulet2, force: true);
-            if (savedUniqueAmulet > 0 ||
-                working.Any(p => !usedPieceIds.Contains(p.Id) && IsUniqueAmulet2Chart(p)))
-            {
-                savedClam = RemoveUnused(working, usedPieceIds, IsClamChart, ClamScore,
-                    maxSave: MaxSavedClamsForAmulet, force: true);
-            }
+            savedClam = RemoveUnused(working, usedPieceIds, IsClamChart, ClamScore,
+                maxSave: MaxSavedClamsForAmulet, force: true);
         }
 
         if (surplusClams)
@@ -296,25 +296,22 @@ public static class VoyagePlacementRules
             AmuletClamHubActive: amuletCrossLocked);
     }
 
-    private static bool BoardHasNonClamStrategy(IReadOnlyList<BorderEffect>[,] tileBorders)
+    private static bool BoardHasStrongTreasureAnchors(IReadOnlyList<BorderEffect>[,] tileBorders)
     {
+        var treasureT1 = 0;
+        var treasureT2 = 0;
         foreach (var (row, col) in EnumerateCells())
         {
-            var borders = BordersAt(tileBorders, row, col);
-            if (OrbPriority(borders) > 0)
-                return true;
-            if (IsStrongNoConsume(borders))
-                return true;
-            if (IsStrongTreasureAnchors(borders))
-                return true;
-            foreach (var b in borders)
+            foreach (var b in BordersAt(tileBorders, row, col))
             {
-                if (IsStrategyBorder(b.Name))
-                    return true;
+                if (b.Name.Equals(TreasureAnchors1, StringComparison.OrdinalIgnoreCase))
+                    treasureT1++;
+                else if (b.Name.Equals(TreasureAnchors2, StringComparison.OrdinalIgnoreCase))
+                    treasureT2++;
             }
         }
 
-        return false;
+        return IsStrongTreasureAnchorsCounts(treasureT1, treasureT2);
     }
 
     private static bool TryLockAmuletClamHub(
@@ -591,9 +588,7 @@ public static class VoyagePlacementRules
             return false;
         return rawName.Equals(RareDivine, StringComparison.OrdinalIgnoreCase)
                || rawName.Equals(RareAnnul, StringComparison.OrdinalIgnoreCase)
-               || rawName.Equals(RareAncient, StringComparison.OrdinalIgnoreCase)
-               || rawName.Equals(MoreScarabs2, StringComparison.OrdinalIgnoreCase)
-               || rawName.Equals(MoreScarabs3, StringComparison.OrdinalIgnoreCase);
+               || rawName.Equals(RareAncient, StringComparison.OrdinalIgnoreCase);
     }
 
     public static bool IsTreasureAnchorsBorder(string rawName)
@@ -719,6 +714,9 @@ public static class VoyagePlacementRules
         return t2 >= 1 || t1 >= 2;
     }
 
+    public static bool IsStrongTreasureAnchorsCounts(int t1, int t2) =>
+        (t2 >= 1 && t1 >= 2) || t1 >= 3 || t2 >= 2;
+
     public static bool IsStrongTreasureAnchors(IEnumerable<string> borderNames)
     {
         var t1 = 0;
@@ -736,7 +734,7 @@ public static class VoyagePlacementRules
                 t2++;
         }
 
-        return t2 >= 1 || t1 >= 2;
+        return IsStrongTreasureAnchorsCounts(t1, t2);
     }
 
     public static bool IsStrongTreasureAnchors(IReadOnlyList<BorderEffect> borders) =>

@@ -255,6 +255,10 @@ public class VoyagePlanner
             if (requiredPiece < 0 && !triedGroups.Add(g)) continue;
 
             var piece = _puzzle.AvailablePieces[i];
+            if (VoyagePlacementRules.IsUniqueAmulet2Chart(piece) &&
+                (r != VoyagePlacementRules.CenterRow || c != VoyagePlacementRules.CenterCol))
+                continue;
+
             for (var rot = 0; rot < piece.DistinctRotations; rot++)
             {
                 if (requiredRotation is { } rr && rot != rr) continue;

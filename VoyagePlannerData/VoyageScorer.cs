@@ -80,8 +80,6 @@ public class VoyageScorer
             _isUniqueAmulet2Piece[i] = VoyagePlacementRules.IsUniqueAmulet2Chart(pieces[i]);
         }
 
-        // One large additive bonus per Clam sitting on an ortho neighbor of Unique Amulet2.
-        // Matches the fast solver's soft preference magnitude without zeroing zero-mod Clams.
         _clamAdjacentBonus = _preferClamsAdjacentToAmulet
             ? VoyagePlacementRules.ClamAdjacentToAmuletMultiplier
             : 0;
@@ -395,7 +393,6 @@ public class VoyageScorer
                         }
                     }
 
-                    // Admissible: already next to amulet, or an empty neighbor might become amulet.
                     if (hasAmuletNeighbor || unknownNeighbor)
                         score += _clamAdjacentBonus;
                 }
@@ -419,7 +416,6 @@ public class VoyageScorer
                 score += _globalsScratch[i];
         }
 
-        // Clams still to place may each claim the adjacent-amulet bonus once.
         if (_clamAdjacentBonus > 0 && remaining > 0)
         {
             var unusedClams = 0;
@@ -429,7 +425,6 @@ public class VoyageScorer
                     unusedClams++;
             }
 
-            // At most 4 ortho neighbors of center can host the soft preference.
             var maxClamBonusSlots = Math.Min(4, remaining);
             score += _clamAdjacentBonus * Math.Min(unusedClams, maxClamBonusSlots);
         }

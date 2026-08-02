@@ -491,7 +491,6 @@ public class VoyagePlannerFast
             {
                 if (!adj[cell] || double.IsNegativeInfinity(weight[i][cell]))
                     continue;
-                // (w+1)*mult keeps relative order and still boosts zero-mod Clams.
                 weight[i][cell] = (Math.Max(0, weight[i][cell]) + 1.0) * mult;
             }
         }

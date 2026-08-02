@@ -58,10 +58,6 @@ public static class VoyagePlacementRules
         bool AmuletClamHubActive = false,
         bool PreferClamsAdjacentToAmulet = false);
 
-    /// <summary>
-    /// Soft preference when the hard clam hub is off: multiply (weight+1) for Clam charts on
-    /// center-orthogonal cells so they outrank normal placements while keeping relative order.
-    /// </summary>
     public const double ClamAdjacentToAmuletMultiplier = 1_000_000d;
 
     public static readonly (int Row, int Col)[] SacrificeCorners = [(2, 0), (2, 2), (0, 2)];
@@ -127,9 +123,6 @@ public static class VoyagePlacementRules
         var hasOrbs = orbCenters.Count > 0;
         var strongTreasure = BoardHasStrongTreasureAnchors(tileBorders);
 
-        // Unique Amulet2 is always center-only (solver hard rule). The toggle only
-        // enables the hard clam-neighbor hub; when off we still lock the amulet on center
-        // and soft-prefer Clams on its orthogonal neighbors via a large score multiplier.
         var amuletCrossLocked = false;
         var preferClamsAdjacentToAmulet = false;
         if (CellFree(CenterRow, CenterCol))
@@ -289,8 +282,6 @@ public static class VoyagePlacementRules
             ? RemoveUnused(working, usedPieceIds, IsLostMessageChart)
             : 0;
 
-        // Hold amulet + clams for the hub only while that strategy is enabled and not already locked.
-        // When the strategy is off, Unique Amulet2 stays in the pool (center-only) or was locked above.
         var savedUniqueAmulet = 0;
         var savedClam = 0;
         if (options.SaveUniqueAmuletAndClams && options.UniqueAmuletClamCross && !amuletCrossLocked)
@@ -303,7 +294,6 @@ public static class VoyagePlacementRules
 
         if (surplusClams)
         {
-            // Soft-prefer mode needs free Clams for the solver; keep enough for center neighbors.
             if (preferClamsAdjacentToAmulet)
             {
                 var freeOrtho = FreeNeighbors(CenterRow, CenterCol, CellFree).Count();
@@ -354,7 +344,6 @@ public static class VoyagePlacementRules
         return IsStrongTreasureAnchorsCounts(treasureT1, treasureT2);
     }
 
-    // 1–2 arm Unique Amulet2 can only force 2 clams; a third forced clam is unsolvable.
     public static int ClamHubCountForAmulet(MapPiece amulet2)
     {
         var connections = amulet2.BaseConnections.CountConnections();

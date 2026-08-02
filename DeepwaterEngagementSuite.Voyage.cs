@@ -1033,7 +1033,8 @@ public partial class DeepwaterEngagementSuite
 
             if (VoyagePlacementRules.IsPelagic(piece))
                 pelagic = true;
-            else if (VoyagePlacementRules.IsAnchorfieldChart(piece))
+            else if (VoyagePlacementRules.IsSoulEaterChart(piece) ||
+                     VoyagePlacementRules.IsAnchorfieldChart(piece))
                 noConsume = true;
             else if (VoyagePlacementRules.IsClamChart(piece))
             {
@@ -1080,6 +1081,18 @@ public partial class DeepwaterEngagementSuite
 
         if (placement.SavedKisharaCount > 0)
             savedBits.Add($"{placement.SavedKisharaCount} Kishara");
+        if (placement.SavedNoEquipmentCount > 0)
+            savedBits.Add($"{placement.SavedNoEquipmentCount} No Equipment");
+        if (placement.SavedFracturedCount > 0)
+            savedBits.Add($"{placement.SavedFracturedCount} Fractured");
+        if (placement.SavedPantheonCount > 0)
+            savedBits.Add($"{placement.SavedPantheonCount} Pantheon");
+        if (placement.SavedSoulEaterCount > 0)
+            savedBits.Add($"{placement.SavedSoulEaterCount} Soul Eater");
+        if (placement.SavedRareFractureCount > 0)
+            savedBits.Add($"{placement.SavedRareFractureCount} Rare Fracture");
+        if (placement.SavedRarePossessedCount > 0)
+            savedBits.Add($"{placement.SavedRarePossessedCount} Rare Possessed");
         if (placement.SavedPelagicCount > 0)
             savedBits.Add($"{placement.SavedPelagicCount} Pelagic");
         if (placement.SavedFarmCount > 0)
@@ -1088,6 +1101,10 @@ public partial class DeepwaterEngagementSuite
             savedBits.Add($"{placement.SavedClamCount} Clam");
         if (placement.SavedUniqueAmuletCount > 0)
             savedBits.Add($"{placement.SavedUniqueAmuletCount} Unique Amulet2");
+        if (placement.SavedUniqueBeltCount > 0)
+            savedBits.Add($"{placement.SavedUniqueBeltCount} Unique Belt");
+        if (placement.SavedUniqueRingCount > 0)
+            savedBits.Add($"{placement.SavedUniqueRingCount} Unique Ring");
         if (placement.SavedStrongboxCount > 0)
             savedBits.Add($"{placement.SavedStrongboxCount} boxes");
         if (placement.SavedOperativeBoxCount > 0)

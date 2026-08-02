@@ -553,9 +553,6 @@ public class VoyageSettings
 [Submenu(CollapsedByDefault = true)]
 public class VoyageStrategySettings
 {
-    [Menu("Save Kishara", "Hold Kishara's Rest charts out of the solver (place boss yourself).")]
-    public ToggleNode SaveKishara { get; set; } = new ToggleNode(true);
-
     [Menu("Amulet + Clams hub",
         "On: hard-lock Clams on orthogonal neighbors of center Unique Amulet2 " +
         "(2 when the amulet has 1–2 connections, 3 when 3–4) and hold spare amulet/clams for the combo. " +
@@ -570,21 +567,50 @@ public class VoyageStrategySettings
     public ToggleNode RareMonstersDrop { get; set; } = new ToggleNode(true);
 
     [Menu("No-consume farm",
-        "Lock Anchorfield (or surplus Clams) on strong no-consume tiles when no higher strategy applies, " +
-        "and hold unused Anchorfield charts for later.")]
+        "Lock Soul Eater, then Anchorfield (or surplus Clams) on strong no-consume tiles when no higher strategy applies, " +
+        "and hold unused Anchorfield charts for later. " +
+        "Save Soul Eater holds them out instead of placing them.")]
     public ToggleNode NoConsumeAnchorfield { get; set; } = new ToggleNode(true);
 
     [Menu("Center specialty",
-        "Prefer Operative box, Lost Message, or Unique Amulet1 on the free center tile, " +
-        "and hold unused Operative/Lost Message charts for later.")]
+        "Prefer Operative box, Lost Message, Unique Amulet1, Unique Belt, or Unique Ring on the free center tile, " +
+        "and hold unused Operative/Lost Message charts for later. " +
+        "Unique Amulet2/Belt/Ring are always center-only in the solver.")]
     public ToggleNode CenterSpecialty { get; set; } = new ToggleNode(true);
 
+    [Menu("Save Kishara", "Hold Kishara's Rest charts out of the solver (place boss yourself).")]
+    public ToggleNode SaveKishara { get; set; } = new ToggleNode(true);
+
+    [Menu("Save No Equipment", "Hold charts with No Equipment Drops out of the solver.")]
+    public ToggleNode SaveNoEquipment { get; set; } = new ToggleNode(true);
+
+    [Menu("Save Fractured", "Hold charts with Fractured items out of the solver.")]
+    public ToggleNode SaveFractured { get; set; } = new ToggleNode(true);
+
+    [Menu("Save Pantheon", "Hold charts with Pantheon items out of the solver.")]
+    public ToggleNode SavePantheon { get; set; } = new ToggleNode(true);
+
+    [Menu("Save Soul Eater", "Hold charts with Soul Eater out of the solver.")]
+    public ToggleNode SaveSoulEater { get; set; } = new ToggleNode(false);
+
+    [Menu("Save Rare Fracture", "Hold charts with Rare Fracture out of the solver.")]
+    public ToggleNode SaveRareFracture { get; set; } = new ToggleNode(true);
+
+    [Menu("Save Rare Possessed", "Hold charts with Possessed monsters out of the solver.")]
+    public ToggleNode SaveRarePossessed { get; set; } = new ToggleNode(true);
+
     public VoyageStrategyOptions ToOptions() => new(
-        SaveKishara: SaveKishara.Value,
         UniqueAmuletClamCross: UniqueAmuletClamCross.Value,
         RareMonstersDrop: RareMonstersDrop.Value,
         NoConsumeAnchorfield: NoConsumeAnchorfield.Value,
-        CenterSpecialty: CenterSpecialty.Value);
+        CenterSpecialty: CenterSpecialty.Value,
+        SaveKishara: SaveKishara.Value,
+        SaveNoEquipment: SaveNoEquipment.Value,
+        SaveFractured: SaveFractured.Value,
+        SavePantheon: SavePantheon.Value,
+        SaveSoulEater: SaveSoulEater.Value,
+        SaveRareFracture: SaveRareFracture.Value,
+        SaveRarePossessed: SaveRarePossessed.Value);
 }
 
 [Submenu(CollapsedByDefault = true)]

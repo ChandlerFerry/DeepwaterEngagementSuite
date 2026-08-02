@@ -245,7 +245,7 @@ public class VoyagePlannerFast
                 var conn = (int)piece.GetConnections(rot);
                 for (var cell = 0; cell < Cells; cell++)
                 {
-                    if (VoyagePlacementRules.IsUniqueAmulet2Chart(piece) &&
+                    if (VoyagePlacementRules.IsCenterOnlyUniqueChart(piece) &&
                         cell != VoyagePlacementRules.CenterRow * GridSize + VoyagePlacementRules.CenterCol)
                         continue;
 
@@ -257,7 +257,7 @@ public class VoyagePlannerFast
                 }
             }
 
-            if (VoyagePlacementRules.IsUniqueAmulet2Chart(piece))
+            if (VoyagePlacementRules.IsCenterOnlyUniqueChart(piece))
             {
                 for (var cell = 0; cell < Cells; cell++)
                 {

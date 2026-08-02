@@ -15,6 +15,12 @@ public static class VoyagePlacementRules
     public const string TreasureAnchors2 = "DeepwaterBorderTreasureAnchors2";
 
     public const string VoyageIncreasedRareMonsters = "MapDeepwaterChartVoyageIncreasedRareMonsters";
+    public const string VoyageNoEquipmentDrops = "MapDeepwaterChartVoyageNoEquipmentDrops";
+    public const string VoyageSoulEater = "MapDeepwaterChartVoyageSoulEater";
+    public const string VoyageRareFracture = "MapDeepwaterChartVoyageRareFracture";
+    public const string VoyageMonstersPossessed = "MapDeepwaterChartVoyageMonstersPossessed";
+    public const string AdjacentFracturedPrefix = "MapDeepwaterChartAdjacentFractured";
+    public const string AdjacentPantheonPrefix = "MapDeepwaterChartAdjacentPantheon";
     public const string AdjacentStrongboxesPrefix = "MapDeepwaterChartAdjacentStrongboxes";
     public const string AdjacentStarfishPrefix = "MapDeepwaterChartAdjacentStarfish";
     public const string AdjacentIncreasedRarePrefix = "MapDeepwaterChartAdjacentIncreasedRareMonsters";
@@ -23,6 +29,8 @@ public static class VoyagePlacementRules
     public const string AdjacentOperativeBoxPrefix = "MapDeepwaterChartAdjacentOperativeBox";
     public const string AdjacentLostMessagePrefix = "MapDeepwaterChartAdjacentLostMessage";
     public const string AdjacentUniqueAmuletPrefix = "MapDeepwaterChartAdjacentUniqueAmulet";
+    public const string AdjacentUniqueBeltPrefix = "MapDeepwaterChartAdjacentUniqueBelt";
+    public const string AdjacentUniqueRingPrefix = "MapDeepwaterChartAdjacentUniqueRing";
 
     public const int CenterRow = 1;
     public const int CenterCol = 1;
@@ -53,8 +61,16 @@ public static class VoyagePlacementRules
         int SavedOperativeBoxCount,
         int SavedLostMessageCount,
         int SavedKisharaCount,
+        int SavedNoEquipmentCount,
+        int SavedFracturedCount,
+        int SavedPantheonCount,
+        int SavedSoulEaterCount,
+        int SavedRareFractureCount,
+        int SavedRarePossessedCount,
         int SavedClamCount,
         int SavedUniqueAmuletCount,
+        int SavedUniqueBeltCount,
+        int SavedUniqueRingCount,
         bool AmuletClamHubActive = false,
         bool PreferClamsAdjacentToAmulet = false);
 
@@ -86,16 +102,27 @@ public static class VoyagePlacementRules
 
         bool CellFree(int row, int col) => !lockedCells.Contains((row, col));
 
-        var savedKishara = 0;
-        if (options.SaveKishara)
+        int SaveByPredicate(bool enabled, Func<MapPiece, bool> pred)
         {
-            foreach (var boss in working.Where(IsKishara).Select(p => p.Id).ToList())
+            if (!enabled)
+                return 0;
+            var saved = 0;
+            foreach (var id in working.Where(pred).Select(p => p.Id).ToList())
             {
-                if (!TrySavePiece(working, boss))
+                if (!TrySavePiece(working, id))
                     break;
-                savedKishara++;
+                saved++;
             }
+            return saved;
         }
+
+        var savedKishara = SaveByPredicate(options.SaveKishara, IsKishara);
+        var savedNoEquipment = SaveByPredicate(options.SaveNoEquipment, IsNoEquipmentChart);
+        var savedFractured = SaveByPredicate(options.SaveFractured, IsFracturedChart);
+        var savedPantheon = SaveByPredicate(options.SavePantheon, IsPantheonChart);
+        var savedSoulEater = SaveByPredicate(options.SaveSoulEater, IsSoulEaterChart);
+        var savedRareFracture = SaveByPredicate(options.SaveRareFracture, IsRareFractureChart);
+        var savedRarePossessed = SaveByPredicate(options.SaveRarePossessed, IsRarePossessedChart);
 
         var divineCenters = EnumerateCells()
             .Where(c => OrbPriority(BordersAt(tileBorders, c.Row, c.Col)) == 3)
@@ -213,7 +240,9 @@ public static class VoyagePlacementRules
         {
             var centerPiece = TakeBest(working, usedPieceIds, IsOperativeBoxChart, OperativeBoxScore)
                               ?? TakeBest(working, usedPieceIds, IsLostMessageChart, LostMessageScore)
-                              ?? TakeBest(working, usedPieceIds, IsUniqueAmulet1Chart, UniqueAmuletScore);
+                              ?? TakeBest(working, usedPieceIds, IsUniqueAmulet1Chart, UniqueAmuletScore)
+                              ?? TakeBest(working, usedPieceIds, IsUniqueBeltChart, UniqueBeltScore)
+                              ?? TakeBest(working, usedPieceIds, IsUniqueRingChart, UniqueRingScore);
             if (centerPiece != null)
                 LockCell(CenterRow, CenterCol, centerPiece);
         }
@@ -228,7 +257,8 @@ public static class VoyagePlacementRules
                          CellFree(c.Row, c.Col) &&
                          IsStrongNoConsume(BordersAt(tileBorders, c.Row, c.Col))))
             {
-                var farm = TakeBest(working, usedPieceIds, IsAnchorfieldChart, FarmPriority);
+                var farm = TakeBest(working, usedPieceIds, IsSoulEaterChart, SoulEaterScore)
+                           ?? TakeBest(working, usedPieceIds, IsAnchorfieldChart, FarmPriority);
                 if (farm == null && surplusClams)
                     farm = TakeBest(working, usedPieceIds, IsClamChart, ClamScore);
                 if (farm == null) break;
@@ -303,11 +333,42 @@ public static class VoyagePlacementRules
             }
         }
 
+        var centerTakenByCenterOnly = locks.Any(lp =>
+            lp.Row == CenterRow &&
+            lp.Col == CenterCol &&
+            pieces.FirstOrDefault(p => p.Id == lp.PieceId) is { } locked &&
+            IsCenterOnlyUniqueChart(locked));
+        var amulet2Waiting = working.Any(p =>
+            !usedPieceIds.Contains(p.Id) && IsUniqueAmulet2Chart(p));
+        var keepBeltRing = CellFree(CenterRow, CenterCol) && !centerTakenByCenterOnly && !amulet2Waiting
+            ? 1
+            : 0;
+        var savedUniqueBelt = 0;
+        var savedUniqueRing = 0;
+        foreach (var piece in working
+                     .Where(p => !usedPieceIds.Contains(p.Id) &&
+                                 (IsUniqueBeltChart(p) || IsUniqueRingChart(p)))
+                     .OrderByDescending(CenterOnlyUniqueScore)
+                     .ThenByDescending(p => p.LocalModifier + p.GlobalModifier)
+                     .Skip(keepBeltRing)
+                     .ToList())
+        {
+            if (!TrySavePiece(working, piece.Id, force: true))
+                break;
+            if (IsUniqueBeltChart(piece))
+                savedUniqueBelt++;
+            else
+                savedUniqueRing++;
+        }
+
         return new Result(
             working, locks,
             savedPelagic, savedFarm, savedStrongbox, savedStarfish, savedRareVoyage,
             savedAdjacentRare, savedOperative, savedLostMessage, savedKishara,
+            savedNoEquipment, savedFractured, savedPantheon,
+            savedSoulEater, savedRareFracture, savedRarePossessed,
             savedClam, savedUniqueAmulet,
+            savedUniqueBelt, savedUniqueRing,
             AmuletClamHubActive: amuletCrossLocked,
             PreferClamsAdjacentToAmulet: preferClamsAdjacentToAmulet);
     }
@@ -405,6 +466,28 @@ public static class VoyagePlacementRules
     public static bool IsKishara(MapPiece piece) =>
         piece.Name.Contains(KisharaRoomName, StringComparison.OrdinalIgnoreCase);
 
+    public static bool IsNoEquipmentChart(MapPiece piece) =>
+        piece.Modifiers.Any(m =>
+            m.Name.Equals(VoyageNoEquipmentDrops, StringComparison.OrdinalIgnoreCase));
+
+    public static bool IsSoulEaterChart(MapPiece piece) =>
+        piece.Modifiers.Any(m =>
+            m.Name.Equals(VoyageSoulEater, StringComparison.OrdinalIgnoreCase));
+
+    public static bool IsRareFractureChart(MapPiece piece) =>
+        piece.Modifiers.Any(m =>
+            m.Name.Equals(VoyageRareFracture, StringComparison.OrdinalIgnoreCase));
+
+    public static bool IsRarePossessedChart(MapPiece piece) =>
+        piece.Modifiers.Any(m =>
+            m.Name.Equals(VoyageMonstersPossessed, StringComparison.OrdinalIgnoreCase));
+
+    public static bool IsFracturedChart(MapPiece piece) =>
+        piece.Modifiers.Any(m => IsFamily(m.Name, AdjacentFracturedPrefix));
+
+    public static bool IsPantheonChart(MapPiece piece) =>
+        piece.Modifiers.Any(m => IsFamily(m.Name, AdjacentPantheonPrefix));
+
     public static bool IsAdjacentStrongboxesChart(MapPiece piece) =>
         piece.Modifiers.Any(m => IsFamily(m.Name, AdjacentStrongboxesPrefix));
 
@@ -450,6 +533,15 @@ public static class VoyagePlacementRules
             IsFamily(m.Name, AdjacentUniqueAmuletPrefix) &&
             TierFromFamily(m.Name, AdjacentUniqueAmuletPrefix) == 2);
 
+    public static bool IsUniqueBeltChart(MapPiece piece) =>
+        piece.Modifiers.Any(m => IsFamily(m.Name, AdjacentUniqueBeltPrefix));
+
+    public static bool IsUniqueRingChart(MapPiece piece) =>
+        piece.Modifiers.Any(m => IsFamily(m.Name, AdjacentUniqueRingPrefix));
+
+    public static bool IsCenterOnlyUniqueChart(MapPiece piece) =>
+        IsUniqueAmulet2Chart(piece) || IsUniqueBeltChart(piece) || IsUniqueRingChart(piece);
+
     public static bool IsOrbRareGlobalChart(MapPiece piece) =>
         IsRareVoyageChart(piece);
 
@@ -467,7 +559,9 @@ public static class VoyagePlacementRules
                || IsFamily(rawName, AdjacentStarfishPrefix)
                || IsFamily(rawName, AdjacentLostMessagePrefix)
                || (IsFamily(rawName, AdjacentUniqueAmuletPrefix) &&
-                   TierFromFamily(rawName, AdjacentUniqueAmuletPrefix) == 2);
+                   TierFromFamily(rawName, AdjacentUniqueAmuletPrefix) == 2)
+               || IsFamily(rawName, AdjacentUniqueBeltPrefix)
+               || IsFamily(rawName, AdjacentUniqueRingPrefix);
     }
 
     public static bool IsIncreasedRareStrategyModifier(string rawName)
@@ -525,7 +619,9 @@ public static class VoyagePlacementRules
                 if (IsFamily(raw, AdjacentLostMessagePrefix) ||
                     IsFamily(raw, AdjacentOperativeBoxPrefix) ||
                     (IsFamily(raw, AdjacentUniqueAmuletPrefix) &&
-                     TierFromFamily(raw, AdjacentUniqueAmuletPrefix) == 2))
+                     TierFromFamily(raw, AdjacentUniqueAmuletPrefix) == 2) ||
+                    IsFamily(raw, AdjacentUniqueBeltPrefix) ||
+                    IsFamily(raw, AdjacentUniqueRingPrefix))
                 {
                     always = true;
                     break;
@@ -644,6 +740,11 @@ public static class VoyagePlacementRules
     private static double FarmPriority(MapPiece p) =>
         p.LocalModifier + p.GlobalModifier;
 
+    private static double SoulEaterScore(MapPiece p) =>
+        p.Modifiers.Where(m => m.Name.Equals(VoyageSoulEater, StringComparison.OrdinalIgnoreCase))
+            .Sum(m => m.Weight)
+        + p.LocalModifier + p.GlobalModifier;
+
     private static double ClamScore(MapPiece p) =>
         p.LocalModifier + p.GlobalModifier;
 
@@ -672,6 +773,23 @@ public static class VoyagePlacementRules
 
     private static double UniqueAmuletScore(MapPiece p) =>
         MaxFamilyTierScore(p, AdjacentUniqueAmuletPrefix);
+
+    private static double UniqueBeltScore(MapPiece p) =>
+        MaxFamilyTierScore(p, AdjacentUniqueBeltPrefix);
+
+    private static double UniqueRingScore(MapPiece p) =>
+        MaxFamilyTierScore(p, AdjacentUniqueRingPrefix);
+
+    private static double CenterOnlyUniqueScore(MapPiece p)
+    {
+        if (IsUniqueAmulet2Chart(p))
+            return 3_000 + UniqueAmuletScore(p);
+        if (IsUniqueBeltChart(p))
+            return 2_000 + UniqueBeltScore(p);
+        if (IsUniqueRingChart(p))
+            return 1_000 + UniqueRingScore(p);
+        return 0;
+    }
 
     private static double OrbRareComboScore(MapPiece p)
     {

@@ -1094,15 +1094,11 @@ public partial class DeepwaterEngagementSuite
         var pelagic = false;
         var noConsume = placement.NoConsumeActive;
         var amuletCenter = false;
-        var other = false;
 
         foreach (var lp in placement.Locks ?? [])
         {
             if (!byId.TryGetValue(lp.PieceId, out var piece))
-            {
-                other = true;
                 continue;
-            }
 
             if (VoyagePlacementRules.IsPelagic(piece))
                 pelagic = true;
@@ -1116,10 +1112,10 @@ public partial class DeepwaterEngagementSuite
             }
             else if (VoyagePlacementRules.IsUniqueAmulet2Chart(piece))
                 amuletCenter = true;
-            else
-                other = true;
+            // Other strategy locks (rare-support, center specialty, etc.) stay silent.
         }
 
+        // Named strategies only; unlabeled locks never surface as a "Locks" word.
         if (placement.AmuletClamHubActive)
             names.Add("Amulet Hub");
         else if (amuletCenter)
@@ -1128,8 +1124,6 @@ public partial class DeepwaterEngagementSuite
             names.Add("Pelagic");
         if (noConsume)
             names.Add("No-consume");
-        if (other)
-            names.Add("Locks");
 
         return names;
     }

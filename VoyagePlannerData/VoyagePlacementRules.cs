@@ -73,7 +73,8 @@ public static class VoyagePlacementRules
         int SavedUniqueRingCount,
         bool AmuletClamHubActive = false,
         bool PreferClamsAdjacentToAmulet = false,
-        bool NoConsumeActive = false);
+        bool NoConsumeActive = false,
+        IReadOnlyList<string> ActiveStrategies = null);
 
     public const double ClamAdjacentToAmuletMultiplier = 1_000_000d;
 
@@ -153,6 +154,7 @@ public static class VoyagePlacementRules
 
         var amuletCrossLocked = false;
         var preferClamsAdjacentToAmulet = false;
+        var amuletCenterLocked = false;
         if (CellFree(CenterRow, CenterCol))
         {
             if (options.UniqueAmuletClamCross && !strongTreasure && !hasOrbs)
@@ -164,10 +166,12 @@ public static class VoyagePlacementRules
             {
                 preferClamsAdjacentToAmulet = TryLockUniqueAmulet2Center(
                     working, usedPieceIds, LockCell);
+                amuletCenterLocked = preferClamsAdjacentToAmulet;
             }
         }
 
         var savedPelagic = 0;
+        var pelagicLocked = false;
         if (options.RareMonstersDrop)
         {
             foreach (var pelagic in working.Where(IsPelagic)
@@ -181,6 +185,7 @@ public static class VoyagePlacementRules
                 {
                     LockCell(target.Row, target.Col, pelagic);
                     orbCenters.RemoveAll(c => c.Row == target.Row && c.Col == target.Col);
+                    pelagicLocked = true;
                 }
                 else if (savedPelagic < MaxSavedPelagic && TrySavePiece(working, pelagic.Id))
                 {
@@ -237,6 +242,7 @@ public static class VoyagePlacementRules
             }
         }
 
+        var centerSpecialtyLocked = false;
         if (options.CenterSpecialty && CellFree(CenterRow, CenterCol))
         {
             var centerPiece = TakeBest(working, usedPieceIds, IsOperativeBoxChart, OperativeBoxScore)
@@ -245,7 +251,10 @@ public static class VoyagePlacementRules
                               ?? TakeBest(working, usedPieceIds, IsUniqueBeltChart, UniqueBeltScore)
                               ?? TakeBest(working, usedPieceIds, IsUniqueRingChart, UniqueRingScore);
             if (centerPiece != null)
+            {
                 LockCell(CenterRow, CenterCol, centerPiece);
+                centerSpecialtyLocked = true;
+            }
         }
 
         var noConsumeActive = false;
@@ -363,6 +372,29 @@ public static class VoyagePlacementRules
                 savedUniqueRing++;
         }
 
+        var activeStrategies = new List<string>();
+        if (options.RareMonstersDrop)
+        {
+            if (divineCenters.Count > 0)
+                activeStrategies.Add("Divine");
+            if (annulCenters.Count > 0)
+                activeStrategies.Add("Annul");
+            if (ancientCenters.Count > 0)
+                activeStrategies.Add("Ancient");
+        }
+        if (pelagicLocked)
+            activeStrategies.Add("Pelagic");
+        if (amuletCrossLocked)
+            activeStrategies.Add("Amulet Hub");
+        else if (preferClamsAdjacentToAmulet)
+            activeStrategies.Add("Amulet Soft");
+        else if (amuletCenterLocked)
+            activeStrategies.Add("Amulet");
+        if (centerSpecialtyLocked)
+            activeStrategies.Add("Center specialty");
+        if (noConsumeActive)
+            activeStrategies.Add("No-consume");
+
         return new Result(
             working, locks,
             savedPelagic, savedFarm, savedStrongbox, savedStarfish, savedRareVoyage,
@@ -373,7 +405,8 @@ public static class VoyagePlacementRules
             savedUniqueBelt, savedUniqueRing,
             AmuletClamHubActive: amuletCrossLocked,
             PreferClamsAdjacentToAmulet: preferClamsAdjacentToAmulet,
-            NoConsumeActive: noConsumeActive);
+            NoConsumeActive: noConsumeActive,
+            ActiveStrategies: activeStrategies);
     }
 
     private static bool BoardHasStrongTreasureAnchors(IReadOnlyList<BorderEffect>[,] tileBorders)

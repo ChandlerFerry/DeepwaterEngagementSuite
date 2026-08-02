@@ -391,7 +391,6 @@ public partial class DeepwaterEngagementSuite
         }
     }
 
-    // TODO: move this overlay to the voyage compass at VoyageWindow → 34 → 3 → 7 once that path draws reliably.
     private void DrawStrategyOnCompass(VoyageWindow tree)
     {
         var placement = _lastPlacement ?? _voyageSolve?.Placement;
@@ -1086,46 +1085,9 @@ public partial class DeepwaterEngagementSuite
 
     private static List<string> DescribeActiveStrategies(VoyagePlacementRules.Result placement)
     {
-        var names = new List<string>();
-        if (placement == null)
-            return names;
-
-        var byId = placement.Pieces?.ToDictionary(p => p.Id) ?? new Dictionary<int, MapPiece>();
-        var pelagic = false;
-        var noConsume = placement.NoConsumeActive;
-        var amuletCenter = false;
-
-        foreach (var lp in placement.Locks ?? [])
-        {
-            if (!byId.TryGetValue(lp.PieceId, out var piece))
-                continue;
-
-            if (VoyagePlacementRules.IsPelagic(piece))
-                pelagic = true;
-            else if (VoyagePlacementRules.IsSoulEaterChart(piece) ||
-                     VoyagePlacementRules.IsAnchorfieldChart(piece))
-                noConsume = true;
-            else if (VoyagePlacementRules.IsClamChart(piece))
-            {
-                if (!placement.AmuletClamHubActive)
-                    noConsume = true;
-            }
-            else if (VoyagePlacementRules.IsUniqueAmulet2Chart(piece))
-                amuletCenter = true;
-            // Other strategy locks (rare-support, center specialty, etc.) stay silent.
-        }
-
-        // Named strategies only; unlabeled locks never surface as a "Locks" word.
-        if (placement.AmuletClamHubActive)
-            names.Add("Amulet Hub");
-        else if (amuletCenter)
-            names.Add(placement.PreferClamsAdjacentToAmulet ? "Amulet Soft" : "Amulet");
-        if (pelagic)
-            names.Add("Pelagic");
-        if (noConsume)
-            names.Add("No-consume");
-
-        return names;
+        if (placement?.ActiveStrategies is { Count: > 0 } active)
+            return active.ToList();
+        return [];
     }
 
     private void DrawStrategyReservationHint()

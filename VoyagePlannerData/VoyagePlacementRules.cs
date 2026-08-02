@@ -161,7 +161,7 @@ public static class VoyagePlacementRules
             }
         }
 
-        if (options.DivineSupportRing)
+        if (options.OrbSupport)
         {
             foreach (var center in divineCenters)
             {
@@ -174,10 +174,7 @@ public static class VoyagePlacementRules
                     LockCell(n.Row, n.Col, support);
                 }
             }
-        }
 
-        if (options.AnnulSupportRing)
-        {
             foreach (var center in annulCenters)
             {
                 foreach (var n in FreeNeighbors(center.Row, center.Col, CellFree))
@@ -188,10 +185,7 @@ public static class VoyagePlacementRules
                     LockCell(n.Row, n.Col, support);
                 }
             }
-        }
 
-        if (options.AncientSupportRing)
-        {
             foreach (var center in ancientCenters)
             {
                 foreach (var n in FreeNeighbors(center.Row, center.Col, CellFree))
@@ -200,6 +194,17 @@ public static class VoyagePlacementRules
                                   ?? TakeBest(working, usedPieceIds, IsOrbRareComboChart, OrbRareComboScore);
                     if (support == null) break;
                     LockCell(n.Row, n.Col, support);
+                }
+            }
+
+            if (divineCenters.Count > 0)
+            {
+                foreach (var cell in EnumerateCells().Where(c => CellFree(c.Row, c.Col)))
+                {
+                    var rare = TakeBest(working, usedPieceIds, IsOrbRareGlobalChart, OrbRareComboScore);
+                    if (rare == null)
+                        break;
+                    LockCell(cell.Row, cell.Col, rare);
                 }
             }
         }
@@ -211,17 +216,6 @@ public static class VoyagePlacementRules
                               ?? TakeBest(working, usedPieceIds, IsUniqueAmulet1Chart, UniqueAmuletScore);
             if (centerPiece != null)
                 LockCell(CenterRow, CenterCol, centerPiece);
-        }
-
-        if (options.DivineRareFill && divineCenters.Count > 0)
-        {
-            foreach (var cell in EnumerateCells().Where(c => CellFree(c.Row, c.Col)))
-            {
-                var rare = TakeBest(working, usedPieceIds, IsOrbRareGlobalChart, OrbRareComboScore);
-                if (rare == null)
-                    break;
-                LockCell(cell.Row, cell.Col, rare);
-            }
         }
 
         if (options.NoConsumeAnchorfield &&
@@ -242,49 +236,41 @@ public static class VoyagePlacementRules
             }
         }
 
-        var savedFarm = options.SaveAnchorfield
+        var savedFarm = options.NoConsumeAnchorfield
             ? RemoveUnused(working, usedPieceIds, IsAnchorfieldChart, FarmPriority)
             : 0;
-        var savedStrongbox = options.SaveStrongboxes
-            ? RemoveUnused(working, usedPieceIds, IsStrongboxCountChart,
-                BoxValue1Score, maxSave: MaxSavedBoxes)
-            : 0;
 
+        var savedStrongbox = 0;
         var savedStarfish = 0;
         var savedAdjacentRare = 0;
-        if (options.SaveStarfish || options.SaveAdjacentRare)
+        var savedRareVoyage = 0;
+        if (options.SaveSupportCharts)
         {
-            if (options.SaveStarfish)
+            savedStrongbox = RemoveUnused(working, usedPieceIds, IsStrongboxCountChart,
+                BoxValue1Score, maxSave: MaxSavedBoxes);
+            savedStarfish = RemoveUnused(working, usedPieceIds, IsStarfishChart,
+                StarfishScore, maxSave: MaxSavedStarfish);
+            var supportSlotsLeft = Math.Max(0, MaxSavedStarfish - savedStarfish);
+            if (supportSlotsLeft > 0)
             {
-                savedStarfish = RemoveUnused(working, usedPieceIds, IsStarfishChart,
-                    StarfishScore, maxSave: MaxSavedStarfish);
+                savedAdjacentRare = RemoveUnused(working, usedPieceIds, IsAdjacentRareSaveChart,
+                    AdjacentRareScore, maxSave: supportSlotsLeft);
             }
 
-            if (options.SaveAdjacentRare)
-            {
-                var supportSlotsLeft = Math.Max(0, MaxSavedStarfish - savedStarfish);
-                if (supportSlotsLeft > 0)
-                {
-                    savedAdjacentRare = RemoveUnused(working, usedPieceIds, IsAdjacentRareSaveChart,
-                        AdjacentRareScore, maxSave: supportSlotsLeft);
-                }
-            }
+            savedRareVoyage = RemoveUnused(working, usedPieceIds, IsRareVoyageChart,
+                RareVoyageScore, maxSave: MaxSavedRareVoyage);
         }
 
-        var savedRareVoyage = options.SaveRareVoyage
-            ? RemoveUnused(working, usedPieceIds, IsRareVoyageChart,
-                RareVoyageScore, maxSave: MaxSavedRareVoyage)
-            : 0;
-        var savedOperative = options.SaveOperative
+        var savedOperative = options.CenterSpecialty
             ? RemoveUnused(working, usedPieceIds, IsOperativeBoxChart)
             : 0;
-        var savedLostMessage = options.SaveLostMessage
+        var savedLostMessage = options.CenterSpecialty
             ? RemoveUnused(working, usedPieceIds, IsLostMessageChart)
             : 0;
 
         var savedUniqueAmulet = 0;
         var savedClam = 0;
-        if (options.SaveUniqueAmuletAndClams && options.UniqueAmuletClamCross && !amuletCrossLocked)
+        if (options.UniqueAmuletClamCross && !amuletCrossLocked)
         {
             savedUniqueAmulet = RemoveUnused(working, usedPieceIds, IsUniqueAmulet2Chart,
                 UniqueAmuletScore, maxSave: MaxSavedUniqueAmulet2, force: true);

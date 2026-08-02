@@ -514,10 +514,6 @@ public class VoyageSettings
     [Menu("Use fast solver (exact, experimental)", "Exact branch-and-bound solver. Ignores the time limit. Per-connection border mods are ignored for now, so scores on those boards are approximate.")]
     public ToggleNode UseFastSolver { get; set; } = new ToggleNode(true);
 
-    [Menu("Placement strategies",
-        "Enable or disable individual voyage placement strategies. Disabled strategies neither lock cells nor save charts for later.")]
-    public VoyageStrategySettings Strategies { get; set; } = new VoyageStrategySettings();
-
     public ListNode ProfileSelector { get; set; } = new ListNode();
     [JsonIgnore] public ButtonNode AddProfile { get; set; } = new ButtonNode();
     [JsonIgnore] public ButtonNode ReloadProfiles { get; set; } = new ButtonNode();
@@ -550,6 +546,10 @@ public class VoyageSettings
         ItemFactory = () => new VoyageChartModifier(),
         ItemFilter = (o, s) => o.Id.Value.Contains(s, StringComparison.OrdinalIgnoreCase),
     };
+
+    [Menu("Placement strategies",
+        "Enable or disable voyage placement strategies. Disabled strategies neither lock cells nor save charts for later.")]
+    public VoyageStrategySettings Strategies { get; set; } = new VoyageStrategySettings();
 }
 
 [Submenu(CollapsedByDefault = true)]
@@ -561,75 +561,40 @@ public class VoyageStrategySettings
     [Menu("Pelagic on orbs", "Lock Pelagic Abyss on Divine/Annul/Ancient orb tiles; otherwise save unused Pelagic.")]
     public ToggleNode PelagicOnOrbs { get; set; } = new ToggleNode(true);
 
-    [Menu("Unique Amulet2 + Clams hub",
-        "On: hard-lock Clam-infested Shelf charts on orthogonal neighbors around center Unique Amulet2 " +
-        "(3 clams when the amulet has 3–4 connections; only 2 when it has 1–2 — a third forced clam is unsolvable). " +
-        "Priority: strong treasure / orbs > this hub > no-consume. Skipped when strong treasure or orbs are present. " +
-        "Off: still put Unique Amulet2 on center only, and soft-prioritize Clams on its orthogonal neighbors " +
-        "with a very large score multiplier.")]
+    [Menu("Amulet + Clams hub",
+        "On: hard-lock Clams on orthogonal neighbors of center Unique Amulet2 " +
+        "(2 when the amulet has 1–2 connections, 3 when 3–4) and hold spare amulet/clams for the combo. " +
+        "Skipped when strong treasure or orbs are present. " +
+        "Off: still put Unique Amulet2 on center only and soft-prioritize Clams on its neighbors.")]
     public ToggleNode UniqueAmuletClamCross { get; set; } = new ToggleNode(true);
 
-    [Menu("Divine support ring", "Fill Divine orb neighbors with boxes, then starfish, then rare combo charts.")]
-    public ToggleNode DivineSupportRing { get; set; } = new ToggleNode(true);
+    [Menu("Orb support",
+        "Around Divine/Annul/Ancient orbs: fill neighbors with boxes/starfish/rare combo charts. " +
+        "When a Divine orb is present, also fill remaining free tiles with voyage-rare charts.")]
+    public ToggleNode OrbSupport { get; set; } = new ToggleNode(true);
 
-    [Menu("Annul support ring", "Fill Annulment orb neighbors with starfish, then rare combo charts.")]
-    public ToggleNode AnnulSupportRing { get; set; } = new ToggleNode(true);
-
-    [Menu("Ancient support ring", "Fill Ancient orb neighbors with starfish, then rare combo charts.")]
-    public ToggleNode AncientSupportRing { get; set; } = new ToggleNode(true);
-
-    [Menu("No-consume Anchorfield",
-        "Weakest strategy: lock Anchorfield (or surplus Clams) on strong no-consume tiles only when no higher strategy applies (no orbs, strong treasure, amulet hub, or other locks).")]
+    [Menu("No-consume farm",
+        "Lock Anchorfield (or surplus Clams) on strong no-consume tiles when no higher strategy applies, " +
+        "and hold unused Anchorfield charts for later.")]
     public ToggleNode NoConsumeAnchorfield { get; set; } = new ToggleNode(true);
 
-    [Menu("Center specialty", "Prefer Operative box, Lost Message, or Unique Amulet1 on the center tile when free.")]
+    [Menu("Center specialty",
+        "Prefer Operative box, Lost Message, or Unique Amulet1 on the free center tile, " +
+        "and hold unused Operative/Lost Message charts for later.")]
     public ToggleNode CenterSpecialty { get; set; } = new ToggleNode(true);
 
-    [Menu("Divine rare fill", "When any Divine orb exists, fill remaining free tiles with voyage-rare charts.")]
-    public ToggleNode DivineRareFill { get; set; } = new ToggleNode(true);
-
-    [Menu("Save Anchorfield", "Hold unused Anchorfield charts out of the solver for better borders later.")]
-    public ToggleNode SaveAnchorfield { get; set; } = new ToggleNode(true);
-
-    [Menu("Save strongboxes", "Hold unused Strongboxes/Diviner/Arcanist charts (capped).")]
-    public ToggleNode SaveStrongboxes { get; set; } = new ToggleNode(true);
-
-    [Menu("Save starfish", "Hold unused starfish charts (capped).")]
-    public ToggleNode SaveStarfish { get; set; } = new ToggleNode(true);
-
-    [Menu("Save adjacent rare T2+", "Hold unused adjacent increased-rare T2+ charts.")]
-    public ToggleNode SaveAdjacentRare { get; set; } = new ToggleNode(true);
-
-    [Menu("Save voyage rares", "Hold unused MapDeepwaterChartVoyageIncreasedRareMonsters charts (capped at 5).")]
-    public ToggleNode SaveRareVoyage { get; set; } = new ToggleNode(true);
-
-    [Menu("Save Operative boxes", "Hold unused Operative box charts.")]
-    public ToggleNode SaveOperative { get; set; } = new ToggleNode(true);
-
-    [Menu("Save Lost Message", "Hold unused Lost Message charts.")]
-    public ToggleNode SaveLostMessage { get; set; } = new ToggleNode(true);
-
-    [Menu("Save Unique Amulet2 + Clams", "Hold one Unique Amulet2 and up to three Clams until the hub combo is ready.")]
-    public ToggleNode SaveUniqueAmuletAndClams { get; set; } = new ToggleNode(true);
+    [Menu("Save support charts",
+        "Hold unused strongboxes, starfish, adjacent rare T2+, and voyage-rare charts (capped) for later borders.")]
+    public ToggleNode SaveSupportCharts { get; set; } = new ToggleNode(true);
 
     public VoyageStrategyOptions ToOptions() => new(
         SaveKishara: SaveKishara.Value,
         PelagicOnOrbs: PelagicOnOrbs.Value,
         UniqueAmuletClamCross: UniqueAmuletClamCross.Value,
-        DivineSupportRing: DivineSupportRing.Value,
-        AnnulSupportRing: AnnulSupportRing.Value,
-        AncientSupportRing: AncientSupportRing.Value,
+        OrbSupport: OrbSupport.Value,
         NoConsumeAnchorfield: NoConsumeAnchorfield.Value,
         CenterSpecialty: CenterSpecialty.Value,
-        DivineRareFill: DivineRareFill.Value,
-        SaveAnchorfield: SaveAnchorfield.Value,
-        SaveStrongboxes: SaveStrongboxes.Value,
-        SaveStarfish: SaveStarfish.Value,
-        SaveAdjacentRare: SaveAdjacentRare.Value,
-        SaveRareVoyage: SaveRareVoyage.Value,
-        SaveOperative: SaveOperative.Value,
-        SaveLostMessage: SaveLostMessage.Value,
-        SaveUniqueAmuletAndClams: SaveUniqueAmuletAndClams.Value);
+        SaveSupportCharts: SaveSupportCharts.Value);
 }
 
 [Submenu(CollapsedByDefault = true)]

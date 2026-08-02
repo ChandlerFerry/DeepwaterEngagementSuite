@@ -128,7 +128,6 @@ public static class VoyagePlacementRules
                 }
                 else if (savedPelagic < MaxSavedPelagic && TrySavePiece(working, pelagic.Id))
                 {
-                    // Hold up to MaxSavedPelagic for later; free solver may use any extras.
                     savedPelagic++;
                 }
             }
@@ -233,9 +232,6 @@ public static class VoyagePlacementRules
             }
         }
 
-        // Reserve specialty charts whenever the save toggle is on (not only when this board
-        // currently has the matching border). Locks above may consume some first; leftovers are
-        // held so the free solver never places them.
         var savedFarm = options.SaveAnchorfield
             ? RemoveUnused(working, usedPieceIds, IsAnchorfieldChart, FarmPriority)
             : 0;
@@ -244,7 +240,6 @@ public static class VoyagePlacementRules
                 BoxValue1Score, maxSave: MaxSavedBoxes)
             : 0;
 
-        // Orb-support pool (cap MaxSavedStarfish): starfish first, then adj rare T2 backfill.
         var savedStarfish = 0;
         var savedAdjacentRare = 0;
         if (options.SaveStarfish || options.SaveAdjacentRare)
@@ -279,7 +274,6 @@ public static class VoyagePlacementRules
 
         var savedUniqueAmulet = 0;
         var savedClam = 0;
-        // Hold T2 amulet + clams only while cross strategy is pending (not locked this run).
         if (options.SaveUniqueAmuletAndClams && !amuletCrossLocked)
         {
             savedUniqueAmulet = RemoveUnused(working, usedPieceIds, IsUniqueAmulet2Chart,
@@ -374,14 +368,10 @@ public static class VoyagePlacementRules
                || IsFamily(rawName, AdjacentOperativeBoxPrefix)
                || IsFamily(rawName, AdjacentStarfishPrefix)
                || IsFamily(rawName, AdjacentLostMessagePrefix)
-               // Unique Amulet2 only (T1 is center-specialty fallback, not labeled).
                || (IsFamily(rawName, AdjacentUniqueAmuletPrefix) &&
                    TierFromFamily(rawName, AdjacentUniqueAmuletPrefix) == 2);
     }
 
-    /// <summary>
-    /// Adjacent rare T2+ or voyage IncreasedRareMonsters — only labeled when orb strategy can use them.
-    /// </summary>
     public static bool IsIncreasedRareStrategyModifier(string rawName)
     {
         if (string.IsNullOrEmpty(rawName))
@@ -459,10 +449,7 @@ public static class VoyagePlacementRules
             }
 
             if (adjRareTier >= 2)
-            {
-                // Prefer higher tier, then weight proxy via Value1-less score using tier only.
                 adjRareT2.Add((i, adjRareTier * 1_000.0));
-            }
 
             foreach (var (raw, _) in mods)
             {
@@ -478,7 +465,6 @@ public static class VoyagePlacementRules
                 boxes.Add((i, boxV));
         }
 
-        // Same reservation pool as solver: starfish first, adj rare T2 fills remaining slots.
         var supportMarked = 0;
         foreach (var (index, _) in starfish
                      .OrderByDescending(x => x.Value1)

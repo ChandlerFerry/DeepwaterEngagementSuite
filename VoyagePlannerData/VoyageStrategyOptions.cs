@@ -1,8 +1,5 @@
 namespace DeepwaterEngagementSuite.VoyagePlannerData;
 
-/// <summary>
-/// Enable/disable individual voyage placement strategies. All default on.
-/// </summary>
 public sealed record VoyageStrategyOptions(
     bool SaveKishara = true,
     bool PelagicOnOrbs = true,

@@ -236,7 +236,6 @@ public partial class DeepwaterEngagementSuite
         var tiles = tree.Tiles;
         if (settings.DrawComboLabels.Value)
         {
-            // Rare chart mods only label when Divine/Annul/Ancient orbs make rare strategy relevant.
             var boardHasStrategyOrb = modsPerTileIndex.Values
                 .Any(tileMods => VoyagePlacementRules.HasStrategyOrb(tileMods.Select(m => m.RawName)));
 

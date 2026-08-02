@@ -49,7 +49,6 @@ public class PathPlanner
         return score;
     }
 
-    //Sync with method above
     public DetailedLootScore GetDetailedScore(List<Vector2i> state, ExpeditionEnvironment environment)
     {
         var lootList = environment.Loot

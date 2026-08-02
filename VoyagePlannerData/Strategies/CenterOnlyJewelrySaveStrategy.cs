@@ -2,10 +2,6 @@ using System.Linq;
 
 namespace DeepwaterEngagementSuite.VoyagePlannerData.Strategies;
 
-/// <summary>
-/// Always runs: hold extra center-only belt/ring charts so the solver only keeps one candidate
-/// when center is still free and not waiting for Unique Amulet2.
-/// </summary>
 public sealed class CenterOnlyJewelrySaveStrategy : IVoyageStrategy
 {
     public string Id => "CenterOnlyJewelrySave";

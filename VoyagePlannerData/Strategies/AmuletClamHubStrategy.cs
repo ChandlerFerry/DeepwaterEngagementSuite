@@ -3,11 +3,6 @@ using System.Linq;
 
 namespace DeepwaterEngagementSuite.VoyagePlannerData.Strategies;
 
-/// <summary>
-/// Hard-lock Unique Amulet2 + clams hub when enabled and board is free of stronger strategies.
-/// Soft path (toggle off): center-only amulet and soft clam-adjacent preference.
-/// Late phase holds unused amulet/clams and surplus clams.
-/// </summary>
 public sealed class AmuletClamHubStrategy : IVoyageStrategy
 {
     public string Id => "UniqueAmuletClamCross";
@@ -75,7 +70,6 @@ public sealed class AmuletClamHubStrategy : IVoyageStrategy
     }
 }
 
-/// <summary>Late-phase amulet/clam holds that depend on earlier lock outcomes.</summary>
 public sealed class AmuletClamSaveStrategy : IVoyageStrategy
 {
     public string Id => "UniqueAmuletClamCross.Save";

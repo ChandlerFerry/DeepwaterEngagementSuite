@@ -3,11 +3,6 @@ using System.Collections.Concurrent;
 
 namespace DeepwaterEngagementSuite.VoyagePlannerData;
 
-/// <summary>
-/// Reward categories used to decide which border multipliers actually apply to which chart
-/// modifiers. A border only multiplies a chart modifier's weight when they share at least one
-/// tag (or the border is tagged <see cref="All"/>).
-/// </summary>
 [Flags]
 public enum ModifierTag
 {
@@ -35,11 +30,6 @@ public static class ModifierTagParser
 {
     private static readonly ConcurrentDictionary<string, ModifierTag?> Cache = new(StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>
-    /// Parses a comma-separated tag list ("Monsters, RareMonsters"). Unknown tokens are ignored.
-    /// Returns <paramref name="emptyFallback"/> when the text is empty or contains no valid token,
-    /// so old profiles without tags keep their legacy behavior (borders: All, chart mods: None).
-    /// </summary>
     public static ModifierTag Parse(string text, ModifierTag emptyFallback)
     {
         if (string.IsNullOrWhiteSpace(text))
@@ -68,11 +58,6 @@ public static class ModifierTagParser
         return anyParsed ? result : null;
     }
 
-    /// <summary>
-    /// Whether a border with <paramref name="borderTags"/> applies to a chart modifier with
-    /// <paramref name="modifierTags"/>. An All-tagged border matches everything, including
-    /// untagged (None) modifiers.
-    /// </summary>
     public static bool Matches(ModifierTag borderTags, ModifierTag modifierTags)
     {
         return borderTags == ModifierTag.All || (borderTags & modifierTags) != ModifierTag.None;

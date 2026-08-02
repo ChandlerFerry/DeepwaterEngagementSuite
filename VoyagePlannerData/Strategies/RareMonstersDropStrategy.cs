@@ -3,10 +3,6 @@ using System.Linq;
 
 namespace DeepwaterEngagementSuite.VoyagePlannerData.Strategies;
 
-/// <summary>
-/// Lock Pelagic on orb tiles, fill orb neighbors with support charts, divine global rare fill,
-/// then hold unused boxes/starfish/adj-rare/voyage rares.
-/// </summary>
 public sealed class RareMonstersDropLockStrategy : IVoyageStrategy
 {
     public string Id => "RareMonstersDrop.Lock";

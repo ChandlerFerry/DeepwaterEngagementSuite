@@ -4,34 +4,12 @@ using System.Linq;
 
 namespace DeepwaterEngagementSuite.VoyagePlannerData;
 
-/// <summary>
-/// Tag-aware scoring for voyage puzzles.
-///
-/// Model:
-/// - A chart's local ("Adjacent...") modifiers deliver their weight to each orthogonally adjacent
-///   tile; global modifiers deliver their weight to every tile on the board.
-/// - A tile-effect border multiplies rewards materializing on its tile, but only rewards whose
-///   tags overlap the border's tags (an All-tagged border matches everything, including untagged
-///   modifiers). Multiple matching borders compound multiplicatively.
-/// - A chart-effect border (AffectsPlacedChart, e.g. "increased effect of adjacent Charts")
-///   multiplies all modifiers carried by the chart placed on its tile, wherever their value lands.
-/// - A per-connection border scales with the connection count of the piece placed on the affected
-///   tile: effective multiplier = 1 + (multiplier - 1) * connections. This is evaluated live per
-///   placement, since the connection count depends on the piece/rotation the solver picks.
-///
-/// All multiplier combinations are precomputed per (tile, tag-mask, connection count), so the hot
-/// path is table lookups only. <see cref="UpperBound"/> is admissible with respect to
-/// <see cref="Score"/>: every unknown (empty tile, unknown neighbor piece, unknown connection
-/// count) is replaced by its maximum possible contribution.
-///
-/// Instances are not thread-safe (scratch buffers are reused); use one instance per thread.
-/// </summary>
 public class VoyageScorer
 {
     private const int GridSize = 3;
     private const int CellCount = GridSize * GridSize;
     private const int MaxConn = 4;
-    private const int MaxSlot = MaxConn + 1; // deliver-table slot for "connection count unknown"
+    private const int MaxSlot = MaxConn + 1;
 
     private static readonly (int Dr, int Dc)[] NeighborOffsets = [(1, 0), (-1, 0), (0, -1), (0, 1)];
 
@@ -40,22 +18,16 @@ public class VoyageScorer
     private readonly int _maskCount;
     private readonly Dictionary<MapPiece, int> _pieceIndex = new();
 
-    // [cell][maskIdx][connectionsOfPieceOnCell 0..4]
     private readonly double[][][] _tileMult;
     private readonly double[][][] _chartMult;
 
-    // [cell][maskIdx] — max over connection counts 1..4
     private readonly double[][] _tileMultMax;
 
-    // Per piece: distinct (mask, summed weight) entries.
     private readonly ModEntry[][] _localEntries;
     private readonly ModEntry[][] _globalEntries;
 
-    // Per piece: upper bound on total global-mod value if placed anywhere.
     private readonly double[] _pieceGlobalUpperBound;
 
-    // [fromCell][toCell][conn 0..4, 5 = unknown]: max over all pieces of the local value an
-    // unknown piece at fromCell could deliver to toCell. Null for non-adjacent pairs.
     private readonly double[][][] _deliverMax;
 
     private readonly double[] _sScratch;
@@ -84,7 +56,6 @@ public class VoyageScorer
             ? VoyagePlacementRules.ClamAdjacentToAmuletMultiplier
             : 0;
 
-        // Index the distinct tag masks that appear on any modifier.
         var maskIndex = new Dictionary<ModifierTag, int>();
         foreach (var mod in pieces.SelectMany(p => p.Modifiers))
         {
@@ -102,7 +73,6 @@ public class VoyageScorer
         foreach (var (mask, idx) in maskIndex)
             masks[idx] = mask;
 
-        // Multiplier tables per tile.
         _tileMult = new double[CellCount][][];
         _chartMult = new double[CellCount][][];
         _tileMultMax = new double[CellCount][];
@@ -145,7 +115,6 @@ public class VoyageScorer
             }
         }
 
-        // Static bounds used for pieces/cells that aren't decided yet.
         var sGlobalMax = new double[_maskCount];
         var chartMaxOverCells = new double[_maskCount];
         for (var mi = 0; mi < _maskCount; mi++)
@@ -157,7 +126,6 @@ public class VoyageScorer
             }
         }
 
-        // Per-piece modifier entries, grouped by tag mask.
         _localEntries = new ModEntry[pieces.Count][];
         _globalEntries = new ModEntry[pieces.Count][];
         _pieceGlobalUpperBound = new double[pieces.Count];
@@ -171,7 +139,6 @@ public class VoyageScorer
                 .Sum(e => e.Weight * chartMaxOverCells[e.MaskIdx] * sGlobalMax[e.MaskIdx]);
         }
 
-        // Max local delivery from an unknown piece at `from` into `to`.
         _deliverMax = new double[CellCount][][];
         for (var from = 0; from < CellCount; from++)
         {
@@ -221,13 +188,8 @@ public class VoyageScorer
             .ToArray();
     }
 
-    /// <summary>Exact score of a completely filled grid.</summary>
     public double Score(MapPiecePlacement[,] grid) => ScoreInternal(grid, null);
 
-    /// <summary>
-    /// Exact score of a completely filled grid, broken down per tile. Local rewards are attributed
-    /// to the tile they land on; global modifiers to the tile carrying them.
-    /// </summary>
     public double[,] CellScores(MapPiecePlacement[,] grid)
     {
         var cells = new double[GridSize, GridSize];
@@ -241,7 +203,6 @@ public class VoyageScorer
         for (var cell = 0; cell < CellCount; cell++)
             conn[cell] = grid[cell / GridSize, cell % GridSize].Connections.CountConnections();
 
-        // Sum of tile multipliers over the whole board, per mask — the factor for global mods.
         var s = _sScratch;
         for (var mi = 0; mi < _maskCount; mi++)
         {
@@ -303,9 +264,6 @@ public class VoyageScorer
         return score;
     }
 
-    /// <summary>
-    /// Admissible upper bound on the score of any completion of a partially filled grid.
-    /// </summary>
     public double UpperBound(MapPiecePlacement[,] grid, bool[] pieceUsed, int filledCount)
     {
         var conn = _connScratch;
@@ -399,7 +357,6 @@ public class VoyageScorer
             }
         }
 
-        // Globals of the pieces still to be placed: take the best (9 - filled) unused pieces.
         var remaining = CellCount - filledCount;
         if (remaining > 0)
         {
@@ -432,18 +389,8 @@ public class VoyageScorer
         return score;
     }
 
-    /// <summary>Borders touching the given tile (for display).</summary>
     public IReadOnlyList<BorderEffect> BordersAt(int row, int col) => _bordersByCell[row * GridSize + col];
 
-    /// <summary>
-    /// Full per-tile justification of a completed grid's score. For each tile, lists every
-    /// contribution landing there: the source modifier, its configured weight, the chart-side
-    /// multiplier (chart-effect borders on the source tile), the tile-side multiplier (borders
-    /// on the receiving tile) with the individual borders that matched, and the final value.
-    /// Global modifiers are attributed to the tile carrying them; their tile factor is the sum
-    /// of matching tile multipliers over the whole board. The values of each tile's rows sum to
-    /// the corresponding <see cref="CellScores"/> entry.
-    /// </summary>
     public List<ScoreContribution>[,] Explain(MapPiecePlacement[,] grid)
     {
         var conn = new int[CellCount];
@@ -544,15 +491,8 @@ public class VoyageScorer
     }
 }
 
-/// <summary>A border that matched a contribution, with its effective multiplier for that placement.</summary>
 public record AppliedBorder(string Name, double Multiplier);
 
-/// <summary>
-/// One line of a tile's score justification: Value = Weight × ChartMultiplier × TileFactor.
-/// For local mods, TileFactor is the receiving tile's border multiplier; for global mods it is
-/// the sum of matching tile multipliers over the whole board. The synthetic "Base adjacency" row
-/// (SourcePieceId = -1) aggregates the per-neighbor base weight.
-/// </summary>
 public record ScoreContribution(
     string ModName,
     int SourcePieceId,

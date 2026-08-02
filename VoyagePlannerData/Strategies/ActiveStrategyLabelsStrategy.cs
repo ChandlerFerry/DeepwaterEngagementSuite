@@ -1,6 +1,5 @@
 namespace DeepwaterEngagementSuite.VoyagePlannerData.Strategies;
 
-/// <summary>Populate orange UI labels from placement outcomes. Always last.</summary>
 public sealed class ActiveStrategyLabelsStrategy : IVoyageStrategy
 {
     public string Id => "ActiveStrategyLabels";

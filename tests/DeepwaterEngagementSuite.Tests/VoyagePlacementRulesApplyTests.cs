@@ -5,10 +5,6 @@ using Xunit;
 
 namespace DeepwaterEngagementSuite.Tests;
 
-/// <summary>
-/// Drives the real public entry point <see cref="VoyagePlacementRules.Apply"/> /
-/// <see cref="Strategies.PlacementPipeline"/> (no reimplementation).
-/// </summary>
 public class VoyagePlacementRulesApplyTests
 {
     private static IReadOnlyList<BorderEffect>[,] EmptyBorders()

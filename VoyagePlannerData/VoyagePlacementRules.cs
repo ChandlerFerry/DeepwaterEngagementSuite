@@ -4,13 +4,8 @@ using DeepwaterEngagementSuite.VoyagePlannerData.Strategies;
 
 namespace DeepwaterEngagementSuite.VoyagePlannerData;
 
-/// <summary>
-/// Public facade for voyage placement. Logic lives in <see cref="PlacementPipeline"/> and
-/// individual strategy classes under <c>VoyagePlannerData/Strategies</c>.
-/// </summary>
 public static class VoyagePlacementRules
 {
-    // --- Compat aliases for constants/helpers used across the plugin ---
 
     public const string NotConsume1 = ChartIds.NotConsume1;
     public const string NotConsume2 = ChartIds.NotConsume2;

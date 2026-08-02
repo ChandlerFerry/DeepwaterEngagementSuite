@@ -96,8 +96,6 @@ public partial class DeepwaterEngagementSuite
                 continue;
             }
 
-            // A surviving pointer means the encounter was merely unloaded
-            // because the player moved away. Preserve the known type and place.
             if (rawPointerTargets.Any(x => Vector2.Distance(x, missing.Value.GridPos) <= 20))
             {
                 if (missing.Value.MissingTicks != 0)

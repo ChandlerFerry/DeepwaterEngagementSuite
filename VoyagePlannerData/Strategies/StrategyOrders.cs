@@ -2,7 +2,6 @@ namespace DeepwaterEngagementSuite.VoyagePlannerData.Strategies;
 
 public static class StrategyOrders
 {
-    // Early saves — offsets preserve original Apply sequence
     public const int SaveKishara = 100;
     public const int SaveNoEquipment = 101;
     public const int SaveFractured = 102;

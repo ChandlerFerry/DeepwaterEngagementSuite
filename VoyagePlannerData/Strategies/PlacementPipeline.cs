@@ -7,7 +7,6 @@ public static class PlacementPipeline
 {
     private static readonly IVoyageStrategy[] Strategies =
     [
-        // Early hold-outs (same relative order as the original Apply body)
         new SaveKisharaStrategy(),
         new SaveNoEquipmentStrategy(),
         new SaveFracturedStrategy(),
@@ -17,20 +16,17 @@ public static class PlacementPipeline
         new SaveRareFractureStrategy(),
         new SaveRarePossessedStrategy(),
 
-        // Placement locks
         new AmuletClamHubStrategy(),
         new RareMonstersDropLockStrategy(),
         new CenterSpecialtyLockStrategy(),
         new NoConsumeFarmLockStrategy(),
 
-        // Late saves / reservations
         new NoConsumeFarmSaveStrategy(),
         new RareMonstersDropSaveStrategy(),
         new CenterSpecialtySaveStrategy(),
         new AmuletClamSaveStrategy(),
         new CenterOnlyJewelrySaveStrategy(),
 
-        // UI labels
         new ActiveStrategyLabelsStrategy(),
     ];
 

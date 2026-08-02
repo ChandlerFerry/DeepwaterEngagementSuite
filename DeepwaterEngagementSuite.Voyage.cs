@@ -28,13 +28,20 @@ public partial class DeepwaterEngagementSuite
     private SyncTask<bool> _voyagePlaceTask;
     private VoyageSolve _voyageSolve;
     private VoyageScorer _uiScorer;
+    private VoyagePlacementRules.Result _lastPlacement;
     private int _selectedSolutionIndex = 0;
     private bool _voyageSolving;
     private bool _voyageTimedOut;
+    private bool _voyageWindowWasOpen;
+    private bool _voyageAutoSolvePending;
+    private int _voyageLastReadyChartCount = -1;
+    private int _voyageReadyChartStableFrames;
     private long _voyageNodesExplored;
     private long _voyageNodesPruned;
     private double _voyageElapsed;
     private System.Diagnostics.Stopwatch _voyageStopwatch;
+
+    private const int VoyageChartStableFramesRequired = 12;
 
     public List<NormalInventoryItem> GetAvailableCharts()
     {
@@ -57,7 +64,7 @@ public partial class DeepwaterEngagementSuite
             var containerSize = containerRect.Size;
             var inventorySize = new Vector2i(
                 (int)Math.Round(containerSize.Width/chartSize.Width),
-                (int)Math.Round(containerSize.Height / chartSize.Height)); //TODO: is this gettable somewhere?
+                (int)Math.Round(containerSize.Height / chartSize.Height));
             var filtered = charts.Select(x =>
                 {
                     var coord = ((x.GetClientRectCache.TopLeft - containerRect.TopLeft).ToVector2Num()
@@ -226,10 +233,25 @@ public partial class DeepwaterEngagementSuite
         if (tree is not { IsValid: true, IsVisible: true })
         {
             _voyagePlaceTask = null;
+            _voyageWindowWasOpen = false;
+            _voyageAutoSolvePending = false;
+            _voyageLastReadyChartCount = -1;
+            _voyageReadyChartStableFrames = 0;
             return;
         }
 
         TaskUtils.RunOrRestart(ref _voyagePlaceTask, () => null);
+
+        if (!_voyageWindowWasOpen)
+        {
+            _voyageWindowWasOpen = true;
+            _voyageAutoSolvePending = true;
+            _voyageLastReadyChartCount = -1;
+            _voyageReadyChartStableFrames = 0;
+        }
+
+        if (_voyageAutoSolvePending && _run is not { IsCompleted: false })
+            TryStartAutoVoyageSolve(tree);
 
         var modsPerTileIndex = GetTileMods(tree);
 
@@ -285,15 +307,12 @@ public partial class DeepwaterEngagementSuite
                     }
                 }
 
-                var strongTreasureAnchors = VoyagePlacementRules.IsStrongTreasureAnchors(
-                    mods.Select(m => m.RawName));
                 tileCenter = tileCenter + new Vector2(0, 10);
                 foreach (var itemMod in mods)
                 {
                     var isStrategy = VoyagePlacementRules.IsStrategyBorder(itemMod.RawName);
-                    var isTreasureHighlight = strongTreasureAnchors &&
-                                              VoyagePlacementRules.IsTreasureAnchorsBorder(itemMod.RawName);
-                    if (!isStrategy && !isTreasureHighlight)
+                    var isTreasure = VoyagePlacementRules.IsTreasureAnchorsBorder(itemMod.RawName);
+                    if (!isStrategy && !isTreasure)
                         continue;
 
                     var matchingSetting = Settings.VoyageSettings.BorderModifiers.Content
@@ -352,6 +371,108 @@ public partial class DeepwaterEngagementSuite
         return modsPerTileIndex;
     }
 
+    private static int CountReadyCharts(VoyageWindow tree)
+    {
+        var charts = tree?.AvailableCharts;
+        if (charts == null || charts.Count == 0)
+            return 0;
+
+        var ready = 0;
+        foreach (var chart in charts)
+        {
+            if (chart?.Item != null && chart.Item.TryGetComponent(out DeepwaterChart _))
+                ready++;
+        }
+
+        return ready;
+    }
+
+    private void TryStartAutoVoyageSolve(VoyageWindow tree)
+    {
+        var ready = CountReadyCharts(tree);
+        var total = tree.AvailableCharts?.Count ?? 0;
+
+        if (ready <= 0 || ready != total)
+        {
+            _voyageLastReadyChartCount = ready;
+            _voyageReadyChartStableFrames = 0;
+            return;
+        }
+
+        if (ready != _voyageLastReadyChartCount)
+        {
+            _voyageLastReadyChartCount = ready;
+            _voyageReadyChartStableFrames = 0;
+            return;
+        }
+
+        _voyageReadyChartStableFrames++;
+        if (_voyageReadyChartStableFrames < VoyageChartStableFramesRequired)
+            return;
+
+        _voyageAutoSolvePending = false;
+        StartVoyageSolve(tree);
+    }
+
+    private void StartVoyageSolve(VoyageWindow tree)
+    {
+        if (tree is not { IsValid: true, IsVisible: true })
+            return;
+        if (_run is { IsCompleted: false })
+            return;
+
+        _voyageAutoSolvePending = false;
+        _voyageSolve?.Cancel();
+        _result = null;
+        _lastPlacement = null;
+        _selectedSolutionIndex = 0;
+        _voyageNodesExplored = 0;
+        _voyageNodesPruned = 0;
+        _voyageElapsed = 0;
+        _voyageTimedOut = false;
+        _voyageSolving = true;
+        _voyageStopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+        var pieces = BuildMapPiecesFromAvailableCharts();
+        var tileBorders = BuildTileBorders(tree);
+        var timeLimitSetting = Settings.VoyageSettings.SolverTimeLimitSeconds.Value;
+        var useFastSolver = Settings.VoyageSettings.UseFastSolver.Value;
+        var strategyOptions = Settings.VoyageSettings.Strategies.ToOptions();
+
+        _run = Task.Run(() =>
+        {
+            try
+            {
+                var session = new VoyageSolve();
+                _voyageSolve = session;
+
+                foreach (var r in session.Run(
+                             pieces,
+                             tileBorders,
+                             useFastSolver: useFastSolver,
+                             settings: new VoyagePlannerSettings(TimeLimitSeconds: timeLimitSetting),
+                             strategyOptions: strategyOptions))
+                {
+                    _result = r;
+                    _voyageNodesExplored = r.NodesExplored;
+                    _voyageNodesPruned = r.NodesPruned;
+                    _uiScorer = session.Scorer;
+                }
+
+                _uiScorer = session.Scorer;
+                _lastPlacement = session.Placement;
+                LogPlacement(session.Placement);
+
+                if (_voyageStopwatch.Elapsed.TotalSeconds >= timeLimitSetting)
+                    _voyageTimedOut = true;
+            }
+            finally
+            {
+                _voyageSolving = false;
+            }
+        });
+    }
+
     private void ShowVoyageOptimizerWindow(VoyageWindow tree, List<VoyageTileElement> tiles)
     {
         if (!ImGui.Begin("Voyage Optimizer"))
@@ -361,48 +482,9 @@ public partial class DeepwaterEngagementSuite
         }
 
         _voyageSolving = _run is { IsCompleted: false };
-        
+
         if (ImGui.Button("Solve"))
-        {
-            _voyageSolve?.Cancel();
-            _result = null;
-            _selectedSolutionIndex = 0;
-            _voyageNodesExplored = 0;
-            _voyageNodesPruned = 0;
-            _voyageElapsed = 0;
-            _voyageTimedOut = false;
-            _voyageStopwatch = System.Diagnostics.Stopwatch.StartNew();
-            _run = Task.Run(() =>
-            {
-                var pieces = BuildMapPiecesFromAvailableCharts();
-                var tileBorders = BuildTileBorders(tree);
-                var timeLimitSetting = Settings.VoyageSettings.SolverTimeLimitSeconds.Value;
-
-                var session = new VoyageSolve();
-                _voyageSolve = session;
-
-                foreach (var r in session.Run(
-                             pieces,
-                             tileBorders,
-                             useFastSolver: Settings.VoyageSettings.UseFastSolver.Value,
-                             settings: new VoyagePlannerSettings(TimeLimitSeconds: timeLimitSetting),
-                             strategyOptions: Settings.VoyageSettings.Strategies.ToOptions()))
-                {
-                    _result = r;
-                    _voyageNodesExplored = r.NodesExplored;
-                    _voyageNodesPruned = r.NodesPruned;
-                    _uiScorer = session.Scorer;
-                }
-
-                _uiScorer = session.Scorer;
-                LogPlacement(session.Placement);
-
-                if (_voyageStopwatch.Elapsed.TotalSeconds >= timeLimitSetting)
-                    _voyageTimedOut = true;
-
-                _voyageSolving = false;
-            });
-        }
+            StartVoyageSolve(tree);
 
         if (_voyageSolve != null && _voyageSolving && !Settings.VoyageSettings.UseFastSolver.Value)
         {
@@ -442,17 +524,30 @@ public partial class DeepwaterEngagementSuite
 
         if (_result == null || _result.Solutions.Count == 0)
         {
-            if (_voyageSolving)
+            if (_voyageAutoSolvePending)
+            {
+                var ready = CountReadyCharts(tree);
+                var total = tree.AvailableCharts?.Count ?? 0;
+                ImGui.TextColored(Color.Yellow.ToImguiVec4(),
+                    $"Waiting for charts... ({ready}/{total})");
+            }
+            else if (_voyageSolving)
             {
                 ImGui.TextColored(Color.Yellow.ToImguiVec4(), "Searching...");
             }
             else if (_voyageTimedOut)
             {
                 ImGui.TextColored(Color.Orange.ToImguiVec4(), "Time limit reached - no valid solution found.");
+                DrawStrategyReservationHint();
+            }
+            else if (_lastPlacement != null || _result != null)
+            {
+                ImGui.TextColored(Color.Orange.ToImguiVec4(), "No solutions found.");
+                DrawStrategyReservationHint();
             }
             else
             {
-                ImGui.TextColored(Color.Gray.ToImguiVec4(), "No solutions yet. Press Solve.");
+                ImGui.TextColored(Color.Gray.ToImguiVec4(), "No solutions yet. Opening voyage auto-solves.");
             }
 
             ImGui.End();
@@ -831,26 +926,38 @@ public partial class DeepwaterEngagementSuite
         return tileBorders;
     }
 
-    private static void LogPlacement(VoyagePlacementRules.Result placement)
+    private void DrawStrategyReservationHint()
     {
-        if (placement == null)
+        var placement = _lastPlacement ?? _voyageSolve?.Placement;
+        var savedBits = FormatSavedChartBits(placement);
+        if (savedBits.Count == 0)
             return;
 
+        ImGui.TextColored(Color.Yellow.ToImguiVec4(), "Reserving:");
+        foreach (var bit in savedBits)
+            ImGui.TextColored(Color.Yellow.ToImguiVec4(), $"- {bit}");
+    }
+
+    private static List<string> FormatSavedChartBits(VoyagePlacementRules.Result placement)
+    {
         var savedBits = new List<string>();
+        if (placement == null)
+            return savedBits;
+
         if (placement.SavedKisharaCount > 0)
-            savedBits.Add($"{placement.SavedKisharaCount} Kishara (place boss yourself)");
+            savedBits.Add($"{placement.SavedKisharaCount} Kishara");
         if (placement.SavedPelagicCount > 0)
             savedBits.Add($"{placement.SavedPelagicCount} Pelagic");
         if (placement.SavedFarmCount > 0)
-            savedBits.Add($"{placement.SavedFarmCount} Anchorfield (no-consume)");
+            savedBits.Add($"{placement.SavedFarmCount} Anchorfield");
         if (placement.SavedClamCount > 0)
-            savedBits.Add($"{placement.SavedClamCount} Clam (for Unique Amulet2)");
+            savedBits.Add($"{placement.SavedClamCount} Clam");
         if (placement.SavedUniqueAmuletCount > 0)
             savedBits.Add($"{placement.SavedUniqueAmuletCount} Unique Amulet2");
         if (placement.SavedStrongboxCount > 0)
-            savedBits.Add($"{placement.SavedStrongboxCount} boxes (Strongboxes/Diviner/Arcanist)");
+            savedBits.Add($"{placement.SavedStrongboxCount} boxes");
         if (placement.SavedOperativeBoxCount > 0)
-            savedBits.Add($"{placement.SavedOperativeBoxCount} Operative boxes");
+            savedBits.Add($"{placement.SavedOperativeBoxCount} Operative");
         if (placement.SavedStarfishCount > 0)
             savedBits.Add($"{placement.SavedStarfishCount} Starfish");
         if (placement.SavedAdjacentRareCount > 0)
@@ -859,6 +966,15 @@ public partial class DeepwaterEngagementSuite
             savedBits.Add($"{placement.SavedRareVoyageCount} voyage rares");
         if (placement.SavedLostMessageCount > 0)
             savedBits.Add($"{placement.SavedLostMessageCount} Lost Message");
+        return savedBits;
+    }
+
+    private static void LogPlacement(VoyagePlacementRules.Result placement)
+    {
+        if (placement == null)
+            return;
+
+        var savedBits = FormatSavedChartBits(placement);
         if (savedBits.Count > 0)
             DebugWindow.LogMsg($"Voyage: saved {string.Join(", ", savedBits)} for better borders", 5);
         if (placement.Locks.Count > 0)

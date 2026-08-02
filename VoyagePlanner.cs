@@ -33,7 +33,6 @@ public class VoyagePlanner
     private int?[,] _lockedRotationAt;
     private int[] _pieceLockedToCell;
 
-    // Precomputed: for each piece, all (rotation, connections) pairs.
     private record struct PieceOption(int PieceIdx, int Rotation, Direction Connections);
     private PieceOption[][] _pieceOptionsByGroup;
     private int[] _pieceToGroup;
@@ -55,9 +54,6 @@ public class VoyagePlanner
 
         _scorer = new VoyageScorer(puzzle);
 
-        // Group pieces by (Type, BaseConnections, modifier signature) — pieces in the same group
-        // are interchangeable for both connectivity and scoring. The signature must include tags,
-        // since two pieces with equal weight sums but different tags score differently.
         var groupMap = new Dictionary<(PieceType, Direction, string), int>();
         var groups = new List<List<int>>();
         _pieceToGroup = new int[puzzle.AvailablePieces.Count];
@@ -76,7 +72,6 @@ public class VoyagePlanner
             _pieceToGroup[i] = g;
         }
 
-        // Precompute all (rotation, connections) options for each group.
         _pieceOptionsByGroup = new PieceOption[groups.Count][];
         for (var g = 0; g < groups.Count; g++)
         {
@@ -89,8 +84,6 @@ public class VoyagePlanner
             _pieceOptionsByGroup[g] = opts.ToArray();
         }
 
-        // Value ordering: try heavier pieces first so good solutions (and thus a high pruning
-        // threshold) are found early.
         _pieceScanOrder = Enumerable.Range(0, puzzle.AvailablePieces.Count)
             .OrderByDescending(i => puzzle.AvailablePieces[i].LocalModifier + puzzle.AvailablePieces[i].GlobalModifier)
             .ToArray();
@@ -137,12 +130,6 @@ public class VoyagePlanner
 
     public void Cancel() => _cancelled = true;
 
-    /// <summary>
-    /// MRV-based backtracking search: at each step, pick the empty cell with the fewest valid
-    /// piece options (Minimum Remaining Values). This dramatically reduces the search space
-    /// because highly-constrained cells are resolved first, propagating adjacency constraints
-    /// to the remaining cells.
-    /// </summary>
     private IEnumerable<VoyageSolutionResult> Search(VoyagePlannerSettings settings, HashSet<(int, int)> lockedCells)
     {
         if (_cancelled) yield break;
@@ -163,7 +150,6 @@ public class VoyagePlanner
                     if (score > _bestScore)
                     {
                         _bestScore = score;
-                        // New best score — clear previous solutions since they're worse
                         _topSolutions.Clear();
                     }
 
@@ -185,15 +171,12 @@ public class VoyagePlanner
             yield break;
         }
 
-        // Upper-bound prune: only prune if the upper bound is strictly worse than best.
-        // Use < (not <=) so equal-scoring subtrees are still explored, allowing TopN to fill.
         if (_scorer.UpperBound(_grid, _pieceUsed, _filledCount) < _bestScore)
         {
             _nodesPruned++;
             yield break;
         }
 
-        // Find the most-constrained empty cell (MRV)
         var bestCell = (-1, -1);
         var bestOptions = new List<(int PieceIdx, int Rotation, Direction Connections)>();
         var bestOptionCount = int.MaxValue;
@@ -254,11 +237,6 @@ public class VoyagePlanner
         }
     }
 
-    /// <summary>
-    /// Returns all valid (pieceIdx, rotation, connections) options for cell (r, c), considering
-    /// adjacency constraints with already-placed neighbors. Only one piece per interchangeable
-    /// group is included (symmetry breaking).
-    /// </summary>
     private List<(int PieceIdx, int Rotation, Direction Connections)> GetValidOptions(int r, int c)
     {
         var result = new List<(int, int, Direction)>();
@@ -316,19 +294,34 @@ public class VoyagePlanner
 
     private bool IsFullyConnected()
     {
+        const int startRow = 0;
+        const int startCol = 0;
+
+        var allowBorderDeadEnds = _puzzle.AllowSacrificeCornerBorderDeadEnds;
         var visited = new bool[GridSize, GridSize];
+        var isolatedSacrifice = new bool[GridSize, GridSize];
+        var requiredCount = GridSize * GridSize;
+
+        if (allowBorderDeadEnds)
+        {
+            for (var r = 0; r < GridSize; r++)
+            for (var c = 0; c < GridSize; c++)
+            {
+                if (!VoyagePlacementRules.IsSacrificeCorner(r, c)) continue;
+                if (r == startRow && c == startCol) continue;
+                if (_grid[r, c] == null) continue;
+                if (!IsBorderFacingDeadEnd(r, c, _grid[r, c].Connections)) continue;
+                isolatedSacrifice[r, c] = true;
+                requiredCount--;
+            }
+        }
+
+        if (_grid[startRow, startCol] == null || isolatedSacrifice[startRow, startCol])
+            return false;
+
         var stack = new Stack<(int R, int C)>();
-
-        // Find first filled cell
-        int sr = -1, sc = -1;
-        for (var i = 0; i < GridSize && sr == -1; i++)
-            for (var j = 0; j < GridSize && sr == -1; j++)
-                if (_grid[i, j] != null) { sr = i; sc = j; }
-
-        if (sr == -1) return true;
-
-        stack.Push((sr, sc));
-        visited[sr, sc] = true;
+        stack.Push((startRow, startCol));
+        visited[startRow, startCol] = true;
         var count = 1;
 
         while (stack.TryPop(out var pos))
@@ -346,18 +339,42 @@ public class VoyagePlanner
                 if (nr < 0 || nr >= GridSize || nc < 0 || nc >= GridSize) continue;
                 if (visited[nr, nc]) continue;
                 if (_grid[nr, nc] == null) continue;
+                if (isolatedSacrifice[nr, nc]) continue;
 
                 var neighborConn = _grid[nr, nc].Connections;
                 if (!neighborConn.HasFlag(dir.Opposite())) continue;
 
                 visited[nr, nc] = true;
                 count++;
-                if (count == GridSize * GridSize) return true;
                 stack.Push((nr, nc));
             }
         }
 
-        return count == GridSize * GridSize;
+        if (count != requiredCount) return false;
+
+        for (var r = 0; r < GridSize; r++)
+        for (var c = 0; c < GridSize; c++)
+        {
+            if (_grid[r, c] == null || isolatedSacrifice[r, c]) continue;
+            if (!visited[r, c]) return false;
+        }
+
+        return true;
+    }
+
+    private static bool IsBorderFacingDeadEnd(int r, int c, Direction conn)
+    {
+        if (conn == Direction.None) return false;
+        foreach (var (dir, dr, dc) in Directions)
+        {
+            if (!conn.HasFlag(dir)) continue;
+            var nr = r + dr;
+            var nc = c + dc;
+            if (nr >= 0 && nr < GridSize && nc >= 0 && nc < GridSize)
+                return false;
+        }
+
+        return true;
     }
 
     private bool IsConnectivityFeasible()
@@ -365,12 +382,11 @@ public class VoyagePlanner
         if (_filledCount <= 1) return true;
         if (_filledCount == GridSize * GridSize) return IsFullyConnected();
 
-        var components = CountConnectedComponents();
+        var components = CountConnectedComponents(excludeSacrificeBorderDeadEnds: true);
         if (components <= 1) return true;
 
         var emptyCells = GridSize * GridSize - _filledCount;
 
-        // Each unused piece can reduce component count by at most (maxConn - 1).
         var mergeCapacities = new List<int>();
         for (var i = 0; i < _pieceUsed.Length; i++)
         {
@@ -399,16 +415,24 @@ public class VoyagePlanner
             .Select(m => $"{(int)m.Tags}:{(m.IsGlobal ? 1 : 0)}:{m.Weight:R}"));
     }
 
-    private int CountConnectedComponents()
+    private int CountConnectedComponents(bool excludeSacrificeBorderDeadEnds = false)
     {
         var visited = new bool[GridSize, GridSize];
         var components = 0;
+        var allowIso = excludeSacrificeBorderDeadEnds && _puzzle.AllowSacrificeCornerBorderDeadEnds;
 
         for (var sr = 0; sr < GridSize; sr++)
         {
             for (var sc = 0; sc < GridSize; sc++)
             {
                 if (_grid[sr, sc] == null || visited[sr, sc]) continue;
+                if (allowIso &&
+                    VoyagePlacementRules.IsSacrificeCorner(sr, sc) &&
+                    IsBorderFacingDeadEnd(sr, sc, _grid[sr, sc].Connections))
+                {
+                    visited[sr, sc] = true;
+                    continue;
+                }
 
                 components++;
                 visited[sr, sc] = true;
@@ -429,6 +453,10 @@ public class VoyagePlanner
 
                         if (nr < 0 || nr >= GridSize || nc < 0 || nc >= GridSize) continue;
                         if (visited[nr, nc] || _grid[nr, nc] == null) continue;
+                        if (allowIso &&
+                            VoyagePlacementRules.IsSacrificeCorner(nr, nc) &&
+                            IsBorderFacingDeadEnd(nr, nc, _grid[nr, nc].Connections))
+                            continue;
 
                         var neighborConn = _grid[nr, nc].Connections;
                         if (!neighborConn.HasFlag(dir.Opposite())) continue;

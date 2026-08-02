@@ -499,7 +499,7 @@ public class VoyageSettings
 
     [Menu("Draw combo labels",
         "Overlay specialty combo pieces (Pelagic/farm rooms, starfish, rares, boxes, Lost Message) and strategy borders " +
-        "(orbs, scarabs, strong treasure anchors). No-consume borders are used for strategy but not labeled. " +
+        "(orbs, scarabs 2–3, any treasure anchors). No-consume borders are used for strategy but not labeled. " +
         "Turn off for a clean voyage UI.")]
     public ToggleNode DrawComboLabels { get; set; } = new ToggleNode(true);
 
@@ -561,7 +561,9 @@ public class VoyageStrategySettings
     [Menu("Pelagic on orbs", "Lock Pelagic Abyss on Divine/Annul/Ancient orb tiles; otherwise save unused Pelagic.")]
     public ToggleNode PelagicOnOrbs { get; set; } = new ToggleNode(true);
 
-    [Menu("Unique Amulet2 + Clams cross", "Lock Unique Amulet2 at center with four Clam-infested Shelf charts on the orthogonal cross.")]
+    [Menu("Unique Amulet2 + Clams hub",
+        "Lock Unique Amulet2 at center with three Clam-infested Shelf charts on orthogonal neighbors. " +
+        "Skipped when the board has other strategies (orbs, scarabs, strong no-consume, strong treasure anchors) so those areas are fully cleared.")]
     public ToggleNode UniqueAmuletClamCross { get; set; } = new ToggleNode(true);
 
     [Menu("Divine support ring", "Fill Divine orb neighbors with boxes, then starfish, then rare combo charts.")]
@@ -603,7 +605,7 @@ public class VoyageStrategySettings
     [Menu("Save Lost Message", "Hold unused Lost Message charts.")]
     public ToggleNode SaveLostMessage { get; set; } = new ToggleNode(true);
 
-    [Menu("Save Unique Amulet2 + Clams", "Hold one Unique Amulet2 and up to four Clams until the cross combo is ready.")]
+    [Menu("Save Unique Amulet2 + Clams", "Hold one Unique Amulet2 and up to three Clams until the hub combo is ready.")]
     public ToggleNode SaveUniqueAmuletAndClams { get; set; } = new ToggleNode(true);
 
     public VoyageStrategyOptions ToOptions() => new(

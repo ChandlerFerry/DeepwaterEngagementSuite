@@ -34,7 +34,7 @@ public static class VoyagePlacementRules
     public const int MaxSavedRareVoyage = 5;
     public const int MaxSavedPelagic = 2;
     public const int MaxSavedUniqueAmulet2 = 1;
-    public const int MaxSavedClamsForAmulet = 4;
+    public const int MaxSavedClamsForAmulet = 3;
 
     public const string PelagicRoomName = "Pelagic Abyss";
     public const string ClamRoomName = "Clam-infested Shelf";
@@ -56,7 +56,13 @@ public static class VoyagePlacementRules
         int SavedLostMessageCount,
         int SavedKisharaCount,
         int SavedClamCount,
-        int SavedUniqueAmuletCount);
+        int SavedUniqueAmuletCount,
+        bool AmuletClamHubActive = false);
+
+    public static readonly (int Row, int Col)[] SacrificeCorners = [(2, 0), (2, 2), (0, 2)];
+
+    public static bool IsSacrificeCorner(int row, int col) =>
+        (row, col) is (2, 0) or (2, 2) or (0, 2);
 
     public static Result Apply(
         IReadOnlyList<MapPiece> pieces,
@@ -69,11 +75,11 @@ public static class VoyagePlacementRules
         var usedPieceIds = new HashSet<int>();
         var lockedCells = new HashSet<(int Row, int Col)>();
 
-        void LockCell(int row, int col, MapPiece piece)
+        void LockCell(int row, int col, MapPiece piece, int? rotation = null)
         {
             if (!usedPieceIds.Add(piece.Id))
                 return;
-            locks.Add(new LockedPlacement(row, col, piece.Id));
+            locks.Add(new LockedPlacement(row, col, piece.Id, rotation));
             lockedCells.Add((row, col));
         }
 
@@ -111,6 +117,19 @@ public static class VoyagePlacementRules
             .OrderByDescending(x => x.Priority)
             .ToList();
 
+        var clamCountAtStart = working.Count(p => !usedPieceIds.Contains(p.Id) && IsClamChart(p));
+        var surplusClams = clamCountAtStart > MaxSavedClamsForAmulet;
+        var boardHasOtherStrategy = BoardHasNonClamStrategy(tileBorders);
+
+        var amuletCrossLocked = false;
+        if (options.UniqueAmuletClamCross &&
+            !boardHasOtherStrategy &&
+            CellFree(CenterRow, CenterCol))
+        {
+            amuletCrossLocked = TryLockAmuletClamHub(
+                working, usedPieceIds, CellFree, LockCell);
+        }
+
         var savedPelagic = 0;
         if (options.PelagicOnOrbs)
         {
@@ -129,30 +148,6 @@ public static class VoyagePlacementRules
                 else if (savedPelagic < MaxSavedPelagic && TrySavePiece(working, pelagic.Id))
                 {
                     savedPelagic++;
-                }
-            }
-        }
-
-        var amuletCrossLocked = false;
-        // Unique Amulet2 + 4 Clams: amulet center, clams on ortho neighbors.
-        if (options.UniqueAmuletClamCross && CellFree(CenterRow, CenterCol))
-        {
-            var amulet2 = TakeBest(working, usedPieceIds, IsUniqueAmulet2Chart, UniqueAmuletScore);
-            var freeCross = FreeNeighbors(CenterRow, CenterCol, CellFree).ToList();
-            if (amulet2 != null && freeCross.Count >= 4)
-            {
-                var clams = working
-                    .Where(p => !usedPieceIds.Contains(p.Id) && IsClamChart(p))
-                    .OrderByDescending(ClamScore)
-                    .ThenByDescending(p => p.LocalModifier + p.GlobalModifier)
-                    .Take(MaxSavedClamsForAmulet)
-                    .ToList();
-                if (clams.Count >= MaxSavedClamsForAmulet)
-                {
-                    LockCell(CenterRow, CenterCol, amulet2);
-                    for (var i = 0; i < MaxSavedClamsForAmulet; i++)
-                        LockCell(freeCross[i].Row, freeCross[i].Col, clams[i]);
-                    amuletCrossLocked = true;
                 }
             }
         }
@@ -207,6 +202,8 @@ public static class VoyagePlacementRules
                          IsStrongNoConsume(BordersAt(tileBorders, c.Row, c.Col))))
             {
                 var farm = TakeBest(working, usedPieceIds, IsAnchorfieldChart, FarmPriority);
+                if (farm == null && surplusClams)
+                    farm = TakeBest(working, usedPieceIds, IsClamChart, ClamScore);
                 if (farm == null) break;
                 LockCell(cell.Row, cell.Col, farm);
             }
@@ -274,22 +271,84 @@ public static class VoyagePlacementRules
 
         var savedUniqueAmulet = 0;
         var savedClam = 0;
-        if (options.SaveUniqueAmuletAndClams && !amuletCrossLocked)
+        if (options.SaveUniqueAmuletAndClams && options.UniqueAmuletClamCross && !amuletCrossLocked)
         {
             savedUniqueAmulet = RemoveUnused(working, usedPieceIds, IsUniqueAmulet2Chart,
-                UniqueAmuletScore, maxSave: MaxSavedUniqueAmulet2);
-            if (savedUniqueAmulet > 0)
+                UniqueAmuletScore, maxSave: MaxSavedUniqueAmulet2, force: true);
+            if (savedUniqueAmulet > 0 ||
+                working.Any(p => !usedPieceIds.Contains(p.Id) && IsUniqueAmulet2Chart(p)))
             {
                 savedClam = RemoveUnused(working, usedPieceIds, IsClamChart, ClamScore,
-                    maxSave: MaxSavedClamsForAmulet);
+                    maxSave: MaxSavedClamsForAmulet, force: true);
             }
+        }
+
+        if (surplusClams)
+        {
+            savedClam += RemoveUnused(working, usedPieceIds, IsClamChart, ClamScore, force: true);
         }
 
         return new Result(
             working, locks,
             savedPelagic, savedFarm, savedStrongbox, savedStarfish, savedRareVoyage,
             savedAdjacentRare, savedOperative, savedLostMessage, savedKishara,
-            savedClam, savedUniqueAmulet);
+            savedClam, savedUniqueAmulet,
+            AmuletClamHubActive: amuletCrossLocked);
+    }
+
+    private static bool BoardHasNonClamStrategy(IReadOnlyList<BorderEffect>[,] tileBorders)
+    {
+        foreach (var (row, col) in EnumerateCells())
+        {
+            var borders = BordersAt(tileBorders, row, col);
+            if (OrbPriority(borders) > 0)
+                return true;
+            if (IsStrongNoConsume(borders))
+                return true;
+            if (IsStrongTreasureAnchors(borders))
+                return true;
+            foreach (var b in borders)
+            {
+                if (IsStrategyBorder(b.Name))
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool TryLockAmuletClamHub(
+        List<MapPiece> working,
+        HashSet<int> usedPieceIds,
+        Func<int, int, bool> cellFree,
+        Action<int, int, MapPiece, int?> lockCell)
+    {
+        var amulet2 = TakeBest(working, usedPieceIds, IsUniqueAmulet2Chart, UniqueAmuletScore);
+        if (amulet2 == null)
+            return false;
+
+        var freeOrtho = FreeNeighbors(CenterRow, CenterCol, cellFree).ToList();
+        if (freeOrtho.Count < MaxSavedClamsForAmulet)
+            return false;
+
+        var clamSlots = freeOrtho
+            .OrderBy(c => c.Row == CenterRow - 1 && c.Col == CenterCol ? 1 : 0)
+            .Take(MaxSavedClamsForAmulet)
+            .ToList();
+
+        var clams = working
+            .Where(p => !usedPieceIds.Contains(p.Id) && IsClamChart(p))
+            .OrderByDescending(ClamScore)
+            .ThenByDescending(p => p.LocalModifier + p.GlobalModifier)
+            .Take(MaxSavedClamsForAmulet)
+            .ToList();
+        if (clams.Count < MaxSavedClamsForAmulet)
+            return false;
+
+        lockCell(CenterRow, CenterCol, amulet2, null);
+        for (var i = 0; i < MaxSavedClamsForAmulet; i++)
+            lockCell(clamSlots[i].Row, clamSlots[i].Col, clams[i], null);
+        return true;
     }
 
     public static bool IsClamChart(MapPiece piece) =>
@@ -677,7 +736,7 @@ public static class VoyagePlacementRules
                 t2++;
         }
 
-        return t2 >= 2 || (t2 >= 1 && t1 >= 1) || t1 >= 3;
+        return t2 >= 1 || t1 >= 2;
     }
 
     public static bool IsStrongTreasureAnchors(IReadOnlyList<BorderEffect> borders) =>
@@ -712,9 +771,9 @@ public static class VoyagePlacementRules
             .FirstOrDefault();
     }
 
-    private static bool TrySavePiece(List<MapPiece> working, int pieceId)
+    private static bool TrySavePiece(List<MapPiece> working, int pieceId, bool force = false)
     {
-        if (working.Count <= 9)
+        if (!force && working.Count <= 9)
             return false;
         return working.RemoveAll(p => p.Id == pieceId) > 0;
     }
@@ -724,7 +783,8 @@ public static class VoyagePlacementRules
         HashSet<int> used,
         Func<MapPiece, bool> pred,
         Func<MapPiece, double> score = null,
-        int? maxSave = null)
+        int? maxSave = null,
+        bool force = false)
     {
         IEnumerable<MapPiece> candidates = working.Where(p => !used.Contains(p.Id) && pred(p));
         if (score != null)
@@ -741,7 +801,7 @@ public static class VoyagePlacementRules
         var removed = 0;
         foreach (var id in drop)
         {
-            if (!TrySavePiece(working, id))
+            if (!TrySavePiece(working, id, force))
                 break;
             removed++;
         }

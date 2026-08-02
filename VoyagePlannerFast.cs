@@ -21,7 +21,10 @@ public class VoyagePlannerFast
     ];
 
     private static readonly int[] InGrid = BuildInGrid();
-    private static readonly int[][] Topologies = BuildTopologies();
+    private const int StartCell = 0 * GridSize + 0;
+    private static readonly int[] SacrificeCornerCells = [6, 8, 2];
+    private static readonly int[][] TopologiesFull = BuildTopologiesFull();
+    private static readonly int[][] TopologiesWithSacrificeCorners = BuildTopologiesWithSacrificeCorners();
 
     private static int[] BuildInGrid()
     {
@@ -39,8 +42,7 @@ public class VoyagePlannerFast
         return mask;
     }
 
-    // Every subset of the 12 internal edges whose open edges connect all nine cells.
-    private static int[][] BuildTopologies()
+    private static List<(int A, int B, Direction Dir)> BuildEdges()
     {
         var edges = new List<(int A, int B, Direction Dir)>();
         for (var r = 0; r < GridSize; r++)
@@ -51,10 +53,16 @@ public class VoyagePlannerFast
             if (r < GridSize - 1) edges.Add((i, i + GridSize, Direction.Up));
         }
 
+        return edges;
+    }
+
+    private static int[][] BuildTopologiesFull()
+    {
+        var edges = BuildEdges();
         var found = new List<int[]>();
         var neighbours = new List<int>[Cells];
 
-        for (var subset = 0; subset < 1 << 12; subset++)
+        for (var subset = 0; subset < 1 << edges.Count; subset++)
         {
             var cellMask = new int[Cells];
             for (var i = 0; i < Cells; i++) neighbours[i] = [];
@@ -69,28 +77,82 @@ public class VoyagePlannerFast
                 neighbours[b].Add(a);
             }
 
-            if (Reaches(neighbours)) found.Add(cellMask);
+            if (Reaches(neighbours, requiredMask: States - 1, start: StartCell))
+                found.Add(cellMask);
         }
 
         return found.ToArray();
     }
 
-    private static bool Reaches(List<int>[] neighbours)
+    private static int[][] BuildTopologiesWithSacrificeCorners()
     {
-        var seen = 1;
+        var edges = BuildEdges();
+        var found = new List<int[]>(TopologiesFull);
+        var neighbours = new List<int>[Cells];
+
+        for (var isolateBits = 1; isolateBits < 1 << SacrificeCornerCells.Length; isolateBits++)
+        {
+            var isolated = 0;
+            for (var b = 0; b < SacrificeCornerCells.Length; b++)
+            {
+                if ((isolateBits >> b & 1) != 0)
+                    isolated |= 1 << SacrificeCornerCells[b];
+            }
+
+            if ((isolated >> StartCell & 1) != 0) continue;
+
+            var required = (States - 1) & ~isolated;
+            if ((required >> StartCell & 1) == 0) continue;
+
+            var usableEdges = new List<(int A, int B, Direction Dir)>();
+            foreach (var e in edges)
+            {
+                if ((isolated >> e.A & 1) != 0 || (isolated >> e.B & 1) != 0) continue;
+                usableEdges.Add(e);
+            }
+
+            var edgeCount = usableEdges.Count;
+            for (var subset = 0; subset < 1 << edgeCount; subset++)
+            {
+                var cellMask = new int[Cells];
+                for (var i = 0; i < Cells; i++) neighbours[i] = [];
+
+                for (var e = 0; e < edgeCount; e++)
+                {
+                    if ((subset >> e & 1) == 0) continue;
+                    var (a, b, dir) = usableEdges[e];
+                    cellMask[a] |= (int)dir;
+                    cellMask[b] |= (int)dir.Opposite();
+                    neighbours[a].Add(b);
+                    neighbours[b].Add(a);
+                }
+
+                if (!Reaches(neighbours, required, StartCell)) continue;
+                found.Add(cellMask);
+            }
+        }
+
+        return found.ToArray();
+    }
+
+    private static bool Reaches(List<int>[] neighbours, int requiredMask, int start)
+    {
+        if ((requiredMask >> start & 1) == 0) return false;
+        var seen = 1 << start;
         var stack = new Stack<int>();
-        stack.Push(0);
+        stack.Push(start);
         while (stack.TryPop(out var cell))
         {
             foreach (var next in neighbours[cell])
             {
+                if ((requiredMask >> next & 1) == 0) continue;
                 if ((seen >> next & 1) != 0) continue;
                 seen |= 1 << next;
                 stack.Push(next);
             }
         }
 
-        return seen == States - 1;
+        return seen == requiredMask;
     }
 
     public IEnumerable<VoyageSolutionResult> Solve(VoyagePuzzle puzzle, VoyagePlannerSettings settings = null)
@@ -106,9 +168,6 @@ public class VoyagePlannerFast
             yield break;
         }
 
-        // Per-cell border factors for a given tag. Per-connection borders are skipped entirely for
-        // now: they break separability, so we ignore their effect rather than model it.
-        // TODO: add per-connection border mod support. There is one that increases quantity per connection
         var borders = new IReadOnlyList<BorderEffect>[Cells];
         for (var cell = 0; cell < Cells; cell++)
             borders[cell] = puzzle.TileBorders?[cell / GridSize, cell % GridSize] ?? [];
@@ -154,8 +213,6 @@ public class VoyagePlannerFast
             return sum;
         }
 
-        // weight[i][cell] = DES score contributed if chart i sits on cell: its local mods delivered
-        // to its neighbours, plus its global mods against the whole board.
         var weight = new double[n][];
         var eligible = new int[n][];
         var rotation = new byte[n][];
@@ -183,7 +240,6 @@ public class VoyagePlannerFast
                 weight[i][cell] = w;
             }
 
-            // which inward arm-sets this chart can present at each cell, and one rotation per set.
             for (var rot = 0; rot < piece.DistinctRotations; rot++)
             {
                 var conn = (int)piece.GetConnections(rot);
@@ -198,17 +254,51 @@ public class VoyagePlannerFast
             }
         }
 
-        ApplyLocks(puzzle, pieces, weight, eligible);
+        ApplyLocks(puzzle, pieces, weight, eligible, rotation);
 
-        var reachable = new int[Topologies.Length][];
-        var bound = new double[Topologies.Length];
+        if (puzzle.AllowSacrificeCornerBorderDeadEnds)
+            AllowSacrificeCornerBorderDeadEnds(pieces, eligible, rotation);
 
-        for (var t = 0; t < Topologies.Length; t++)
+        var topologies = puzzle.AllowSacrificeCornerBorderDeadEnds
+            ? TopologiesWithSacrificeCorners
+            : TopologiesFull;
+
+        var reachable = new int[topologies.Length][];
+        var bound = new double[topologies.Length];
+
+        for (var t = 0; t < topologies.Length; t++)
         {
-            var topo = Topologies[t];
+            var topo = topologies[t];
             var allow = new int[n];
             var total = 0.0;
             var feasible = true;
+
+            if (puzzle.LockedPlacements is { Count: > 0 })
+            {
+                foreach (var lp in puzzle.LockedPlacements)
+                {
+                    var cell = lp.Row * GridSize + lp.Col;
+                    if (cell is < 0 or >= Cells)
+                    {
+                        feasible = false;
+                        break;
+                    }
+
+                    var pieceIdx = -1;
+                    for (var i = 0; i < n; i++)
+                    {
+                        if (pieces[i].Id != lp.PieceId) continue;
+                        pieceIdx = i;
+                        break;
+                    }
+
+                    if (pieceIdx < 0 || (eligible[pieceIdx][cell] >> topo[cell] & 1) == 0)
+                    {
+                        feasible = false;
+                        break;
+                    }
+                }
+            }
 
             for (var cell = 0; cell < Cells && feasible; cell++)
             {
@@ -228,7 +318,7 @@ public class VoyagePlannerFast
             bound[t] = feasible ? total : double.NegativeInfinity;
         }
 
-        var order = Enumerable.Range(0, Topologies.Length).OrderByDescending(t => bound[t]).ToArray();
+        var order = Enumerable.Range(0, topologies.Length).OrderByDescending(t => bound[t]).ToArray();
 
         var dpPrev = new double[States];
         var dpNext = new double[States];
@@ -255,7 +345,7 @@ public class VoyagePlannerFast
             if (double.IsNegativeInfinity(score)) continue;
             if (top.Count >= topN && score <= top[^1].TotalScore) continue;
 
-            var topo = Topologies[t];
+            var topo = topologies[t];
             var grid = new MapPiecePlacement[GridSize, GridSize];
             for (var cell = 0; cell < Cells; cell++)
             {
@@ -338,16 +428,40 @@ public class VoyagePlannerFast
         if (top.Count > topN) top.RemoveAt(top.Count - 1);
     }
 
+    private static void AllowSacrificeCornerBorderDeadEnds(
+        List<MapPiece> pieces,
+        int[][] eligible,
+        byte[][] rotation)
+    {
+        for (var i = 0; i < pieces.Count; i++)
+        {
+            var piece = pieces[i];
+            foreach (var cell in SacrificeCornerCells)
+            {
+                eligible[i][cell] |= 1;
+                for (var rot = 0; rot < piece.DistinctRotations; rot++)
+                {
+                    var conn = (int)piece.GetConnections(rot);
+                    if ((conn & InGrid[cell]) != 0) continue;
+                    if (conn == 0) continue;
+                    var slot = cell * 16 + 0;
+                    if (rotation[i][slot] == byte.MaxValue)
+                        rotation[i][slot] = (byte)rot;
+                }
+            }
+        }
+    }
+
     private static void ApplyLocks(
         VoyagePuzzle puzzle,
         List<MapPiece> pieces,
         double[][] weight,
-        int[][] eligible)
+        int[][] eligible,
+        byte[][] rotation)
     {
         if (puzzle.LockedPlacements is not { Count: > 0 })
             return;
 
-        const double LockBonus = 1e9;
         var idToIndex = new Dictionary<int, int>(pieces.Count);
         for (var i = 0; i < pieces.Count; i++)
             idToIndex[pieces[i].Id] = i;
@@ -368,18 +482,36 @@ public class VoyagePlannerFast
                 weight[pieceIdx][c] = double.NegativeInfinity;
             }
 
-            if (eligible[pieceIdx][cell] == 0)
-            {
-                continue;
-            }
-
-            weight[pieceIdx][cell] += LockBonus;
-
             for (var i = 0; i < pieces.Count; i++)
             {
                 if (i == pieceIdx) continue;
-                weight[i][cell] -= LockBonus;
+                eligible[i][cell] = 0;
+                weight[i][cell] = double.NegativeInfinity;
             }
+
+            var piece = pieces[pieceIdx];
+            if (lp.Rotation is { } fixedRot)
+            {
+                var conn = (int)piece.GetConnections(fixedRot);
+                var inGrid = conn & InGrid[cell];
+                eligible[pieceIdx][cell] = 1 << inGrid;
+                rotation[pieceIdx][cell * 16 + inGrid] = (byte)fixedRot;
+            }
+            else if (eligible[pieceIdx][cell] == 0)
+            {
+                for (var rot = 0; rot < piece.DistinctRotations; rot++)
+                {
+                    var conn = (int)piece.GetConnections(rot);
+                    var inGrid = conn & InGrid[cell];
+                    var slot = cell * 16 + inGrid;
+                    eligible[pieceIdx][cell] |= 1 << inGrid;
+                    if (rotation[pieceIdx][slot] == byte.MaxValue)
+                        rotation[pieceIdx][slot] = (byte)rot;
+                }
+            }
+
+            if (double.IsNegativeInfinity(weight[pieceIdx][cell]))
+                weight[pieceIdx][cell] = 0;
         }
     }
 }

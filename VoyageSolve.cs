@@ -24,7 +24,11 @@ public sealed class VoyageSolve
         _slowPlanner = null;
 
         Placement = VoyagePlacementRules.Apply(pieces, tileBorders, strategyOptions);
-        Puzzle = new VoyagePuzzle(Placement.Pieces, tileBorders, Placement.Locks);
+        Puzzle = new VoyagePuzzle(
+            Placement.Pieces,
+            tileBorders,
+            Placement.Locks,
+            AllowSacrificeCornerBorderDeadEnds: Placement.AmuletClamHubActive);
         Scorer = new VoyageScorer(Puzzle);
 
         if (useFastSolver)

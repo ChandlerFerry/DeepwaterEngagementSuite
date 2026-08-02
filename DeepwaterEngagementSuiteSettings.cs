@@ -558,9 +558,6 @@ public class VoyageStrategySettings
     [Menu("Save Kishara", "Hold Kishara's Rest charts out of the solver (place boss yourself).")]
     public ToggleNode SaveKishara { get; set; } = new ToggleNode(true);
 
-    [Menu("Pelagic on orbs", "Lock Pelagic Abyss on Divine/Annul/Ancient orb tiles; otherwise save unused Pelagic.")]
-    public ToggleNode PelagicOnOrbs { get; set; } = new ToggleNode(true);
-
     [Menu("Amulet + Clams hub",
         "On: hard-lock Clams on orthogonal neighbors of center Unique Amulet2 " +
         "(2 when the amulet has 1–2 connections, 3 when 3–4) and hold spare amulet/clams for the combo. " +
@@ -568,10 +565,11 @@ public class VoyageStrategySettings
         "Off: still put Unique Amulet2 on center only and soft-prioritize Clams on its neighbors.")]
     public ToggleNode UniqueAmuletClamCross { get; set; } = new ToggleNode(true);
 
-    [Menu("Orb support",
-        "Around Divine/Annul/Ancient orbs: fill neighbors with boxes/starfish/rare combo charts. " +
-        "When a Divine orb is present, also fill remaining free tiles with voyage-rare charts.")]
-    public ToggleNode OrbSupport { get; set; } = new ToggleNode(true);
+    [Menu("Rare Monsters Drop X",
+        "Lock Pelagic Abyss on Divine/Annul/Ancient orb tiles (save unused Pelagic otherwise). " +
+        "Fill orb neighbors with boxes/starfish/rare combo charts; with a Divine orb, fill remaining free tiles with voyage rares. " +
+        "Holds unused strongboxes, starfish, adjacent rare T2+, and voyage rares for later.")]
+    public ToggleNode RareMonstersDrop { get; set; } = new ToggleNode(true);
 
     [Menu("No-consume farm",
         "Lock Anchorfield (or surplus Clams) on strong no-consume tiles when no higher strategy applies, " +
@@ -583,18 +581,12 @@ public class VoyageStrategySettings
         "and hold unused Operative/Lost Message charts for later.")]
     public ToggleNode CenterSpecialty { get; set; } = new ToggleNode(true);
 
-    [Menu("Save support charts",
-        "Hold unused strongboxes, starfish, adjacent rare T2+, and voyage-rare charts (capped) for later borders.")]
-    public ToggleNode SaveSupportCharts { get; set; } = new ToggleNode(true);
-
     public VoyageStrategyOptions ToOptions() => new(
         SaveKishara: SaveKishara.Value,
-        PelagicOnOrbs: PelagicOnOrbs.Value,
         UniqueAmuletClamCross: UniqueAmuletClamCross.Value,
-        OrbSupport: OrbSupport.Value,
+        RareMonstersDrop: RareMonstersDrop.Value,
         NoConsumeAnchorfield: NoConsumeAnchorfield.Value,
-        CenterSpecialty: CenterSpecialty.Value,
-        SaveSupportCharts: SaveSupportCharts.Value);
+        CenterSpecialty: CenterSpecialty.Value);
 }
 
 [Submenu(CollapsedByDefault = true)]

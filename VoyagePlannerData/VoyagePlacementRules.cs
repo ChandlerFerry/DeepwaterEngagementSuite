@@ -140,7 +140,7 @@ public static class VoyagePlacementRules
         }
 
         var savedPelagic = 0;
-        if (options.PelagicOnOrbs)
+        if (options.RareMonstersDrop)
         {
             foreach (var pelagic in working.Where(IsPelagic)
                          .OrderByDescending(p => p.LocalModifier + p.GlobalModifier).ToList())
@@ -161,7 +161,7 @@ public static class VoyagePlacementRules
             }
         }
 
-        if (options.OrbSupport)
+        if (options.RareMonstersDrop)
         {
             foreach (var center in divineCenters)
             {
@@ -244,7 +244,7 @@ public static class VoyagePlacementRules
         var savedStarfish = 0;
         var savedAdjacentRare = 0;
         var savedRareVoyage = 0;
-        if (options.SaveSupportCharts)
+        if (options.RareMonstersDrop)
         {
             savedStrongbox = RemoveUnused(working, usedPieceIds, IsStrongboxCountChart,
                 BoxValue1Score, maxSave: MaxSavedBoxes);

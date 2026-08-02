@@ -242,7 +242,6 @@ public static class VoyagePlacementRules
             }
         }
 
-        var centerSpecialtyLocked = false;
         if (options.CenterSpecialty && CellFree(CenterRow, CenterCol))
         {
             var centerPiece = TakeBest(working, usedPieceIds, IsOperativeBoxChart, OperativeBoxScore)
@@ -251,10 +250,7 @@ public static class VoyagePlacementRules
                               ?? TakeBest(working, usedPieceIds, IsUniqueBeltChart, UniqueBeltScore)
                               ?? TakeBest(working, usedPieceIds, IsUniqueRingChart, UniqueRingScore);
             if (centerPiece != null)
-            {
                 LockCell(CenterRow, CenterCol, centerPiece);
-                centerSpecialtyLocked = true;
-            }
         }
 
         var noConsumeActive = false;
@@ -390,8 +386,6 @@ public static class VoyagePlacementRules
             activeStrategies.Add("Amulet Soft");
         else if (amuletCenterLocked)
             activeStrategies.Add("Amulet");
-        if (centerSpecialtyLocked)
-            activeStrategies.Add("Center specialty");
         if (noConsumeActive)
             activeStrategies.Add("No-consume");
 

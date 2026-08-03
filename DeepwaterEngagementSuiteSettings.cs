@@ -615,11 +615,21 @@ public class VoyageStrategySettings
     [Menu("Save Fractured", "Hold charts with Fractured items out of the solver.")]
     public ToggleNode SaveFractured { get; set; } = new ToggleNode(true);
 
-    [Menu("Save Golden Lanterns", "Hold charts with Adjacent Golden Lanterns out of the solver.")]
+    [Menu("Save Golden Lanterns",
+        "Hold charts with Adjacent Golden Lanterns out of the solver (capped; prefers Tee/3-connection shapes).")]
     public ToggleNode SaveGoldenLanterns { get; set; } = new ToggleNode(true);
 
-    [Menu("Save Pantheon", "Hold charts with Pantheon items out of the solver.")]
+    [Menu("Max saved Golden Lanterns",
+        "Maximum Adjacent Golden Lanterns charts held out of the solver. Prefers Tee (3 connections) over dead end, long, and cross.")]
+    public RangeNode<int> MaxSavedGoldenLanterns { get; set; } =
+        new RangeNode<int>(ChartIds.MaxSavedGoldenLanterns, 0, 20);
+
+    [Menu("Save Pantheon", "Hold charts with Pantheon items out of the solver (capped).")]
     public ToggleNode SavePantheon { get; set; } = new ToggleNode(true);
+
+    [Menu("Max saved Pantheon", "Maximum Pantheon charts held out of the solver.")]
+    public RangeNode<int> MaxSavedPantheon { get; set; } =
+        new RangeNode<int>(ChartIds.MaxSavedPantheon, 0, 20);
 
     [Menu("Save Soul Eater", "Hold charts with Soul Eater out of the solver.")]
     public ToggleNode SaveSoulEater { get; set; } = new ToggleNode(false);
@@ -639,7 +649,9 @@ public class VoyageStrategySettings
         SaveNoEquipment: SaveNoEquipment.Value,
         SaveFractured: SaveFractured.Value,
         SaveGoldenLanterns: SaveGoldenLanterns.Value,
+        MaxSavedGoldenLanterns: MaxSavedGoldenLanterns.Value,
         SavePantheon: SavePantheon.Value,
+        MaxSavedPantheon: MaxSavedPantheon.Value,
         SaveSoulEater: SaveSoulEater.Value,
         SaveRareFracture: SaveRareFracture.Value,
         SaveRarePossessed: SaveRarePossessed.Value);

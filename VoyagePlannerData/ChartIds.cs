@@ -39,6 +39,8 @@ public static class ChartIds
     public const int MaxSavedPelagic = 2;
     public const int MaxSavedUniqueAmulet2 = 1;
     public const int MaxSavedClamsForAmulet = 3;
+    public const int MaxSavedGoldenLanterns = 4;
+    public const int MaxSavedPantheon = 2;
 
     public const string PelagicRoomName = "Pelagic Abyss";
     public const string ClamRoomName = "Clam-infested Shelf";

@@ -408,6 +408,24 @@ public static class ChartPredicates
     public static double FarmPriority(MapPiece p) =>
         p.LocalModifier + p.GlobalModifier;
 
+    /// <summary>
+    /// Save priority for golden lantern charts. Prefer Tee (3 connections) over
+    /// Cross, long (Straight), and dead end (Single) so better pathing shapes are kept.
+    /// </summary>
+    public static double GoldenLanternsSaveScore(MapPiece p)
+    {
+        var shape = p.Type switch
+        {
+            PieceType.Tee => 4_000,      // 3 connections — preferred keep
+            PieceType.Corner => 3_000,
+            PieceType.Cross => 2_000,
+            PieceType.Straight => 1_000, // long
+            PieceType.Single => 0,        // dead end
+            _ => 0
+        };
+        return shape + MaxFamilyTierScore(p, ChartIds.AdjacentGoldenLanternsPrefix);
+    }
+
     public static double SoulEaterScore(MapPiece p) =>
         p.Modifiers.Where(m => m.Name.Equals(ChartIds.VoyageSoulEater, StringComparison.OrdinalIgnoreCase))
             .Sum(m => m.Weight)

@@ -9,7 +9,9 @@ public sealed record VoyageStrategyOptions(
     bool SaveNoEquipment = true,
     bool SaveFractured = true,
     bool SaveGoldenLanterns = true,
+    int MaxSavedGoldenLanterns = ChartIds.MaxSavedGoldenLanterns,
     bool SavePantheon = true,
+    int MaxSavedPantheon = ChartIds.MaxSavedPantheon,
     bool SaveSoulEater = false,
     bool SaveRareFracture = true,
     bool SaveRarePossessed = true)

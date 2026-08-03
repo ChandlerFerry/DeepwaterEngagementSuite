@@ -18,7 +18,7 @@ public abstract class SaveStrategyBase : IVoyageStrategy
     public abstract bool IsEnabled(VoyageStrategyOptions options);
     protected abstract bool Matches(MapPiece piece);
 
-    public void Apply(PlacementContext ctx)
+    public virtual void Apply(PlacementContext ctx)
     {
         if (!IsEnabled(ctx.Options))
             return;

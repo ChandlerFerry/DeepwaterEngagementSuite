@@ -218,8 +218,12 @@ public class IconSettings
     public ToggleNode ShowScarabStrongboxIcons { get; set; } = new ToggleNode(false);
 
     [Menu("Show Sulphur icons",
-    "Show map icons for Dead Man's Sulphur resource chests.")]
+        "Show map icons for base, large, and huge Dead Man's Sulphur resource chests.")]
     public ToggleNode ShowDeadmansSulphurIcons { get; set; } = new ToggleNode(true);
+
+    [Menu("Show small Sulphur icons",
+        "Off by default to reduce clutter.")]
+    public ToggleNode ShowDeadmansSulphurSmallIcons { get; set; } = new ToggleNode(false);
 
     public bool IsIconEnabled(IconPickerIndex index) => index switch
     {
@@ -250,7 +254,7 @@ public class IconSettings
         IconPickerIndex.StrongboxScarab => ShowScarabStrongboxIcons.Value,
         IconPickerIndex.StrongboxArcanist => ShowArcanistStrongboxIcons.Value,
         IconPickerIndex.PointerTarget => ShowPointerTargetIcons.Value,
-        IconPickerIndex.DeadMansSulphurSmall => ShowDeadmansSulphurIcons.Value,
+        IconPickerIndex.DeadMansSulphurSmall => ShowDeadmansSulphurSmallIcons.Value,
         IconPickerIndex.DeadMansSulphurBase => ShowDeadmansSulphurIcons.Value,
         IconPickerIndex.DeadMansSulphurLarge => ShowDeadmansSulphurIcons.Value,
         IconPickerIndex.DeadMansSulphurHuge => ShowDeadmansSulphurIcons.Value,

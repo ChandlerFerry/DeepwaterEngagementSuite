@@ -230,6 +230,26 @@ public static class ChartPredicates
         return IsStrongTreasureAnchorsCounts(treasureT1, treasureT2);
     }
 
+    /// <summary>
+    /// How many orthogonal neighbours a cell has inside the 3x3 grid: 2 for a corner,
+    /// 3 for an edge, 4 for the centre. This is the cell's routing pressure — a chart with
+    /// few connections is cheap in a corner and expensive in the centre, because every
+    /// topology that routes through the centre needs connections there.
+    /// </summary>
+    public static int InGridDegree(int row, int col)
+    {
+        var degree = 0;
+        foreach (var (dr, dc) in ChartIds.Ortho)
+        {
+            var nr = row + dr;
+            var nc = col + dc;
+            if (nr is >= 0 and <= 2 && nc is >= 0 and <= 2)
+                degree++;
+        }
+
+        return degree;
+    }
+
     public static int OrbPriority(IReadOnlyList<BorderEffect> borders)
     {
         var best = 0;

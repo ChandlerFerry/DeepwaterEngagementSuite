@@ -130,6 +130,8 @@ public class VoyagePlanner
 
     public void Cancel() => _cancelled = true;
 
+    public bool WasCancelled => _cancelled;
+
     private IEnumerable<VoyageSolutionResult> Search(VoyagePlannerSettings settings, HashSet<(int, int)> lockedCells)
     {
         if (_cancelled) yield break;

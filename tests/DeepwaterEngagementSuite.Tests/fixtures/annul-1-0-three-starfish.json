@@ -1,0 +1,1780 @@
+{
+  "Version": 1,
+  "CapturedAtUtc": "2026-08-03T07:42:53.9050138Z",
+  "Note": "hotkey dump",
+  "ProfileName": "Default",
+  "RawBorderMods": [
+    "DeepwaterBorderTreasureAnchors1",
+    "DeepwaterBorderChartEffect3",
+    "DeepwaterBorderPackSize1",
+    "DeepwaterBorderIncreasedRareMonsters1",
+    "DeepwaterBorderMoreRarity2",
+    "DeepwaterBorderChanceToNotConsumeChart2",
+    "DeepwaterBorderChanceToNotConsumeChart2",
+    "DeepwaterBorderMoreCurrency1",
+    "DeepwaterBorderSulphurDrops",
+    "DeepwaterBorderMonstersAtLeastMagic",
+    "DeepwaterBorderRareMonsterAnnulment",
+    "DeepwaterBorderChartEffect1"
+  ],
+  "Tiles": [
+    {
+      "Index": 0,
+      "Row": 0,
+      "Col": 0,
+      "Borders": [
+        {
+          "RawName": "DeepwaterBorderTreasureAnchors1",
+          "HasSettingsEntry": true,
+          "Tags": "None",
+          "Multiplier": 1.100000023841858,
+          "PerConnection": false,
+          "AffectsPlacedChart": false
+        },
+        {
+          "RawName": "DeepwaterBorderChartEffect1",
+          "HasSettingsEntry": true,
+          "Tags": "All",
+          "Multiplier": 1.5,
+          "PerConnection": false,
+          "AffectsPlacedChart": true
+        }
+      ],
+      "PlacedChart": {
+        "RoomName": "Abyssal Plain",
+        "RoomPath": 5,
+        "Rotation": 3,
+        "EffectiveConnections": "Up, Down",
+        "Mods": [
+          {
+            "RawName": "MapDeepwaterChartAdjacentStarfish2",
+            "HasSettingsEntry": true,
+            "Weight": 30.0,
+            "IsGlobal": false,
+            "Tags": "None",
+            "Value1": 7,
+            "Values": [
+              7,
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "Index": 1,
+      "Row": 0,
+      "Col": 1,
+      "Borders": [
+        {
+          "RawName": "DeepwaterBorderChartEffect3",
+          "HasSettingsEntry": true,
+          "Tags": "All",
+          "Multiplier": 3.0,
+          "PerConnection": false,
+          "AffectsPlacedChart": true
+        }
+      ],
+      "PlacedChart": null
+    },
+    {
+      "Index": 2,
+      "Row": 0,
+      "Col": 2,
+      "Borders": [
+        {
+          "RawName": "DeepwaterBorderPackSize1",
+          "HasSettingsEntry": true,
+          "Tags": "Monsters,MagicMonsters",
+          "Multiplier": 1.2000000476837158,
+          "PerConnection": false,
+          "AffectsPlacedChart": false
+        },
+        {
+          "RawName": "DeepwaterBorderIncreasedRareMonsters1",
+          "HasSettingsEntry": true,
+          "Tags": "RareMonsters",
+          "Multiplier": 1.5,
+          "PerConnection": false,
+          "AffectsPlacedChart": false
+        }
+      ],
+      "PlacedChart": null
+    },
+    {
+      "Index": 3,
+      "Row": 1,
+      "Col": 0,
+      "Borders": [
+        {
+          "RawName": "DeepwaterBorderRareMonsterAnnulment",
+          "HasSettingsEntry": true,
+          "Tags": "RareMonsters",
+          "Multiplier": 6.0,
+          "PerConnection": false,
+          "AffectsPlacedChart": false
+        }
+      ],
+      "PlacedChart": {
+        "RoomName": "Pelagic Abyss",
+        "RoomPath": 15,
+        "Rotation": 0,
+        "EffectiveConnections": "All",
+        "Mods": [
+          {
+            "RawName": "MapDeepwaterChartAdjacentUniqueBelt2",
+            "HasSettingsEntry": true,
+            "Weight": 82.0,
+            "IsGlobal": false,
+            "Tags": "Uniques",
+            "Value1": 20,
+            "Values": [
+              20,
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "Index": 4,
+      "Row": 1,
+      "Col": 1,
+      "Borders": [],
+      "PlacedChart": {
+        "RoomName": "Abyssal Plain",
+        "RoomPath": 10,
+        "Rotation": 1,
+        "EffectiveConnections": "Left, Right",
+        "Mods": [
+          {
+            "RawName": "MapDeepwaterChartAdjacentStarfish2",
+            "HasSettingsEntry": true,
+            "Weight": 30.0,
+            "IsGlobal": false,
+            "Tags": "None",
+            "Value1": 7,
+            "Values": [
+              7,
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "Index": 5,
+      "Row": 1,
+      "Col": 2,
+      "Borders": [
+        {
+          "RawName": "DeepwaterBorderMoreRarity2",
+          "HasSettingsEntry": true,
+          "Tags": "Rarity,MagicMonsters,RareMonsters,Uniques,Equipment",
+          "Multiplier": 3.200000047683716,
+          "PerConnection": false,
+          "AffectsPlacedChart": false
+        }
+      ],
+      "PlacedChart": null
+    },
+    {
+      "Index": 6,
+      "Row": 2,
+      "Col": 0,
+      "Borders": [
+        {
+          "RawName": "DeepwaterBorderSulphurDrops",
+          "HasSettingsEntry": true,
+          "Tags": "Resources,RareMonsters",
+          "Multiplier": 2.0,
+          "PerConnection": false,
+          "AffectsPlacedChart": false
+        },
+        {
+          "RawName": "DeepwaterBorderMonstersAtLeastMagic",
+          "HasSettingsEntry": true,
+          "Tags": "Monsters,MagicMonsters",
+          "Multiplier": 1.100000023841858,
+          "PerConnection": false,
+          "AffectsPlacedChart": false
+        }
+      ],
+      "PlacedChart": {
+        "RoomName": "Abyssal Plain",
+        "RoomPath": 8,
+        "Rotation": 0,
+        "EffectiveConnections": "Down",
+        "Mods": [
+          {
+            "RawName": "MapDeepwaterChartAdjacentStarfish1",
+            "HasSettingsEntry": true,
+            "Weight": 20.0,
+            "IsGlobal": false,
+            "Tags": "None",
+            "Value1": 4,
+            "Values": [
+              4,
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "Index": 7,
+      "Row": 2,
+      "Col": 1,
+      "Borders": [
+        {
+          "RawName": "DeepwaterBorderMoreCurrency1",
+          "HasSettingsEntry": true,
+          "Tags": "Currency,MagicMonsters,RareMonsters",
+          "Multiplier": 1.7999999523162842,
+          "PerConnection": false,
+          "AffectsPlacedChart": false
+        }
+      ],
+      "PlacedChart": null
+    },
+    {
+      "Index": 8,
+      "Row": 2,
+      "Col": 2,
+      "Borders": [
+        {
+          "RawName": "DeepwaterBorderChanceToNotConsumeChart2",
+          "HasSettingsEntry": true,
+          "Tags": "All",
+          "Multiplier": 1.399999976158142,
+          "PerConnection": false,
+          "AffectsPlacedChart": true
+        },
+        {
+          "RawName": "DeepwaterBorderChanceToNotConsumeChart2",
+          "HasSettingsEntry": true,
+          "Tags": "All",
+          "Multiplier": 1.399999976158142,
+          "PerConnection": false,
+          "AffectsPlacedChart": true
+        }
+      ],
+      "PlacedChart": null
+    }
+  ],
+  "Charts": [
+    {
+      "InventoryIndex": 0,
+      "PieceId": 0,
+      "IncludedInSolve": true,
+      "RoomName": "Undersea Groves",
+      "RoomPath": 12,
+      "BaseConnections": "Right, Down",
+      "PieceType": "Corner",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartVoyagePackSize1",
+          "HasSettingsEntry": true,
+          "Weight": 3.0,
+          "IsGlobal": true,
+          "Tags": "Monsters,MagicMonsters",
+          "Value1": 5,
+          "Values": [
+            5,
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 1,
+      "PieceId": 1,
+      "IncludedInSolve": true,
+      "RoomName": "Undersea Groves",
+      "RoomPath": 5,
+      "BaseConnections": "Left, Right",
+      "PieceType": "Straight",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentIncreasedRareMonsters1",
+          "HasSettingsEntry": true,
+          "Weight": 55.0,
+          "IsGlobal": false,
+          "Tags": "RareMonsters",
+          "Value1": 30,
+          "Values": [
+            30,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 2,
+      "PieceId": 2,
+      "IncludedInSolve": true,
+      "RoomName": "Undersea Groves",
+      "RoomPath": 15,
+      "BaseConnections": "All",
+      "PieceType": "Cross",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartVoyageFriendlyJelly",
+          "HasSettingsEntry": true,
+          "Weight": 15.0,
+          "IsGlobal": true,
+          "Tags": "None",
+          "Value1": 1,
+          "Values": [
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 3,
+      "PieceId": 3,
+      "IncludedInSolve": true,
+      "RoomName": "Pelagic Abyss",
+      "RoomPath": 15,
+      "BaseConnections": "All",
+      "PieceType": "Cross",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentUniqueBelt2",
+          "HasSettingsEntry": true,
+          "Weight": 82.0,
+          "IsGlobal": false,
+          "Tags": "Uniques",
+          "Value1": 20,
+          "Values": [
+            20,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 4,
+      "PieceId": 4,
+      "IncludedInSolve": true,
+      "RoomName": "Abyssal Plain",
+      "RoomPath": 8,
+      "BaseConnections": "Down",
+      "PieceType": "Single",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentStarfish1",
+          "HasSettingsEntry": true,
+          "Weight": 20.0,
+          "IsGlobal": false,
+          "Tags": "None",
+          "Value1": 4,
+          "Values": [
+            4,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 5,
+      "PieceId": 5,
+      "IncludedInSolve": true,
+      "RoomName": "Pelagic Abyss",
+      "RoomPath": 15,
+      "BaseConnections": "All",
+      "PieceType": "Cross",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartVoyagePackSize1",
+          "HasSettingsEntry": true,
+          "Weight": 3.0,
+          "IsGlobal": true,
+          "Tags": "Monsters,MagicMonsters",
+          "Value1": 5,
+          "Values": [
+            5,
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 6,
+      "PieceId": 6,
+      "IncludedInSolve": true,
+      "RoomName": "Undersea Groves",
+      "RoomPath": 13,
+      "BaseConnections": "Left, Right, Down",
+      "PieceType": "Tee",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentEssence2",
+          "HasSettingsEntry": true,
+          "Weight": 12.0,
+          "IsGlobal": false,
+          "Tags": "Essences",
+          "Value1": 2,
+          "Values": [
+            2,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 7,
+      "PieceId": 7,
+      "IncludedInSolve": true,
+      "RoomName": "Seafloor Ridges",
+      "RoomPath": 6,
+      "BaseConnections": "Up, Right",
+      "PieceType": "Corner",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentIncreasedRareMonsters2",
+          "HasSettingsEntry": true,
+          "Weight": 70.0,
+          "IsGlobal": false,
+          "Tags": "RareMonsters",
+          "Value1": 60,
+          "Values": [
+            60,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 8,
+      "PieceId": 8,
+      "IncludedInSolve": true,
+      "RoomName": "Undersea Groves",
+      "RoomPath": 15,
+      "BaseConnections": "All",
+      "PieceType": "Cross",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentEssence3",
+          "HasSettingsEntry": true,
+          "Weight": 16.0,
+          "IsGlobal": false,
+          "Tags": "Essences",
+          "Value1": 5,
+          "Values": [
+            5,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 9,
+      "PieceId": 9,
+      "IncludedInSolve": true,
+      "RoomName": "Undersea Groves",
+      "RoomPath": 12,
+      "BaseConnections": "Right, Down",
+      "PieceType": "Corner",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentPantheon",
+          "HasSettingsEntry": true,
+          "Weight": 20.0,
+          "IsGlobal": false,
+          "Tags": "None",
+          "Value1": 1,
+          "Values": [
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 10,
+      "PieceId": 10,
+      "IncludedInSolve": true,
+      "RoomName": "Abyssal Plain",
+      "RoomPath": 13,
+      "BaseConnections": "Left, Right, Down",
+      "PieceType": "Tee",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentIncreasedRareMonsters2",
+          "HasSettingsEntry": true,
+          "Weight": 70.0,
+          "IsGlobal": false,
+          "Tags": "RareMonsters",
+          "Value1": 60,
+          "Values": [
+            60,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 11,
+      "PieceId": 11,
+      "IncludedInSolve": true,
+      "RoomName": "Undersea Groves",
+      "RoomPath": 12,
+      "BaseConnections": "Right, Down",
+      "PieceType": "Corner",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentArcanistBox1",
+          "HasSettingsEntry": true,
+          "Weight": 90.0,
+          "IsGlobal": false,
+          "Tags": "Strongboxes",
+          "Value1": 2,
+          "Values": [
+            2,
+            1,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 12,
+      "PieceId": 12,
+      "IncludedInSolve": true,
+      "RoomName": "Undersea Groves",
+      "RoomPath": 15,
+      "BaseConnections": "All",
+      "PieceType": "Cross",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentTormentCages1",
+          "HasSettingsEntry": true,
+          "Weight": 15.0,
+          "IsGlobal": false,
+          "Tags": "RareMonsters",
+          "Value1": 1,
+          "Values": [
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 13,
+      "PieceId": 13,
+      "IncludedInSolve": true,
+      "RoomName": "Seafloor Ridges",
+      "RoomPath": 6,
+      "BaseConnections": "Up, Right",
+      "PieceType": "Corner",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentStrongboxes2",
+          "HasSettingsEntry": true,
+          "Weight": 25.0,
+          "IsGlobal": false,
+          "Tags": "None",
+          "Value1": 2,
+          "Values": [
+            2,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 14,
+      "PieceId": 14,
+      "IncludedInSolve": true,
+      "RoomName": "Undersea Groves",
+      "RoomPath": 5,
+      "BaseConnections": "Left, Right",
+      "PieceType": "Straight",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentUniqueAmulet2",
+          "HasSettingsEntry": true,
+          "Weight": 82.0,
+          "IsGlobal": false,
+          "Tags": "Uniques",
+          "Value1": 20,
+          "Values": [
+            20,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 15,
+      "PieceId": 15,
+      "IncludedInSolve": true,
+      "RoomName": "Seafloor Ridges",
+      "RoomPath": 6,
+      "BaseConnections": "Up, Right",
+      "PieceType": "Corner",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentStrongboxes2",
+          "HasSettingsEntry": true,
+          "Weight": 25.0,
+          "IsGlobal": false,
+          "Tags": "None",
+          "Value1": 3,
+          "Values": [
+            3,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 16,
+      "PieceId": 16,
+      "IncludedInSolve": true,
+      "RoomName": "Undersea Groves",
+      "RoomPath": 13,
+      "BaseConnections": "Left, Right, Down",
+      "PieceType": "Tee",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartVoyageFriendlyJelly",
+          "HasSettingsEntry": true,
+          "Weight": 15.0,
+          "IsGlobal": true,
+          "Tags": "None",
+          "Value1": 1,
+          "Values": [
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 17,
+      "PieceId": 17,
+      "IncludedInSolve": true,
+      "RoomName": "Seafloor Ridges",
+      "RoomPath": 4,
+      "BaseConnections": "Right",
+      "PieceType": "Single",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentArcanistBox1",
+          "HasSettingsEntry": true,
+          "Weight": 90.0,
+          "IsGlobal": false,
+          "Tags": "Strongboxes",
+          "Value1": 2,
+          "Values": [
+            2,
+            1,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 18,
+      "PieceId": 18,
+      "IncludedInSolve": true,
+      "RoomName": "Seafloor Ridges",
+      "RoomPath": 15,
+      "BaseConnections": "All",
+      "PieceType": "Cross",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentArcanistBox2",
+          "HasSettingsEntry": true,
+          "Weight": 120.0,
+          "IsGlobal": false,
+          "Tags": "Strongboxes",
+          "Value1": 3,
+          "Values": [
+            3,
+            1,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 19,
+      "PieceId": 19,
+      "IncludedInSolve": true,
+      "RoomName": "Undersea Groves",
+      "RoomPath": 13,
+      "BaseConnections": "Left, Right, Down",
+      "PieceType": "Tee",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentEssence2",
+          "HasSettingsEntry": true,
+          "Weight": 12.0,
+          "IsGlobal": false,
+          "Tags": "Essences",
+          "Value1": 4,
+          "Values": [
+            4,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 20,
+      "PieceId": 20,
+      "IncludedInSolve": true,
+      "RoomName": "Undersea Groves",
+      "RoomPath": 15,
+      "BaseConnections": "All",
+      "PieceType": "Cross",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentCrabPacks1",
+          "HasSettingsEntry": true,
+          "Weight": 20.0,
+          "IsGlobal": false,
+          "Tags": "Monsters",
+          "Value1": 8,
+          "Values": [
+            8,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 21,
+      "PieceId": 21,
+      "IncludedInSolve": true,
+      "RoomName": "Abyssal Plain",
+      "RoomPath": 15,
+      "BaseConnections": "All",
+      "PieceType": "Cross",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentStrongboxes2",
+          "HasSettingsEntry": true,
+          "Weight": 25.0,
+          "IsGlobal": false,
+          "Tags": "None",
+          "Value1": 2,
+          "Values": [
+            2,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 22,
+      "PieceId": 22,
+      "IncludedInSolve": true,
+      "RoomName": "Abyssal Plain",
+      "RoomPath": 7,
+      "BaseConnections": "Left, Up, Right",
+      "PieceType": "Tee",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartVoyageIncreasedRareMonsters",
+          "HasSettingsEntry": true,
+          "Weight": 20.0,
+          "IsGlobal": true,
+          "Tags": "Monsters,RareMonsters",
+          "Value1": 25,
+          "Values": [
+            25,
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 23,
+      "PieceId": 23,
+      "IncludedInSolve": true,
+      "RoomName": "Abyssal Plain",
+      "RoomPath": 12,
+      "BaseConnections": "Right, Down",
+      "PieceType": "Corner",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentGoldenLanterns",
+          "HasSettingsEntry": true,
+          "Weight": 95.0,
+          "IsGlobal": false,
+          "Tags": "Lanterns",
+          "Value1": 4,
+          "Values": [
+            4,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 24,
+      "PieceId": 24,
+      "IncludedInSolve": true,
+      "RoomName": "Abyssal Plain",
+      "RoomPath": 13,
+      "BaseConnections": "Left, Right, Down",
+      "PieceType": "Tee",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartVoyageIncreasedRareMonsters",
+          "HasSettingsEntry": true,
+          "Weight": 20.0,
+          "IsGlobal": true,
+          "Tags": "Monsters,RareMonsters",
+          "Value1": 25,
+          "Values": [
+            25,
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 25,
+      "PieceId": 25,
+      "IncludedInSolve": true,
+      "RoomName": "Undersea Groves",
+      "RoomPath": 5,
+      "BaseConnections": "Left, Right",
+      "PieceType": "Straight",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartVoyagePackSize1",
+          "HasSettingsEntry": true,
+          "Weight": 3.0,
+          "IsGlobal": true,
+          "Tags": "Monsters,MagicMonsters",
+          "Value1": 5,
+          "Values": [
+            5,
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 26,
+      "PieceId": 26,
+      "IncludedInSolve": true,
+      "RoomName": "Undersea Groves",
+      "RoomPath": 15,
+      "BaseConnections": "All",
+      "PieceType": "Cross",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartVoyageIncreasedMagicMonsters",
+          "HasSettingsEntry": true,
+          "Weight": 10.0,
+          "IsGlobal": true,
+          "Tags": "Monsters,MagicMonsters",
+          "Value1": 25,
+          "Values": [
+            25,
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 27,
+      "PieceId": 27,
+      "IncludedInSolve": true,
+      "RoomName": "Kishara's Rest",
+      "RoomPath": 9,
+      "BaseConnections": "Left, Down",
+      "PieceType": "Corner",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartVoyageQuantity2",
+          "HasSettingsEntry": true,
+          "Weight": 9.0,
+          "IsGlobal": true,
+          "Tags": "Monsters,Currency",
+          "Value1": 10,
+          "Values": [
+            10,
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 28,
+      "PieceId": 28,
+      "IncludedInSolve": true,
+      "RoomName": "Undersea Groves",
+      "RoomPath": 4,
+      "BaseConnections": "Right",
+      "PieceType": "Single",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartVoyageRarity2",
+          "HasSettingsEntry": true,
+          "Weight": 8.0,
+          "IsGlobal": true,
+          "Tags": "Monsters,Rarity",
+          "Value1": 9,
+          "Values": [
+            9,
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 29,
+      "PieceId": 29,
+      "IncludedInSolve": true,
+      "RoomName": "Undersea Groves",
+      "RoomPath": 13,
+      "BaseConnections": "Left, Right, Down",
+      "PieceType": "Tee",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentEssence2",
+          "HasSettingsEntry": true,
+          "Weight": 12.0,
+          "IsGlobal": false,
+          "Tags": "Essences",
+          "Value1": 3,
+          "Values": [
+            3,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 30,
+      "PieceId": 30,
+      "IncludedInSolve": true,
+      "RoomName": "Seafloor Ridges",
+      "RoomPath": 5,
+      "BaseConnections": "Left, Right",
+      "PieceType": "Straight",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartVoyagePackSize1",
+          "HasSettingsEntry": true,
+          "Weight": 3.0,
+          "IsGlobal": true,
+          "Tags": "Monsters,MagicMonsters",
+          "Value1": 5,
+          "Values": [
+            5,
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 31,
+      "PieceId": 31,
+      "IncludedInSolve": true,
+      "RoomName": "Abyssal Plain",
+      "RoomPath": 10,
+      "BaseConnections": "Up, Down",
+      "PieceType": "Straight",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentStarfish2",
+          "HasSettingsEntry": true,
+          "Weight": 30.0,
+          "IsGlobal": false,
+          "Tags": "None",
+          "Value1": 7,
+          "Values": [
+            7,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 32,
+      "PieceId": 32,
+      "IncludedInSolve": true,
+      "RoomName": "Undersea Groves",
+      "RoomPath": 12,
+      "BaseConnections": "Right, Down",
+      "PieceType": "Corner",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartVoyageRarity1",
+          "HasSettingsEntry": true,
+          "Weight": 5.0,
+          "IsGlobal": true,
+          "Tags": "Monsters,Rarity",
+          "Value1": 7,
+          "Values": [
+            7,
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 33,
+      "PieceId": 33,
+      "IncludedInSolve": true,
+      "RoomName": "Undersea Groves",
+      "RoomPath": 12,
+      "BaseConnections": "Right, Down",
+      "PieceType": "Corner",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartVoyagePackSize1",
+          "HasSettingsEntry": true,
+          "Weight": 3.0,
+          "IsGlobal": true,
+          "Tags": "Monsters,MagicMonsters",
+          "Value1": 5,
+          "Values": [
+            5,
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 34,
+      "PieceId": 34,
+      "IncludedInSolve": true,
+      "RoomName": "Undersea Groves",
+      "RoomPath": 4,
+      "BaseConnections": "Right",
+      "PieceType": "Single",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartVoyagePackSize2",
+          "HasSettingsEntry": true,
+          "Weight": 5.0,
+          "IsGlobal": true,
+          "Tags": "Monsters,MagicMonsters",
+          "Value1": 7,
+          "Values": [
+            7,
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 35,
+      "PieceId": 35,
+      "IncludedInSolve": true,
+      "RoomName": "Undersea Groves",
+      "RoomPath": 15,
+      "BaseConnections": "All",
+      "PieceType": "Cross",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentUniqueRing1",
+          "HasSettingsEntry": true,
+          "Weight": 65.0,
+          "IsGlobal": false,
+          "Tags": "Uniques",
+          "Value1": 10,
+          "Values": [
+            10,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 36,
+      "PieceId": 36,
+      "IncludedInSolve": true,
+      "RoomName": "Seafloor Ridges",
+      "RoomPath": 6,
+      "BaseConnections": "Up, Right",
+      "PieceType": "Corner",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartVoyageIncreasedRareMonsters",
+          "HasSettingsEntry": true,
+          "Weight": 20.0,
+          "IsGlobal": true,
+          "Tags": "Monsters,RareMonsters",
+          "Value1": 25,
+          "Values": [
+            25,
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 37,
+      "PieceId": 37,
+      "IncludedInSolve": true,
+      "RoomName": "Undersea Groves",
+      "RoomPath": 5,
+      "BaseConnections": "Left, Right",
+      "PieceType": "Straight",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentPantheon",
+          "HasSettingsEntry": true,
+          "Weight": 20.0,
+          "IsGlobal": false,
+          "Tags": "None",
+          "Value1": 1,
+          "Values": [
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 38,
+      "PieceId": 38,
+      "IncludedInSolve": true,
+      "RoomName": "Abyssal Plain",
+      "RoomPath": 15,
+      "BaseConnections": "All",
+      "PieceType": "Cross",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentEssence2",
+          "HasSettingsEntry": true,
+          "Weight": 12.0,
+          "IsGlobal": false,
+          "Tags": "Essences",
+          "Value1": 2,
+          "Values": [
+            2,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 39,
+      "PieceId": 39,
+      "IncludedInSolve": true,
+      "RoomName": "Undersea Groves",
+      "RoomPath": 4,
+      "BaseConnections": "Right",
+      "PieceType": "Single",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartVoyageRarity1",
+          "HasSettingsEntry": true,
+          "Weight": 5.0,
+          "IsGlobal": true,
+          "Tags": "Monsters,Rarity",
+          "Value1": 7,
+          "Values": [
+            7,
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 40,
+      "PieceId": 40,
+      "IncludedInSolve": true,
+      "RoomName": "Undersea Groves",
+      "RoomPath": 15,
+      "BaseConnections": "All",
+      "PieceType": "Cross",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentEssence2",
+          "HasSettingsEntry": true,
+          "Weight": 12.0,
+          "IsGlobal": false,
+          "Tags": "Essences",
+          "Value1": 4,
+          "Values": [
+            4,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 41,
+      "PieceId": 41,
+      "IncludedInSolve": true,
+      "RoomName": "Undersea Groves",
+      "RoomPath": 13,
+      "BaseConnections": "Left, Right, Down",
+      "PieceType": "Tee",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentUniqueAmulet2",
+          "HasSettingsEntry": true,
+          "Weight": 82.0,
+          "IsGlobal": false,
+          "Tags": "Uniques",
+          "Value1": 20,
+          "Values": [
+            20,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 42,
+      "PieceId": 42,
+      "IncludedInSolve": true,
+      "RoomName": "Seafloor Ridges",
+      "RoomPath": 5,
+      "BaseConnections": "Left, Right",
+      "PieceType": "Straight",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartVoyageIncreasedRareMonsters",
+          "HasSettingsEntry": true,
+          "Weight": 20.0,
+          "IsGlobal": true,
+          "Tags": "Monsters,RareMonsters",
+          "Value1": 25,
+          "Values": [
+            25,
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 43,
+      "PieceId": 43,
+      "IncludedInSolve": true,
+      "RoomName": "Abyssal Plain",
+      "RoomPath": 11,
+      "BaseConnections": "Left, Up, Down",
+      "PieceType": "Tee",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartVoyagePackSize1",
+          "HasSettingsEntry": true,
+          "Weight": 3.0,
+          "IsGlobal": true,
+          "Tags": "Monsters,MagicMonsters",
+          "Value1": 5,
+          "Values": [
+            5,
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 44,
+      "PieceId": 44,
+      "IncludedInSolve": true,
+      "RoomName": "Abyssal Plain",
+      "RoomPath": 10,
+      "BaseConnections": "Up, Down",
+      "PieceType": "Straight",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentEssence2",
+          "HasSettingsEntry": true,
+          "Weight": 12.0,
+          "IsGlobal": false,
+          "Tags": "Essences",
+          "Value1": 2,
+          "Values": [
+            2,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 45,
+      "PieceId": 45,
+      "IncludedInSolve": true,
+      "RoomName": "Undersea Groves",
+      "RoomPath": 15,
+      "BaseConnections": "All",
+      "PieceType": "Cross",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartVoyagePackSize2",
+          "HasSettingsEntry": true,
+          "Weight": 5.0,
+          "IsGlobal": true,
+          "Tags": "Monsters,MagicMonsters",
+          "Value1": 7,
+          "Values": [
+            7,
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 46,
+      "PieceId": 46,
+      "IncludedInSolve": true,
+      "RoomName": "Undersea Groves",
+      "RoomPath": 12,
+      "BaseConnections": "Right, Down",
+      "PieceType": "Corner",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartVoyagePackSize2",
+          "HasSettingsEntry": true,
+          "Weight": 5.0,
+          "IsGlobal": true,
+          "Tags": "Monsters,MagicMonsters",
+          "Value1": 7,
+          "Values": [
+            7,
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 47,
+      "PieceId": 47,
+      "IncludedInSolve": true,
+      "RoomName": "Undersea Groves",
+      "RoomPath": 15,
+      "BaseConnections": "All",
+      "PieceType": "Cross",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartVoyageIncreasedRareMonsters",
+          "HasSettingsEntry": true,
+          "Weight": 20.0,
+          "IsGlobal": true,
+          "Tags": "Monsters,RareMonsters",
+          "Value1": 25,
+          "Values": [
+            25,
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 48,
+      "PieceId": 48,
+      "IncludedInSolve": true,
+      "RoomName": "Undersea Groves",
+      "RoomPath": 12,
+      "BaseConnections": "Right, Down",
+      "PieceType": "Corner",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentPantheon",
+          "HasSettingsEntry": true,
+          "Weight": 20.0,
+          "IsGlobal": false,
+          "Tags": "None",
+          "Value1": 1,
+          "Values": [
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 49,
+      "PieceId": 49,
+      "IncludedInSolve": true,
+      "RoomName": "Abyssal Plain",
+      "RoomPath": 7,
+      "BaseConnections": "Left, Up, Right",
+      "PieceType": "Tee",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentEssence2",
+          "HasSettingsEntry": true,
+          "Weight": 12.0,
+          "IsGlobal": false,
+          "Tags": "Essences",
+          "Value1": 4,
+          "Values": [
+            4,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 50,
+      "PieceId": 50,
+      "IncludedInSolve": true,
+      "RoomName": "Seafloor Ridges",
+      "RoomPath": 6,
+      "BaseConnections": "Up, Right",
+      "PieceType": "Corner",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentIncreasedRareMonsters2",
+          "HasSettingsEntry": true,
+          "Weight": 70.0,
+          "IsGlobal": false,
+          "Tags": "RareMonsters",
+          "Value1": 60,
+          "Values": [
+            60,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 51,
+      "PieceId": 51,
+      "IncludedInSolve": true,
+      "RoomName": "Abyssal Plain",
+      "RoomPath": 5,
+      "BaseConnections": "Left, Right",
+      "PieceType": "Straight",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentStarfish2",
+          "HasSettingsEntry": true,
+          "Weight": 30.0,
+          "IsGlobal": false,
+          "Tags": "None",
+          "Value1": 7,
+          "Values": [
+            7,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 52,
+      "PieceId": 52,
+      "IncludedInSolve": true,
+      "RoomName": "Undersea Groves",
+      "RoomPath": 15,
+      "BaseConnections": "All",
+      "PieceType": "Cross",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentGoldenLanterns",
+          "HasSettingsEntry": true,
+          "Weight": 95.0,
+          "IsGlobal": false,
+          "Tags": "Lanterns",
+          "Value1": 4,
+          "Values": [
+            4,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 53,
+      "PieceId": 53,
+      "IncludedInSolve": true,
+      "RoomName": "Undersea Groves",
+      "RoomPath": 13,
+      "BaseConnections": "Left, Right, Down",
+      "PieceType": "Tee",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentStrongboxes2",
+          "HasSettingsEntry": true,
+          "Weight": 25.0,
+          "IsGlobal": false,
+          "Tags": "None",
+          "Value1": 3,
+          "Values": [
+            3,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 54,
+      "PieceId": 54,
+      "IncludedInSolve": true,
+      "RoomName": "Abyssal Plain",
+      "RoomPath": 15,
+      "BaseConnections": "All",
+      "PieceType": "Cross",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartVoyagePackSize1",
+          "HasSettingsEntry": true,
+          "Weight": 3.0,
+          "IsGlobal": true,
+          "Tags": "Monsters,MagicMonsters",
+          "Value1": 5,
+          "Values": [
+            5,
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 55,
+      "PieceId": 55,
+      "IncludedInSolve": true,
+      "RoomName": "Abyssal Plain",
+      "RoomPath": 2,
+      "BaseConnections": "Up",
+      "PieceType": "Single",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentGoldConvert1",
+          "HasSettingsEntry": true,
+          "Weight": 15.0,
+          "IsGlobal": false,
+          "Tags": "Gold",
+          "Value1": 40,
+          "Values": [
+            40,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 56,
+      "PieceId": 56,
+      "IncludedInSolve": true,
+      "RoomName": "Undersea Groves",
+      "RoomPath": 12,
+      "BaseConnections": "Right, Down",
+      "PieceType": "Corner",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentIncreasedRareMonsters1",
+          "HasSettingsEntry": true,
+          "Weight": 55.0,
+          "IsGlobal": false,
+          "Tags": "RareMonsters",
+          "Value1": 30,
+          "Values": [
+            30,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 57,
+      "PieceId": 57,
+      "IncludedInSolve": true,
+      "RoomName": "Abyssal Plain",
+      "RoomPath": 9,
+      "BaseConnections": "Left, Down",
+      "PieceType": "Corner",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentFractured",
+          "HasSettingsEntry": true,
+          "Weight": 35.0,
+          "IsGlobal": false,
+          "Tags": "Equipment",
+          "Value1": 2,
+          "Values": [
+            2,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "InventoryIndex": 58,
+      "PieceId": 58,
+      "IncludedInSolve": true,
+      "RoomName": "Abyssal Plain",
+      "RoomPath": 13,
+      "BaseConnections": "Left, Right, Down",
+      "PieceType": "Tee",
+      "Mods": [
+        {
+          "RawName": "MapDeepwaterChartAdjacentBarrels1",
+          "HasSettingsEntry": true,
+          "Weight": 15.0,
+          "IsGlobal": false,
+          "Tags": "None",
+          "Value1": 14,
+          "Values": [
+            14,
+            1
+          ]
+        }
+      ]
+    }
+  ],
+  "StrategyOptions": {
+    "UniqueAmuletClamCross": true,
+    "RareMonstersDrop": true,
+    "NoConsumeAnchorfield": true,
+    "CenterSpecialty": true,
+    "SaveKishara": true,
+    "SaveNoEquipment": true,
+    "SaveFractured": true,
+    "SaveGoldenLanterns": true,
+    "SavePantheon": true,
+    "SaveSoulEater": false,
+    "SaveRareFracture": true,
+    "SaveRarePossessed": true
+  },
+  "Solver": {
+    "UseFastSolver": true,
+    "TimeLimitSeconds": 60.0,
+    "TopN": 10
+  },
+  "Derived": {
+    "DivineCenters": [],
+    "AnnulCenters": [
+      "(1,0)"
+    ],
+    "AncientCenters": [],
+    "StarfishChartCount": 3,
+    "AdjacentRareT2ChartCount": 3,
+    "RareVoyageChartCount": 5,
+    "StrongboxChartCount": 7,
+    "PelagicChartCount": 2,
+    "BoardHasStrongTreasureAnchors": false
+  },
+  "Placement": {
+    "Locks": [
+      {
+        "Row": 1,
+        "Col": 0,
+        "PieceId": 3,
+        "Rotation": null,
+        "PieceRoomName": "Pelagic Abyss",
+        "PieceMods": [
+          "MapDeepwaterChartAdjacentUniqueBelt2"
+        ]
+      },
+      {
+        "Row": 2,
+        "Col": 0,
+        "PieceId": 31,
+        "Rotation": null,
+        "PieceRoomName": "Abyssal Plain",
+        "PieceMods": [
+          "MapDeepwaterChartAdjacentStarfish2"
+        ]
+      },
+      {
+        "Row": 0,
+        "Col": 0,
+        "PieceId": 51,
+        "Rotation": null,
+        "PieceRoomName": "Abyssal Plain",
+        "PieceMods": [
+          "MapDeepwaterChartAdjacentStarfish2"
+        ]
+      },
+      {
+        "Row": 1,
+        "Col": 1,
+        "PieceId": 4,
+        "Rotation": null,
+        "PieceRoomName": "Abyssal Plain",
+        "PieceMods": [
+          "MapDeepwaterChartAdjacentStarfish1"
+        ]
+      }
+    ],
+    "RemainingPieceIds": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      6,
+      8,
+      12,
+      16,
+      19,
+      20,
+      21,
+      25,
+      26,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      38,
+      39,
+      40,
+      41,
+      43,
+      44,
+      45,
+      46,
+      49,
+      51,
+      54,
+      55,
+      56,
+      58
+    ],
+    "ActiveStrategies": [
+      "Annul",
+      "Pelagic"
+    ],
+    "SavedCounts": {
+      "Kishara": 1,
+      "Fractured": 1,
+      "Golden Lanterns": 2,
+      "Pantheon": 3,
+      "Pelagic": 1,
+      "Unique Amulet2": 1,
+      "Unique Ring": 1,
+      "boxes": 6,
+      "adj. rare T2": 3,
+      "voyage rares": 5
+    },
+    "AmuletClamHubActive": false,
+    "PreferClamsAdjacentToAmulet": false,
+    "NoConsumeActive": false
+  },
+  "Solution": null
+}

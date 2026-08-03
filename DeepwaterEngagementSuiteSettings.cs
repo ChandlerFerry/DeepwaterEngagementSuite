@@ -526,6 +526,12 @@ public class VoyageSettings
     [Menu("Use fast solver (exact, experimental)", "Exact branch-and-bound solver. Ignores the time limit. Per-connection border mods are ignored for now, so scores on those boards are approximate.")]
     public ToggleNode UseFastSolver { get; set; } = new ToggleNode(true);
 
+    [Menu("Dump voyage state hotkey",
+        "Writes a replayable JSON snapshot of the open voyage board (raw border mods, resolved tile borders, " +
+        "every chart with resolved and raw modifier data, placed charts, strategy/solver settings, placement " +
+        "locks and saves, and the current solution) to ConfigDirectory/voyage-dumps.")]
+    public HotkeyNodeV2 DumpVoyageStateHotkey { get; set; } = new HotkeyNodeV2(Keys.None);
+
     public ToggleNode ShowAllBorderModifiers { get; set; } = new ToggleNode(false);
     public ToggleNode ShowAllChartModifiers { get; set; } = new ToggleNode(false);
     public ToggleNode ShowChartInventoryInformation { get; set; } = new ToggleNode(false);

@@ -218,8 +218,8 @@ public class IconSettings
     public ToggleNode ShowScarabStrongboxIcons { get; set; } = new ToggleNode(false);
 
     [Menu("Show Sulphur icons",
-    "Off by default to reduce clutter.")]
-    public ToggleNode ShowDeadmansSulphurIcons { get; set; } = new ToggleNode(false);
+    "Show map icons for Dead Man's Sulphur resource chests.")]
+    public ToggleNode ShowDeadmansSulphurIcons { get; set; } = new ToggleNode(true);
 
     public bool IsIconEnabled(IconPickerIndex index) => index switch
     {

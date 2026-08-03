@@ -16,4 +16,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\DeepwaterEngagementSuite.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- Captured in-game voyage boards, replayed by VoyageDumpReplayTests. -->
+    <None Include="fixtures\**\*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

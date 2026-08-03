@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using static DeepwaterEngagementSuite.VoyagePlannerData.Strategies.SupportPlacement;
 
 namespace DeepwaterEngagementSuite.VoyagePlannerData.Strategies;
 
@@ -34,45 +36,32 @@ public sealed class RareMonstersDropLockStrategy : IVoyageStrategy
 
         ctx.AddSaved(SaveCountKeys.Pelagic, savedPelagic);
 
-        foreach (var center in ctx.DivineCenters)
+        var boxPools = new[]
         {
-            foreach (var n in ctx.FreeNeighbors(center.Row, center.Col))
-            {
-                var support = ctx.TakeBest(ChartPredicates.IsStrongboxCountChart, ChartPredicates.BoxValue1Score)
-                              ?? ctx.TakeBest(ChartPredicates.IsStarfishChart, ChartPredicates.StarfishScore)
-                              ?? ctx.TakeBest(ChartPredicates.IsOrbRareComboChart, ChartPredicates.OrbRareComboScore);
-                if (support == null)
-                    break;
-                ctx.LockCell(n.Row, n.Col, support);
-            }
-        }
+            new SupportPool(ChartPredicates.IsStrongboxCountChart, ChartPredicates.BoxValue1Score),
+            new SupportPool(ChartPredicates.IsStarfishChart, ChartPredicates.StarfishScore),
+            new SupportPool(ChartPredicates.IsOrbRareComboChart, ChartPredicates.OrbRareComboScore),
+        };
+        var starfishPools = new[]
+        {
+            new SupportPool(ChartPredicates.IsStarfishChart, ChartPredicates.StarfishScore),
+            new SupportPool(ChartPredicates.IsOrbRareComboChart, ChartPredicates.OrbRareComboScore),
+        };
+
+        foreach (var center in ctx.DivineCenters)
+            LockSupportsAround(ctx, center, boxPools);
 
         foreach (var center in ctx.AnnulCenters)
-        {
-            foreach (var n in ctx.FreeNeighbors(center.Row, center.Col))
-            {
-                var support = ctx.TakeBest(ChartPredicates.IsStarfishChart, ChartPredicates.StarfishScore)
-                              ?? ctx.TakeBest(ChartPredicates.IsOrbRareComboChart, ChartPredicates.OrbRareComboScore);
-                if (support == null)
-                    break;
-                ctx.LockCell(n.Row, n.Col, support);
-            }
-        }
+            LockSupportsAround(ctx, center, starfishPools);
 
         foreach (var center in ctx.AncientCenters)
-        {
-            foreach (var n in ctx.FreeNeighbors(center.Row, center.Col))
-            {
-                var support = ctx.TakeBest(ChartPredicates.IsStarfishChart, ChartPredicates.StarfishScore)
-                              ?? ctx.TakeBest(ChartPredicates.IsOrbRareComboChart, ChartPredicates.OrbRareComboScore);
-                if (support == null)
-                    break;
-                ctx.LockCell(n.Row, n.Col, support);
-            }
-        }
+            LockSupportsAround(ctx, center, starfishPools);
 
         if (ctx.DivineCenters.Count > 0)
         {
+            // NOTE: this fills every remaining free cell with a hard lock, which leaves the
+            // solver almost no freedom. VoyageSolve's lock-dropping retry is what keeps this
+            // from returning zero solutions on a shape-poor board.
             foreach (var cell in ChartPredicates.EnumerateCells().Where(c => ctx.CellFree(c.Row, c.Col)))
             {
                 var rare = ctx.TakeBest(ChartPredicates.IsOrbRareGlobalChart, ChartPredicates.OrbRareComboScore);
@@ -81,6 +70,79 @@ public sealed class RareMonstersDropLockStrategy : IVoyageStrategy
                 ctx.LockCell(cell.Row, cell.Col, rare);
             }
         }
+    }
+}
+
+/// <summary>A candidate source of support charts, tried in order until one yields a piece.</summary>
+internal readonly record struct SupportPool(Func<MapPiece, bool> Pred, Func<MapPiece, double> Score);
+
+internal static class SupportPlacement
+{
+    /// <summary>
+    /// Locks support charts onto the free orthogonal neighbours of an orb centre.
+    ///
+    /// Which charts get chosen is unchanged: pools are drained best-first by their own score.
+    /// What changed is where each one lands. Previously charts were zipped onto cells in
+    /// <see cref="ChartIds.Ortho"/> order, so the lowest-scoring chart got whatever cell came
+    /// last — frequently the grid centre. A one-connection chart in the centre eliminates
+    /// almost every valid topology, and combined with two straights it can eliminate all of
+    /// them, leaving the solver with nothing.
+    ///
+    /// So we pair the most connected chart with the most constrained cell. This helps twice:
+    /// dead ends become cheap (a corner only has two in-grid directions), and the strongest
+    /// chart lands where its adjacency bonus reaches the most tiles.
+    /// </summary>
+    public static void LockSupportsAround(
+        PlacementContext ctx,
+        (int Row, int Col) center,
+        IReadOnlyList<SupportPool> pools)
+    {
+        // Materialise before locking: FreeNeighbors is lazy and reads LockedCells as it goes.
+        var cells = ctx.FreeNeighbors(center.Row, center.Col).ToList();
+        if (cells.Count == 0)
+            return;
+
+        // TakeBest only excludes pieces already in UsedPieceIds, and we have not locked
+        // anything yet, so track picks locally to avoid drawing the same chart twice.
+        var picked = new HashSet<int>();
+        var supports = new List<MapPiece>();
+        for (var slot = 0; slot < cells.Count; slot++)
+        {
+            MapPiece support = null;
+            foreach (var pool in pools)
+            {
+                support = ctx.TakeBest(p => !picked.Contains(p.Id) && pool.Pred(p), pool.Score);
+                if (support != null)
+                    break;
+            }
+
+            if (support == null)
+                break;
+
+            picked.Add(support.Id);
+            supports.Add(support);
+        }
+
+        if (supports.Count == 0)
+            return;
+
+        var orderedCells = cells
+            .OrderByDescending(c => ChartPredicates.InGridDegree(c.Row, c.Col))
+            .ThenBy(c => c.Row)
+            .ThenBy(c => c.Col)
+            .ToList();
+
+        // Rank preserves the value ordering the pools produced, so it breaks ties between
+        // charts of equal shape without ever overriding shape itself.
+        var orderedSupports = supports
+            .Select((piece, rank) => (Piece: piece, Rank: rank))
+            .OrderByDescending(x => x.Piece.BaseConnections.CountConnections())
+            .ThenBy(x => x.Rank)
+            .Select(x => x.Piece)
+            .ToList();
+
+        for (var i = 0; i < orderedSupports.Count; i++)
+            ctx.LockCell(orderedCells[i].Row, orderedCells[i].Col, orderedSupports[i]);
     }
 }
 

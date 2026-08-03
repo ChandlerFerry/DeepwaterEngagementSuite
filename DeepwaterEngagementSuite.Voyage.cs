@@ -246,6 +246,9 @@ public partial class DeepwaterEngagementSuite
 
         TaskUtils.RunOrRestart(ref _voyagePlaceTask, () => null);
 
+        if (Settings.VoyageSettings.DumpVoyageStateHotkey.PressedOnce())
+            DumpVoyageStateToFile(tree, "hotkey dump");
+
         if (!_voyageWindowWasOpen)
         {
             _voyageWindowWasOpen = true;
@@ -659,11 +662,37 @@ public partial class DeepwaterEngagementSuite
             }
         }
 
+        ImGui.SameLine();
+        if (ImGui.Button("Dump State"))
+            DumpVoyageStateToFile(tree, "manual dump from optimizer window");
+        if (ImGui.IsItemHovered())
+            ImGui.SetTooltip("Writes a replayable JSON snapshot of this board\n" +
+                             "(borders, charts, mods, strategy options, locks, solution)\n" +
+                             "to ConfigDirectory/voyage-dumps.");
+
+        if (_lastVoyageDumpError != null)
+        {
+            ImGui.TextColored(Color.Red.ToImguiVec4(), $"Dump failed: {_lastVoyageDumpError}");
+        }
+        else if (_lastVoyageDumpPath != null)
+        {
+            ImGui.TextColored(Color.Lime.ToImguiVec4(), $"Dumped: {_lastVoyageDumpPath}");
+            ImGui.SameLine();
+            if (ImGui.SmallButton("Copy path"))
+                ImGui.SetClipboardText(_lastVoyageDumpPath);
+        }
+
         ImGui.Spacing();
 
         if (_voyageSolving || _result != null || _lastPlacement != null)
         {
             ImGui.Text($"Nodes: {_voyageNodesExplored:N0} explored, {_voyageNodesPruned:N0} pruned");
+            if (_voyageSolve?.DroppedLockCount > 0)
+            {
+                ImGui.TextColored(Color.Orange.ToImguiVec4(),
+                    $"Dropped {_voyageSolve.DroppedLockCount} strategy lock(s) — no board satisfied all of them.");
+            }
+
             DrawStrategyStatus();
         }
 

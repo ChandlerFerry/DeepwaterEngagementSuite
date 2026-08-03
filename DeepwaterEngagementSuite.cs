@@ -99,6 +99,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
         RegisterHotkey(Settings.PlannerSettings.StartSearchHotkey);
         RegisterHotkey(Settings.PlannerSettings.StopSearchHotkey);
         RegisterHotkey(Settings.PlannerSettings.ClearSearchHotkey);
+        RegisterHotkey(Settings.VoyageSettings.DumpVoyageStateHotkey);
         return base.Initialise();
     }
 

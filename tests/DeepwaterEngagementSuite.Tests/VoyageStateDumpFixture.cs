@@ -74,7 +74,6 @@ public static class VoyageStateDumpFixture
         foreach (var r in session.Run(
                      pieces,
                      borders,
-                     useFastSolver: dump.Solver?.UseFastSolver ?? true,
                      settings: dump.ToPlannerSettings(),
                      strategyOptions: options))
         {

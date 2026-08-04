@@ -527,9 +527,6 @@ public class VoyageSettings
     [Menu("Solver time limit (seconds)", "Max time the solver runs before returning the best solution found so far. 0 = no limit.")]
     public RangeNode<int> SolverTimeLimitSeconds { get; set; } = new RangeNode<int>(5, 1, 120);
 
-    [Menu("Use fast solver (exact, experimental)", "Exact branch-and-bound solver. Ignores the time limit. Per-connection border mods are ignored for now, so scores on those boards are approximate.")]
-    public ToggleNode UseFastSolver { get; set; } = new ToggleNode(true);
-
     [Menu("Dump voyage state hotkey",
         "Writes a replayable JSON snapshot of the open voyage board (raw border mods, resolved tile borders, " +
         "every chart with resolved and raw modifier data, placed charts, strategy/solver settings, placement " +

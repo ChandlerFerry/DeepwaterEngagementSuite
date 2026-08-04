@@ -36,7 +36,7 @@ public partial class DeepwaterEngagementSuite
             ProfileName = Settings.VoyageSettings.ProfileSelector?.Value,
             Solver = new VoyageStateDump.SolverSettingsDump
             {
-                UseFastSolver = Settings.VoyageSettings.UseFastSolver.Value,
+                UseFastSolver = true,
                 TimeLimitSeconds = Settings.VoyageSettings.SolverTimeLimitSeconds.Value,
                 TopN = 10,
             },

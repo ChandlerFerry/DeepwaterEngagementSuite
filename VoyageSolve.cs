@@ -6,8 +6,6 @@ namespace DeepwaterEngagementSuite;
 
 public sealed class VoyageSolve
 {
-    private VoyagePlanner _slowPlanner;
-
     public VoyageScorer Scorer { get; private set; }
     public VoyagePlacementRules.Result Placement { get; private set; }
     public VoyagePuzzle Puzzle { get; private set; }
@@ -18,17 +16,18 @@ public sealed class VoyageSolve
     /// <summary>Human-readable descriptions of each lock that was dropped (order = drop order).</summary>
     public List<string> DroppedLocks { get; } = [];
 
-    public void Cancel() => _slowPlanner?.Cancel();
+    public void Cancel()
+    {
+        // Fast solver runs to completion; generation counters handle obsolete results.
+    }
 
     public IEnumerable<VoyageSolutionResult> Run(
         List<MapPiece> pieces,
         IReadOnlyList<BorderEffect>[,] tileBorders,
-        bool useFastSolver,
         VoyagePlannerSettings settings = null,
         VoyageStrategyOptions strategyOptions = null)
     {
         settings ??= new VoyagePlannerSettings();
-        _slowPlanner = null;
         DroppedLocks.Clear();
 
         Placement = VoyagePlacementRules.Apply(pieces, tileBorders, strategyOptions);
@@ -45,18 +44,13 @@ public sealed class VoyageSolve
             Scorer = new VoyageScorer(Puzzle);
 
             VoyageSolutionResult last = null;
-            foreach (var result in SolveOnce(useFastSolver, settings))
+            foreach (var result in new VoyagePlannerFast().Solve(Puzzle, settings))
             {
                 last = result;
                 yield return result;
             }
 
             if (last is { Solutions.Count: > 0 })
-                yield break;
-
-            // A cancelled or timed-out run tells us nothing about whether the locks are
-            // satisfiable, so don't burn another solve on it.
-            if (_slowPlanner is { WasCancelled: true })
                 yield break;
 
             if (locks.Count == 0)
@@ -97,14 +91,5 @@ public sealed class VoyageSolve
         var strategy = string.IsNullOrWhiteSpace(lp.Strategy) ? "lock" : lp.Strategy;
         var pieceBit = room != null ? $"{room} #{lp.PieceId}" : $"piece #{lp.PieceId}";
         return $"{strategy} @ ({lp.Row},{lp.Col}) [{pieceBit}]";
-    }
-
-    private IEnumerable<VoyageSolutionResult> SolveOnce(bool useFastSolver, VoyagePlannerSettings settings)
-    {
-        if (useFastSolver)
-            return new VoyagePlannerFast().Solve(Puzzle, settings);
-
-        _slowPlanner = new VoyagePlanner();
-        return _slowPlanner.Solve(Puzzle, settings);
     }
 }

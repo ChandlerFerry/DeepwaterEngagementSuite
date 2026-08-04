@@ -104,7 +104,7 @@ public class SupportPlacementShapeTests
         var session = new VoyageSolve();
 
         VoyageSolutionResult last = null;
-        foreach (var r in session.Run(pieces, borders, useFastSolver: true,
+        foreach (var r in session.Run(pieces, borders,
                      settings: new VoyagePlannerSettings(TopN: 5),
                      strategyOptions: VoyageStrategyOptions.AllEnabled))
         {
@@ -129,7 +129,7 @@ public class SupportPlacementShapeTests
 
         var session = new VoyageSolve();
         VoyageSolutionResult last = null;
-        foreach (var r in session.Run(pieces, BordersWithAnnulAt(1, 0), useFastSolver: true,
+        foreach (var r in session.Run(pieces, BordersWithAnnulAt(1, 0),
                      settings: new VoyagePlannerSettings(TopN: 5),
                      strategyOptions: VoyageStrategyOptions.AllEnabled))
         {

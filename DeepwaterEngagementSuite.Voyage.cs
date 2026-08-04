@@ -648,7 +648,6 @@ public partial class DeepwaterEngagementSuite
         var pieces = BuildMapPiecesFromAvailableCharts();
         var tileBorders = BuildTileBorders(tree);
         var timeLimitSetting = Settings.VoyageSettings.SolverTimeLimitSeconds.Value;
-        var useFastSolver = Settings.VoyageSettings.UseFastSolver.Value;
         var strategyOptions = Settings.VoyageSettings.Strategies.ToOptions();
         var generation = ++_voyageSolveGeneration;
 
@@ -665,7 +664,6 @@ public partial class DeepwaterEngagementSuite
                 foreach (var r in session.Run(
                              pieces,
                              tileBorders,
-                             useFastSolver: useFastSolver,
                              settings: new VoyagePlannerSettings(TimeLimitSeconds: timeLimitSetting),
                              strategyOptions: strategyOptions))
                 {
@@ -759,13 +757,6 @@ public partial class DeepwaterEngagementSuite
 
         if (ImGui.Button("Solve"))
             StartVoyageSolve(tree);
-
-        if (_voyageSolve != null && _voyageSolving && !Settings.VoyageSettings.UseFastSolver.Value)
-        {
-            ImGui.SameLine();
-            if (ImGui.Button("Cancel"))
-                _voyageSolve.Cancel();
-        }
 
         if (_voyageSolving)
         {

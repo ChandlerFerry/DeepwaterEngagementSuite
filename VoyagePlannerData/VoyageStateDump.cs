@@ -138,6 +138,7 @@ public sealed class VoyageStateDump
         public bool RareMonstersDrop { get; set; } = true;
         public bool NoConsumeAnchorfield { get; set; } = true;
         public bool CenterSpecialty { get; set; } = true;
+        public bool InfiniteLanterns { get; set; }
         public int SaveKishara { get; set; } = ChartIds.MaxSavedKishara;
         public int SaveNoEquipment { get; set; } = ChartIds.MaxSavedNoEquipment;
         public int SaveFractured { get; set; } = ChartIds.MaxSavedFractured;
@@ -156,6 +157,7 @@ public sealed class VoyageStateDump
                 RareMonstersDrop = o.RareMonstersDrop,
                 NoConsumeAnchorfield = o.NoConsumeAnchorfield,
                 CenterSpecialty = o.CenterSpecialty,
+                InfiniteLanterns = o.InfiniteLanterns,
                 SaveKishara = o.SaveKishara,
                 SaveNoEquipment = o.SaveNoEquipment,
                 SaveFractured = o.SaveFractured,
@@ -172,6 +174,7 @@ public sealed class VoyageStateDump
             RareMonstersDrop,
             NoConsumeAnchorfield,
             CenterSpecialty,
+            InfiniteLanterns,
             SaveKishara,
             SaveNoEquipment,
             SaveFractured,
@@ -200,6 +203,7 @@ public sealed class VoyageStateDump
         public int StrongboxChartCount { get; set; }
         public int PelagicChartCount { get; set; }
         public bool BoardHasStrongTreasureAnchors { get; set; }
+        public bool BoardHasStrongInfiniteLanterns { get; set; }
     }
 
     public sealed class PlacementDump

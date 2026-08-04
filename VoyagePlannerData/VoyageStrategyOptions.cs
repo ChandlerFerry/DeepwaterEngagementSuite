@@ -9,6 +9,11 @@ public sealed record VoyageStrategyOptions(
     bool RareMonstersDrop = true,
     bool NoConsumeAnchorfield = true,
     bool CenterSpecialty = true,
+    /// <summary>
+    /// When on, highlight Infinite Lanterns borders if the board has at least two.
+    /// Alert-only — no locks or chart saves. Default off.
+    /// </summary>
+    bool InfiniteLanterns = false,
     int SaveKishara = ChartIds.MaxSavedKishara,
     int SaveNoEquipment = ChartIds.MaxSavedNoEquipment,
     int SaveFractured = ChartIds.MaxSavedFractured,

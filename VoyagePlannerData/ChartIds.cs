@@ -9,6 +9,7 @@ public static class ChartIds
     public const string RareAncient = "DeepwaterBorderRareMonsterAncient";
     public const string TreasureAnchors1 = "DeepwaterBorderTreasureAnchors1";
     public const string TreasureAnchors2 = "DeepwaterBorderTreasureAnchors2";
+    public const string InfiniteLanterns = "DeepwaterBorderInfiniteLanterns";
 
     public const string VoyageIncreasedRareMonsters = "MapDeepwaterChartVoyageIncreasedRareMonsters";
     public const string VoyageNoEquipmentDrops = "MapDeepwaterChartVoyageNoEquipmentDrops";

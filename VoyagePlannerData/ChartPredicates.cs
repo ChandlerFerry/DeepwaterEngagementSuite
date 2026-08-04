@@ -169,6 +169,13 @@ public static class ChartPredicates
                || rawName.Equals(ChartIds.TreasureAnchors2, StringComparison.OrdinalIgnoreCase);
     }
 
+    public static bool IsInfiniteLanternsBorder(string rawName)
+    {
+        if (string.IsNullOrEmpty(rawName))
+            return false;
+        return rawName.Equals(ChartIds.InfiniteLanterns, StringComparison.OrdinalIgnoreCase);
+    }
+
     public static bool IsStrongNoConsume(IReadOnlyList<BorderEffect> borders)
     {
         var t1 = 0;
@@ -228,6 +235,44 @@ public static class ChartPredicates
         }
 
         return IsStrongTreasureAnchorsCounts(treasureT1, treasureT2);
+    }
+
+    /// <summary>Board is "strong" Infinite Lanterns when at least two of that border are present.</summary>
+    public static bool IsStrongInfiniteLanternsCount(int count) => count >= 2;
+
+    public static bool IsStrongInfiniteLanterns(IEnumerable<string> borderNames)
+    {
+        if (borderNames == null)
+            return false;
+
+        var count = 0;
+        foreach (var name in borderNames)
+        {
+            if (string.IsNullOrEmpty(name))
+                continue;
+            if (name.Equals(ChartIds.InfiniteLanterns, StringComparison.OrdinalIgnoreCase))
+                count++;
+        }
+
+        return IsStrongInfiniteLanternsCount(count);
+    }
+
+    public static bool IsStrongInfiniteLanterns(IReadOnlyList<BorderEffect> borders) =>
+        IsStrongInfiniteLanterns(borders?.Select(b => b.Name));
+
+    public static bool BoardHasStrongInfiniteLanterns(IReadOnlyList<BorderEffect>[,] tileBorders)
+    {
+        var count = 0;
+        foreach (var (row, col) in EnumerateCells())
+        {
+            foreach (var b in BordersAt(tileBorders, row, col))
+            {
+                if (b.Name.Equals(ChartIds.InfiniteLanterns, StringComparison.OrdinalIgnoreCase))
+                    count++;
+            }
+        }
+
+        return IsStrongInfiniteLanternsCount(count);
     }
 
     /// <summary>

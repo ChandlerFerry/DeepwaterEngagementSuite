@@ -225,6 +225,7 @@ public partial class DeepwaterEngagementSuite
         dump.Derived.StrongboxChartCount = pieces.Count(ChartPredicates.IsStrongboxCountChart);
         dump.Derived.PelagicChartCount = pieces.Count(ChartPredicates.IsPelagic);
         dump.Derived.BoardHasStrongTreasureAnchors = ChartPredicates.BoardHasStrongTreasureAnchors(tileBorders);
+        dump.Derived.BoardHasStrongInfiniteLanterns = ChartPredicates.BoardHasStrongInfiniteLanterns(tileBorders);
     }
 
     private static VoyageStateDump.PlacementDump BuildPlacementDump(

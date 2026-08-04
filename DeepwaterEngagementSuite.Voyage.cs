@@ -395,8 +395,12 @@ public partial class DeepwaterEngagementSuite
         var tiles = tree.Tiles;
         var boardHasStrategyOrb = modsPerTileIndex.Values
             .Any(tileMods => VoyagePlacementRules.HasStrategyOrb(tileMods.Select(m => m.RawName)));
-        var boardStrongTreasureAnchors = VoyagePlacementRules.IsStrongTreasureAnchors(
-            modsPerTileIndex.Values.SelectMany(tileMods => tileMods.Select(m => m.RawName)));
+        var allBorderNames = modsPerTileIndex.Values
+            .SelectMany(tileMods => tileMods.Select(m => m.RawName))
+            .ToList();
+        var boardStrongTreasureAnchors = VoyagePlacementRules.IsStrongTreasureAnchors(allBorderNames);
+        var boardStrongInfiniteLanterns = Settings.VoyageSettings.Strategies.InfiniteLanterns.Value
+            && VoyagePlacementRules.IsStrongInfiniteLanterns(allBorderNames);
 
         for (var index = 0; index < tiles.Count; index++)
         {
@@ -461,7 +465,9 @@ public partial class DeepwaterEngagementSuite
                 var isStrategy = VoyagePlacementRules.IsStrategyBorder(itemMod.RawName);
                 var isTreasure = boardStrongTreasureAnchors &&
                                  VoyagePlacementRules.IsTreasureAnchorsBorder(itemMod.RawName);
-                var isCombo = isStrategy || isTreasure;
+                var isInfiniteLanterns = boardStrongInfiniteLanterns &&
+                                        VoyagePlacementRules.IsInfiniteLanternsBorder(itemMod.RawName);
+                var isCombo = isStrategy || isTreasure || isInfiniteLanterns;
                 if (!Settings.VoyageSettings.ShowAllBorderModifiers && !isCombo)
                     continue;
 

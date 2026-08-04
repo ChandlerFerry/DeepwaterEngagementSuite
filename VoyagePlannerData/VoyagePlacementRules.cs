@@ -14,6 +14,7 @@ public static class VoyagePlacementRules
     public const string RareAncient = ChartIds.RareAncient;
     public const string TreasureAnchors1 = ChartIds.TreasureAnchors1;
     public const string TreasureAnchors2 = ChartIds.TreasureAnchors2;
+    public const string InfiniteLanterns = ChartIds.InfiniteLanterns;
 
     public const string VoyageIncreasedRareMonsters = ChartIds.VoyageIncreasedRareMonsters;
     public const string VoyageNoEquipmentDrops = ChartIds.VoyageNoEquipmentDrops;
@@ -188,6 +189,9 @@ public static class VoyagePlacementRules
     public static bool IsTreasureAnchorsBorder(string rawName) =>
         ChartPredicates.IsTreasureAnchorsBorder(rawName);
 
+    public static bool IsInfiniteLanternsBorder(string rawName) =>
+        ChartPredicates.IsInfiniteLanternsBorder(rawName);
+
     public static bool IsStrongNoConsume(IReadOnlyList<BorderEffect> borders) =>
         ChartPredicates.IsStrongNoConsume(borders);
 
@@ -199,6 +203,15 @@ public static class VoyagePlacementRules
 
     public static bool IsStrongTreasureAnchors(IReadOnlyList<BorderEffect> borders) =>
         ChartPredicates.IsStrongTreasureAnchors(borders);
+
+    public static bool IsStrongInfiniteLanternsCount(int count) =>
+        ChartPredicates.IsStrongInfiniteLanternsCount(count);
+
+    public static bool IsStrongInfiniteLanterns(IEnumerable<string> borderNames) =>
+        ChartPredicates.IsStrongInfiniteLanterns(borderNames);
+
+    public static bool IsStrongInfiniteLanterns(IReadOnlyList<BorderEffect> borders) =>
+        ChartPredicates.IsStrongInfiniteLanterns(borders);
 
     public static int OrbPriority(IReadOnlyList<BorderEffect> borders) =>
         ChartPredicates.OrbPriority(borders);

@@ -607,6 +607,11 @@ public class VoyageStrategySettings
         "Unique Amulet2/Belt/Ring are always center-only in the solver.")]
     public ToggleNode CenterSpecialty { get; set; } = new ToggleNode(true);
 
+    [Menu("Infinite Lanterns",
+        "Alert-only: when the board has at least two Infinite Lanterns borders, highlight them (like treasure anchors). " +
+        "Does not lock cells or save charts. Default off.")]
+    public ToggleNode InfiniteLanterns { get; set; } = new ToggleNode(false);
+
     [Menu("Save Kishara",
         "Max Kishara's Rest charts held out of the solver (0 = off; place boss yourself).")]
     public RangeNode<int> SaveKishara { get; set; } =
@@ -650,6 +655,7 @@ public class VoyageStrategySettings
         RareMonstersDrop: RareMonstersDrop.Value,
         NoConsumeAnchorfield: NoConsumeAnchorfield.Value,
         CenterSpecialty: CenterSpecialty.Value,
+        InfiniteLanterns: InfiniteLanterns.Value,
         SaveKishara: SaveKishara.Value,
         SaveNoEquipment: SaveNoEquipment.Value,
         SaveFractured: SaveFractured.Value,

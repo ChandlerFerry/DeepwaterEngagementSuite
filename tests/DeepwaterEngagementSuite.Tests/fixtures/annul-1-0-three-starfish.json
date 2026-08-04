@@ -1649,14 +1649,14 @@
     "RareMonstersDrop": true,
     "NoConsumeAnchorfield": true,
     "CenterSpecialty": true,
-    "SaveKishara": true,
-    "SaveNoEquipment": true,
-    "SaveFractured": true,
-    "SaveGoldenLanterns": true,
-    "SavePantheon": true,
-    "SaveSoulEater": false,
-    "SaveRareFracture": true,
-    "SaveRarePossessed": true
+    "SaveKishara": 60,
+    "SaveNoEquipment": 60,
+    "SaveFractured": 60,
+    "SaveGoldenLanterns": 4,
+    "SavePantheon": 2,
+    "SaveSoulEater": 0,
+    "SaveRareFracture": 60,
+    "SaveRarePossessed": 60
   },
   "Solver": {
     "UseFastSolver": true,

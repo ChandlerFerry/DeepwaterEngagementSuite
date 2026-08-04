@@ -43,8 +43,16 @@ public static class VoyagePlacementRules
     public const int MaxSavedPelagic = ChartIds.MaxSavedPelagic;
     public const int MaxSavedUniqueAmulet2 = ChartIds.MaxSavedUniqueAmulet2;
     public const int MaxSavedClamsForAmulet = ChartIds.MaxSavedClamsForAmulet;
+    public const int MaxSaveCap = ChartIds.MaxSaveCap;
+    public const int MaxSavedDefault = ChartIds.MaxSavedDefault;
+    public const int MaxSavedKishara = ChartIds.MaxSavedKishara;
+    public const int MaxSavedNoEquipment = ChartIds.MaxSavedNoEquipment;
+    public const int MaxSavedFractured = ChartIds.MaxSavedFractured;
     public const int MaxSavedGoldenLanterns = ChartIds.MaxSavedGoldenLanterns;
     public const int MaxSavedPantheon = ChartIds.MaxSavedPantheon;
+    public const int MaxSavedSoulEater = ChartIds.MaxSavedSoulEater;
+    public const int MaxSavedRareFracture = ChartIds.MaxSavedRareFracture;
+    public const int MaxSavedRarePossessed = ChartIds.MaxSavedRarePossessed;
 
     public const string PelagicRoomName = ChartIds.PelagicRoomName;
     public const string ClamRoomName = ChartIds.ClamRoomName;

@@ -138,14 +138,14 @@ public sealed class VoyageStateDump
         public bool RareMonstersDrop { get; set; } = true;
         public bool NoConsumeAnchorfield { get; set; } = true;
         public bool CenterSpecialty { get; set; } = true;
-        public bool SaveKishara { get; set; } = true;
-        public bool SaveNoEquipment { get; set; } = true;
-        public bool SaveFractured { get; set; } = true;
-        public bool SaveGoldenLanterns { get; set; } = true;
-        public bool SavePantheon { get; set; } = true;
-        public bool SaveSoulEater { get; set; }
-        public bool SaveRareFracture { get; set; } = true;
-        public bool SaveRarePossessed { get; set; } = true;
+        public int SaveKishara { get; set; } = ChartIds.MaxSavedKishara;
+        public int SaveNoEquipment { get; set; } = ChartIds.MaxSavedNoEquipment;
+        public int SaveFractured { get; set; } = ChartIds.MaxSavedFractured;
+        public int SaveGoldenLanterns { get; set; } = ChartIds.MaxSavedGoldenLanterns;
+        public int SavePantheon { get; set; } = ChartIds.MaxSavedPantheon;
+        public int SaveSoulEater { get; set; } = ChartIds.MaxSavedSoulEater;
+        public int SaveRareFracture { get; set; } = ChartIds.MaxSavedRareFracture;
+        public int SaveRarePossessed { get; set; } = ChartIds.MaxSavedRarePossessed;
 
         public static StrategyOptionsDump From(VoyageStrategyOptions o)
         {

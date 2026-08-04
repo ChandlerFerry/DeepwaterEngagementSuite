@@ -39,8 +39,18 @@ public static class ChartIds
     public const int MaxSavedPelagic = 2;
     public const int MaxSavedUniqueAmulet2 = 1;
     public const int MaxSavedClamsForAmulet = 3;
+    /// <summary>Upper bound for save-strategy max settings (0 = off).</summary>
+    public const int MaxSaveCap = 60;
+    /// <summary>Default max for save strategies that should hold as many as practical when enabled.</summary>
+    public const int MaxSavedDefault = MaxSaveCap;
+    public const int MaxSavedKishara = MaxSavedDefault;
+    public const int MaxSavedNoEquipment = MaxSavedDefault;
+    public const int MaxSavedFractured = MaxSavedDefault;
     public const int MaxSavedGoldenLanterns = 4;
     public const int MaxSavedPantheon = 2;
+    public const int MaxSavedSoulEater = 0;
+    public const int MaxSavedRareFracture = MaxSavedDefault;
+    public const int MaxSavedRarePossessed = MaxSavedDefault;
 
     public const string PelagicRoomName = "Pelagic Abyss";
     public const string ClamRoomName = "Clam-infested Shelf";

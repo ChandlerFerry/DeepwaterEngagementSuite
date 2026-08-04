@@ -54,7 +54,10 @@ public class VoyagePlacementRulesApplyTests
     public void Apply_saves_GoldenLanterns_when_enabled_and_surplus_pieces()
     {
         var pieces = TenPiecesWithGoldenLantern();
-        var options = VoyageStrategyOptions.AllEnabled with { SaveGoldenLanterns = true };
+        var options = VoyageStrategyOptions.AllEnabled with
+        {
+            SaveGoldenLanterns = ChartIds.MaxSavedGoldenLanterns
+        };
 
         var result = VoyagePlacementRules.Apply(pieces, EmptyBorders(), options);
 
@@ -69,7 +72,7 @@ public class VoyagePlacementRulesApplyTests
     public void Apply_keeps_GoldenLanterns_when_save_disabled()
     {
         var pieces = TenPiecesWithGoldenLantern();
-        var options = VoyageStrategyOptions.AllEnabled with { SaveGoldenLanterns = false };
+        var options = VoyageStrategyOptions.AllEnabled with { SaveGoldenLanterns = 0 };
 
         var result = VoyagePlacementRules.Apply(pieces, EmptyBorders(), options);
 
@@ -87,8 +90,7 @@ public class VoyagePlacementRulesApplyTests
 
         var options = VoyageStrategyOptions.AllEnabled with
         {
-            SaveGoldenLanterns = true,
-            MaxSavedGoldenLanterns = ChartIds.MaxSavedGoldenLanterns
+            SaveGoldenLanterns = ChartIds.MaxSavedGoldenLanterns
         };
 
         var result = VoyagePlacementRules.Apply(pieces, EmptyBorders(), options);
@@ -104,11 +106,7 @@ public class VoyagePlacementRulesApplyTests
         for (var i = 0; i < 5; i++)
             pieces.Add(Piece(100 + i, PieceType.Cross, Direction.All, $"Golden{i}", GoldenLanternMod));
 
-        var options = VoyageStrategyOptions.AllEnabled with
-        {
-            SaveGoldenLanterns = true,
-            MaxSavedGoldenLanterns = 2
-        };
+        var options = VoyageStrategyOptions.AllEnabled with { SaveGoldenLanterns = 2 };
 
         var result = VoyagePlacementRules.Apply(pieces, EmptyBorders(), options);
 
@@ -125,11 +123,7 @@ public class VoyagePlacementRulesApplyTests
         pieces.Add(Piece(202, PieceType.Single, Direction.Up, "GoldenDeadEnd", GoldenLanternMod));
         pieces.Add(Piece(203, PieceType.Tee, Direction.Up | Direction.Left | Direction.Right, "GoldenTee", GoldenLanternMod));
 
-        var options = VoyageStrategyOptions.AllEnabled with
-        {
-            SaveGoldenLanterns = true,
-            MaxSavedGoldenLanterns = 1
-        };
+        var options = VoyageStrategyOptions.AllEnabled with { SaveGoldenLanterns = 1 };
 
         var result = VoyagePlacementRules.Apply(pieces, EmptyBorders(), options);
 
@@ -149,8 +143,7 @@ public class VoyagePlacementRulesApplyTests
 
         var options = VoyageStrategyOptions.AllEnabled with
         {
-            SavePantheon = true,
-            MaxSavedPantheon = ChartIds.MaxSavedPantheon
+            SavePantheon = ChartIds.MaxSavedPantheon
         };
 
         var result = VoyagePlacementRules.Apply(pieces, EmptyBorders(), options);
@@ -166,11 +159,7 @@ public class VoyagePlacementRulesApplyTests
         for (var i = 0; i < 4; i++)
             pieces.Add(Piece(100 + i, $"Pantheon{i}", PantheonMod));
 
-        var options = VoyageStrategyOptions.AllEnabled with
-        {
-            SavePantheon = true,
-            MaxSavedPantheon = 1
-        };
+        var options = VoyageStrategyOptions.AllEnabled with { SavePantheon = 1 };
 
         var result = VoyagePlacementRules.Apply(pieces, EmptyBorders(), options);
 

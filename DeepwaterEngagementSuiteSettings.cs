@@ -606,39 +606,43 @@ public class VoyageStrategySettings
         "Unique Amulet2/Belt/Ring are always center-only in the solver.")]
     public ToggleNode CenterSpecialty { get; set; } = new ToggleNode(true);
 
-    [Menu("Save Kishara", "Hold Kishara's Rest charts out of the solver (place boss yourself).")]
-    public ToggleNode SaveKishara { get; set; } = new ToggleNode(true);
+    [Menu("Save Kishara",
+        "Max Kishara's Rest charts held out of the solver (0 = off; place boss yourself).")]
+    public RangeNode<int> SaveKishara { get; set; } =
+        new RangeNode<int>(ChartIds.MaxSavedKishara, 0, ChartIds.MaxSaveCap);
 
-    [Menu("Save No Equipment", "Hold charts with No Equipment Drops out of the solver.")]
-    public ToggleNode SaveNoEquipment { get; set; } = new ToggleNode(true);
+    [Menu("Save No Equipment",
+        "Max No Equipment Drops charts held out of the solver (0 = off).")]
+    public RangeNode<int> SaveNoEquipment { get; set; } =
+        new RangeNode<int>(ChartIds.MaxSavedNoEquipment, 0, ChartIds.MaxSaveCap);
 
-    [Menu("Save Fractured", "Hold charts with Fractured items out of the solver.")]
-    public ToggleNode SaveFractured { get; set; } = new ToggleNode(true);
+    [Menu("Save Fractured",
+        "Max Fractured-item charts held out of the solver (0 = off).")]
+    public RangeNode<int> SaveFractured { get; set; } =
+        new RangeNode<int>(ChartIds.MaxSavedFractured, 0, ChartIds.MaxSaveCap);
 
     [Menu("Save Golden Lanterns",
-        "Hold charts with Adjacent Golden Lanterns out of the solver (capped; prefers Tee/3-connection shapes).")]
-    public ToggleNode SaveGoldenLanterns { get; set; } = new ToggleNode(true);
+        "Max Adjacent Golden Lanterns charts held out of the solver (0 = off). Prefers Tee (3 connections) over dead end, long, and cross.")]
+    public RangeNode<int> SaveGoldenLanterns { get; set; } =
+        new RangeNode<int>(ChartIds.MaxSavedGoldenLanterns, 0, ChartIds.MaxSaveCap);
 
-    [Menu("Max saved Golden Lanterns",
-        "Maximum Adjacent Golden Lanterns charts held out of the solver. Prefers Tee (3 connections) over dead end, long, and cross.")]
-    public RangeNode<int> MaxSavedGoldenLanterns { get; set; } =
-        new RangeNode<int>(ChartIds.MaxSavedGoldenLanterns, 0, 20);
+    [Menu("Save Pantheon", "Max Pantheon charts held out of the solver (0 = off).")]
+    public RangeNode<int> SavePantheon { get; set; } =
+        new RangeNode<int>(ChartIds.MaxSavedPantheon, 0, ChartIds.MaxSaveCap);
 
-    [Menu("Save Pantheon", "Hold charts with Pantheon items out of the solver (capped).")]
-    public ToggleNode SavePantheon { get; set; } = new ToggleNode(true);
+    [Menu("Save Soul Eater", "Max Soul Eater charts held out of the solver (0 = off).")]
+    public RangeNode<int> SaveSoulEater { get; set; } =
+        new RangeNode<int>(ChartIds.MaxSavedSoulEater, 0, ChartIds.MaxSaveCap);
 
-    [Menu("Max saved Pantheon", "Maximum Pantheon charts held out of the solver.")]
-    public RangeNode<int> MaxSavedPantheon { get; set; } =
-        new RangeNode<int>(ChartIds.MaxSavedPantheon, 0, 20);
+    [Menu("Save Rare Fracture",
+        "Max Rare Fracture charts held out of the solver (0 = off).")]
+    public RangeNode<int> SaveRareFracture { get; set; } =
+        new RangeNode<int>(ChartIds.MaxSavedRareFracture, 0, ChartIds.MaxSaveCap);
 
-    [Menu("Save Soul Eater", "Hold charts with Soul Eater out of the solver.")]
-    public ToggleNode SaveSoulEater { get; set; } = new ToggleNode(false);
-
-    [Menu("Save Rare Fracture", "Hold charts with Rare Fracture out of the solver.")]
-    public ToggleNode SaveRareFracture { get; set; } = new ToggleNode(true);
-
-    [Menu("Save Rare Possessed", "Hold charts with Possessed monsters out of the solver.")]
-    public ToggleNode SaveRarePossessed { get; set; } = new ToggleNode(true);
+    [Menu("Save Rare Possessed",
+        "Max Possessed-monster charts held out of the solver (0 = off).")]
+    public RangeNode<int> SaveRarePossessed { get; set; } =
+        new RangeNode<int>(ChartIds.MaxSavedRarePossessed, 0, ChartIds.MaxSaveCap);
 
     public VoyageStrategyOptions ToOptions() => new(
         UniqueAmuletClamCross: UniqueAmuletClamCross.Value,
@@ -649,9 +653,7 @@ public class VoyageStrategySettings
         SaveNoEquipment: SaveNoEquipment.Value,
         SaveFractured: SaveFractured.Value,
         SaveGoldenLanterns: SaveGoldenLanterns.Value,
-        MaxSavedGoldenLanterns: MaxSavedGoldenLanterns.Value,
         SavePantheon: SavePantheon.Value,
-        MaxSavedPantheon: MaxSavedPantheon.Value,
         SaveSoulEater: SaveSoulEater.Value,
         SaveRareFracture: SaveRareFracture.Value,
         SaveRarePossessed: SaveRarePossessed.Value);

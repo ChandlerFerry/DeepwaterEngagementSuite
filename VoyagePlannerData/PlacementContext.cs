@@ -74,11 +74,17 @@ public sealed class PlacementContext
     public bool PelagicLocked { get; set; }
     public bool NoConsumeActive { get; set; }
 
-    public void LockCell(int row, int col, MapPiece piece, int? rotation = null)
+    public void LockCell(
+        int row,
+        int col,
+        MapPiece piece,
+        int? rotation = null,
+        string strategy = null,
+        int priority = 0)
     {
         if (!UsedPieceIds.Add(piece.Id))
             return;
-        Locks.Add(new LockedPlacement(row, col, piece.Id, rotation));
+        Locks.Add(new LockedPlacement(row, col, piece.Id, rotation, strategy, priority));
         LockedCells.Add((row, col));
     }
 

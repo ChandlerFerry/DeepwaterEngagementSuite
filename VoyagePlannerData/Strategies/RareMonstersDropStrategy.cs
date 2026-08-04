@@ -10,10 +10,20 @@ public sealed class RareMonstersDropLockStrategy : IVoyageStrategy
     public string Id => "RareMonstersDrop.Lock";
     public int Order => StrategyOrders.RareMonstersLock;
 
+    /// <summary>
+    /// Enabled by setting, or forced whenever a Divine rare-drop orb is on the board
+    /// so that strategy is never skipped for the most valuable orb type.
+    /// </summary>
     public bool IsEnabled(VoyageStrategyOptions options) => options.RareMonstersDrop;
+
+    public static bool ShouldRun(PlacementContext ctx) =>
+        ctx.Options.RareMonstersDrop || ctx.DivineCenters.Count > 0;
 
     public void Apply(PlacementContext ctx)
     {
+        if (!ShouldRun(ctx))
+            return;
+
         var savedPelagic = 0;
         foreach (var pelagic in ctx.Working.Where(ChartPredicates.IsPelagic)
                      .OrderByDescending(p => p.LocalModifier + p.GlobalModifier).ToList())
@@ -24,7 +34,8 @@ public sealed class RareMonstersDropLockStrategy : IVoyageStrategy
             var target = ctx.OrbCenters.FirstOrDefault(c => ctx.CellFree(c.Row, c.Col));
             if (target.Priority > 0)
             {
-                ctx.LockCell(target.Row, target.Col, pelagic);
+                var (strategy, priority) = OrbLockMeta(target.Priority, isPelagic: true);
+                ctx.LockCell(target.Row, target.Col, pelagic, strategy: strategy, priority: priority);
                 ctx.OrbCenters.RemoveAll(c => c.Row == target.Row && c.Col == target.Col);
                 ctx.PelagicLocked = true;
             }
@@ -49,28 +60,39 @@ public sealed class RareMonstersDropLockStrategy : IVoyageStrategy
         };
 
         foreach (var center in ctx.DivineCenters)
-            LockSupportsAround(ctx, center, boxPools);
+            LockSupportsAround(ctx, center, boxPools, "Divine", LockPriorities.DivineSupport);
 
         foreach (var center in ctx.AnnulCenters)
-            LockSupportsAround(ctx, center, starfishPools);
+            LockSupportsAround(ctx, center, starfishPools, "Annul", LockPriorities.AnnulSupport);
 
         foreach (var center in ctx.AncientCenters)
-            LockSupportsAround(ctx, center, starfishPools);
+            LockSupportsAround(ctx, center, starfishPools, "Ancient", LockPriorities.AncientSupport);
 
         if (ctx.DivineCenters.Count > 0)
         {
             // NOTE: this fills every remaining free cell with a hard lock, which leaves the
             // solver almost no freedom. VoyageSolve's lock-dropping retry is what keeps this
-            // from returning zero solutions on a shape-poor board.
+            // from returning zero solutions on a shape-poor board — fill locks use the lowest
+            // Divine priority so they are dropped before Pelagic/support Divine locks.
             foreach (var cell in ChartPredicates.EnumerateCells().Where(c => ctx.CellFree(c.Row, c.Col)))
             {
                 var rare = ctx.TakeBest(ChartPredicates.IsOrbRareGlobalChart, ChartPredicates.OrbRareComboScore);
                 if (rare == null)
                     break;
-                ctx.LockCell(cell.Row, cell.Col, rare);
+                ctx.LockCell(cell.Row, cell.Col, rare,
+                    strategy: "Divine fill", priority: LockPriorities.DivineFill);
             }
         }
     }
+
+    private static (string Strategy, int Priority) OrbLockMeta(int orbPriority, bool isPelagic) =>
+        orbPriority switch
+        {
+            3 => ("Divine", isPelagic ? LockPriorities.DivinePelagic : LockPriorities.DivineSupport),
+            2 => ("Annul", isPelagic ? LockPriorities.AnnulPelagic : LockPriorities.AnnulSupport),
+            1 => ("Ancient", isPelagic ? LockPriorities.AncientPelagic : LockPriorities.AncientSupport),
+            _ => ("Rare Monsters", LockPriorities.Default),
+        };
 }
 
 /// <summary>A candidate source of support charts, tried in order until one yields a piece.</summary>
@@ -95,7 +117,9 @@ internal static class SupportPlacement
     public static void LockSupportsAround(
         PlacementContext ctx,
         (int Row, int Col) center,
-        IReadOnlyList<SupportPool> pools)
+        IReadOnlyList<SupportPool> pools,
+        string strategy,
+        int priority)
     {
         // Materialise before locking: FreeNeighbors is lazy and reads LockedCells as it goes.
         var cells = ctx.FreeNeighbors(center.Row, center.Col).ToList();
@@ -142,7 +166,8 @@ internal static class SupportPlacement
             .ToList();
 
         for (var i = 0; i < orderedSupports.Count; i++)
-            ctx.LockCell(orderedCells[i].Row, orderedCells[i].Col, orderedSupports[i]);
+            ctx.LockCell(orderedCells[i].Row, orderedCells[i].Col, orderedSupports[i],
+                strategy: strategy, priority: priority);
     }
 }
 
@@ -155,6 +180,9 @@ public sealed class RareMonstersDropSaveStrategy : IVoyageStrategy
 
     public void Apply(PlacementContext ctx)
     {
+        if (!RareMonstersDropLockStrategy.ShouldRun(ctx))
+            return;
+
         ctx.AddSaved(SaveCountKeys.Strongbox,
             ctx.RemoveUnused(ChartPredicates.IsStrongboxCountChart, ChartPredicates.BoxValue1Score,
                 maxSave: ChartIds.MaxSavedBoxes));

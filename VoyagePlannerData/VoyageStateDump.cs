@@ -214,6 +214,9 @@ public sealed class VoyageStateDump
 
         /// <summary>Locks the solver had to give up because no topology satisfied them all.</summary>
         public int DroppedLockCount { get; set; }
+
+        /// <summary>Descriptions of each dropped lock (strategy, cell, piece), drop order.</summary>
+        public List<string> DroppedLocks { get; set; } = [];
     }
 
     public sealed class LockDump
@@ -222,6 +225,8 @@ public sealed class VoyageStateDump
         public int Col { get; set; }
         public int PieceId { get; set; }
         public int? Rotation { get; set; }
+        public string Strategy { get; set; }
+        public int Priority { get; set; }
         public string PieceRoomName { get; set; }
         public List<string> PieceMods { get; set; } = [];
     }

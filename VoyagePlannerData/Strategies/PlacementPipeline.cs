@@ -40,11 +40,26 @@ public static class PlacementPipeline
         var ctx = new PlacementContext(pieces, tileBorders, options);
         foreach (var strategy in Strategies.OrderBy(s => s.Order).ThenBy(s => s.Id))
         {
-            if (!strategy.IsEnabled(ctx.Options))
+            if (!IsStrategyEnabled(strategy, ctx))
                 continue;
             strategy.Apply(ctx);
         }
 
         return ctx;
+    }
+
+    /// <summary>
+    /// Normal option gates, plus force-run rare-monsters lock/save when a Divine orb is
+    /// present so that strategy is never skipped for the highest-value orb.
+    /// </summary>
+    private static bool IsStrategyEnabled(IVoyageStrategy strategy, PlacementContext ctx)
+    {
+        if (strategy.IsEnabled(ctx.Options))
+            return true;
+
+        if (ctx.DivineCenters.Count == 0)
+            return false;
+
+        return strategy is RareMonstersDropLockStrategy or RareMonstersDropSaveStrategy;
     }
 }

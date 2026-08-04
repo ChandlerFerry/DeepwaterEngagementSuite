@@ -31,7 +31,8 @@ public sealed class AmuletClamHubStrategy : IVoyageStrategy
         var amulet2 = ctx.TakeBest(ChartPredicates.IsUniqueAmulet2Chart, ChartPredicates.UniqueAmuletScore);
         if (amulet2 == null)
             return false;
-        ctx.LockCell(ChartIds.CenterRow, ChartIds.CenterCol, amulet2);
+        ctx.LockCell(ChartIds.CenterRow, ChartIds.CenterCol, amulet2,
+            strategy: "Amulet", priority: LockPriorities.Amulet);
         return true;
     }
 
@@ -63,9 +64,11 @@ public sealed class AmuletClamHubStrategy : IVoyageStrategy
         if (clams.Count < clamCount)
             return false;
 
-        ctx.LockCell(ChartIds.CenterRow, ChartIds.CenterCol, amulet2);
+        ctx.LockCell(ChartIds.CenterRow, ChartIds.CenterCol, amulet2,
+            strategy: "Amulet Hub", priority: LockPriorities.Amulet);
         for (var i = 0; i < clamCount; i++)
-            ctx.LockCell(clamSlots[i].Row, clamSlots[i].Col, clams[i]);
+            ctx.LockCell(clamSlots[i].Row, clamSlots[i].Col, clams[i],
+                strategy: "Amulet Hub", priority: LockPriorities.Amulet);
         return true;
     }
 }

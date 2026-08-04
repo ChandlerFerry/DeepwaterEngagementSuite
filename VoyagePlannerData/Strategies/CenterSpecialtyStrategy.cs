@@ -18,7 +18,8 @@ public sealed class CenterSpecialtyLockStrategy : IVoyageStrategy
                           ?? ctx.TakeBest(ChartPredicates.IsUniqueBeltChart, ChartPredicates.UniqueBeltScore)
                           ?? ctx.TakeBest(ChartPredicates.IsUniqueRingChart, ChartPredicates.UniqueRingScore);
         if (centerPiece != null)
-            ctx.LockCell(ChartIds.CenterRow, ChartIds.CenterCol, centerPiece);
+            ctx.LockCell(ChartIds.CenterRow, ChartIds.CenterCol, centerPiece,
+                strategy: "Center Specialty", priority: LockPriorities.CenterSpecialty);
     }
 }
 

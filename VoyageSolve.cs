@@ -13,7 +13,10 @@ public sealed class VoyageSolve
     public VoyagePuzzle Puzzle { get; private set; }
 
     /// <summary>How many strategy locks had to be given up before the board became solvable.</summary>
-    public int DroppedLockCount { get; private set; }
+    public int DroppedLockCount => DroppedLocks.Count;
+
+    /// <summary>Human-readable descriptions of each lock that was dropped (order = drop order).</summary>
+    public List<string> DroppedLocks { get; } = [];
 
     public void Cancel() => _slowPlanner?.Cancel();
 
@@ -26,7 +29,7 @@ public sealed class VoyageSolve
     {
         settings ??= new VoyagePlannerSettings();
         _slowPlanner = null;
-        DroppedLockCount = 0;
+        DroppedLocks.Clear();
 
         Placement = VoyagePlacementRules.Apply(pieces, tileBorders, strategyOptions);
         var locks = Placement.Locks.ToList();
@@ -59,14 +62,41 @@ public sealed class VoyageSolve
             if (locks.Count == 0)
                 yield break;
 
-            // Every topology was rejected, which means the strategy locks cannot all hold at
-            // once. Give up the last one — locks are appended lowest-value-first within a
-            // centre, so the tail is the cheapest to lose — and try again. A degraded board
-            // beats "No solutions found".
-            locks.RemoveAt(locks.Count - 1);
-            DroppedLockCount++;
+            // No topology satisfied the full lock set. Drop the lowest-priority lock
+            // (Divine Pelagic/support outrank Divine fill, Annul, etc.) so important
+            // strategies are kept as long as possible. Among equal priority, drop the
+            // later-appended lock first (fill/support tails).
+            var dropIdx = IndexOfLockToDrop(locks);
+            var dropped = locks[dropIdx];
+            locks.RemoveAt(dropIdx);
+            DroppedLocks.Add(FormatDroppedLock(dropped, pieces));
             Placement = Placement with { Locks = locks.ToList() };
         }
+    }
+
+    private static int IndexOfLockToDrop(IReadOnlyList<LockedPlacement> locks)
+    {
+        var bestIdx = locks.Count - 1;
+        var bestPriority = locks[bestIdx].Priority;
+        for (var i = locks.Count - 2; i >= 0; i--)
+        {
+            if (locks[i].Priority < bestPriority)
+            {
+                bestPriority = locks[i].Priority;
+                bestIdx = i;
+            }
+        }
+
+        return bestIdx;
+    }
+
+    private static string FormatDroppedLock(LockedPlacement lp, IReadOnlyList<MapPiece> pieces)
+    {
+        var piece = pieces?.FirstOrDefault(p => p.Id == lp.PieceId);
+        var room = string.IsNullOrWhiteSpace(piece?.Name) ? null : piece.Name;
+        var strategy = string.IsNullOrWhiteSpace(lp.Strategy) ? "lock" : lp.Strategy;
+        var pieceBit = room != null ? $"{room} #{lp.PieceId}" : $"piece #{lp.PieceId}";
+        return $"{strategy} @ ({lp.Row},{lp.Col}) [{pieceBit}]";
     }
 
     private IEnumerable<VoyageSolutionResult> SolveOnce(bool useFastSolver, VoyagePlannerSettings settings)

@@ -184,5 +184,26 @@ public class VoyagePlacementRulesApplyTests
 
         Assert.Contains("Divine", result.ActiveStrategies);
         Assert.Contains(result.Locks, lp => lp.PieceId == 0 && lp.Row == 0 && lp.Col == 0);
+        Assert.Contains(result.Locks, lp => lp.Strategy == "Divine" && lp.Priority == LockPriorities.DivinePelagic);
+    }
+
+    [Fact]
+    public void Apply_forces_Divine_rare_monsters_even_when_option_disabled()
+    {
+        var pieces = new List<MapPiece>();
+        for (var i = 0; i < 10; i++)
+            pieces.Add(Piece(i, i == 0 ? ChartIds.PelagicRoomName : $"Filler{i}"));
+
+        var borders = EmptyBorders();
+        borders[0, 0] =
+        [
+            new BorderEffect(ChartIds.RareDivine, ModifierTag.All, 1, false, false)
+        ];
+
+        var options = VoyageStrategyOptions.AllEnabled with { RareMonstersDrop = false };
+        var result = VoyagePlacementRules.Apply(pieces, borders, options);
+
+        Assert.Contains("Divine", result.ActiveStrategies);
+        Assert.Contains(result.Locks, lp => lp.PieceId == 0 && lp.Strategy == "Divine");
     }
 }

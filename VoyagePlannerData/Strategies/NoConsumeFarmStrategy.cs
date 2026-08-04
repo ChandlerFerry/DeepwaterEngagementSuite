@@ -24,7 +24,8 @@ public sealed class NoConsumeFarmLockStrategy : IVoyageStrategy
                 farm = ctx.TakeBest(ChartPredicates.IsClamChart, ChartPredicates.ClamScore);
             if (farm == null)
                 break;
-            ctx.LockCell(cell.Row, cell.Col, farm);
+            ctx.LockCell(cell.Row, cell.Col, farm,
+                strategy: "No-consume", priority: LockPriorities.NoConsume);
             ctx.NoConsumeActive = true;
         }
     }

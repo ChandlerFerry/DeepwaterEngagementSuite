@@ -59,6 +59,7 @@ public partial class DeepwaterEngagementSuite
             dump.Placement = BuildPlacementDump(placement, pieces);
             if (dump.Placement != null)
                 dump.Placement.DroppedLockCount = _voyageSolve?.DroppedLockCount ?? 0;
+                dump.Placement.DroppedLocks = _voyageSolve?.DroppedLocks?.ToList() ?? [];
         }
         catch (Exception ex)
         {
@@ -253,6 +254,8 @@ public partial class DeepwaterEngagementSuite
                 Col = lockedPlacement.Col,
                 PieceId = lockedPlacement.PieceId,
                 Rotation = lockedPlacement.Rotation,
+                Strategy = lockedPlacement.Strategy,
+                Priority = lockedPlacement.Priority,
             };
 
             if (byId.TryGetValue(lockedPlacement.PieceId, out var piece))

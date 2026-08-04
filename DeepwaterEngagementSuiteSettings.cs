@@ -591,7 +591,8 @@ public class VoyageStrategySettings
     [Menu("Rare Monsters Drop X",
         "Lock Pelagic Abyss on Divine/Annul/Ancient orb tiles (save unused Pelagic otherwise). " +
         "Fill orb neighbors with boxes/starfish/rare combo charts; with a Divine orb, fill remaining free tiles with voyage rares. " +
-        "Holds unused strongboxes, starfish, adjacent rare T2+, and voyage rares for later.")]
+        "Holds unused strongboxes, starfish, adjacent rare T2+, and voyage rares for later. " +
+        "A Divine rare-drop border always forces this strategy on, even when this toggle is off.")]
     public ToggleNode RareMonstersDrop { get; set; } = new ToggleNode(true);
 
     [Menu("No-consume farm",

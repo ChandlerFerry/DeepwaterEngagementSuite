@@ -90,6 +90,34 @@ public partial class DeepwaterEngagementSuite
     private static bool BoardIsClear(VoyageWindow tree) =>
         tree.Tiles.All(t => !TileHasChart(t));
 
+    private static DeepwaterChart TryGetTileChart(VoyageTileElement tile) =>
+        tile?.ItemContainer?.Entity?.GetComponent<DeepwaterChart>();
+
+    private static int? TryGetTileRotation(VoyageTileElement tile) =>
+        TryGetTileChart(tile)?.Rotation;
+
+    /// <summary>
+    /// Effective board connections for a placed chart (base path rotated by the game's Rotation).
+    /// This is what topology cares about; raw Rotation alone can miss-match equivalent encodings.
+    /// </summary>
+    private static Direction? TryGetTileConnections(VoyageTileElement tile)
+    {
+        var chart = TryGetTileChart(tile);
+        if (chart == null)
+            return null;
+        return ((Direction)chart.Room.Path).RotateCcw(chart.Rotation);
+    }
+
+    private static bool TileMatchesPlacement(VoyageTileElement tile, MapPiecePlacement expected)
+    {
+        if (expected?.Piece == null)
+            return !TileHasChart(tile);
+
+        // Match by effective connections (what the board topology uses). Raw Rotation can
+        // differ for equivalent orientations (e.g. straight pieces: rot 0 ≡ rot 2).
+        return TryGetTileConnections(tile) == expected.Connections;
+    }
+
     private static async SyncTask<bool> WiggleCursorToFocus(Vector2 screenPos)
     {
         const float delta = 4f;
@@ -101,6 +129,111 @@ public partial class DeepwaterEngagementSuite
         await TaskUtils.NextFrame();
         Input.SetCursorPos(screenPos);
         await TaskUtils.NextFrame();
+        return true;
+    }
+
+    /// <summary>
+    /// Right-clicks a placed tile until its effective connections match the solution placement.
+    /// Throws if the chart never appears or cannot be rotated into the target orientation.
+    /// </summary>
+    private async SyncTask<bool> RotateTileToMatch(
+        VoyageTileElement tile,
+        MapPiecePlacement expected,
+        Vector2 winOrigin)
+    {
+        await TaskUtils.CheckEveryFrameWithThrow(
+            () => TileHasChart(tile),
+            () => "Tile has no chart to rotate",
+            TimeSpan.FromSeconds(1));
+
+        if (TileMatchesPlacement(tile, expected))
+            return true;
+
+        // At most 4 distinct orientations in-game.
+        for (var click = 0; click < 4; click++)
+        {
+            if (TileMatchesPlacement(tile, expected))
+                return true;
+
+            var beforeRot = TryGetTileRotation(tile);
+            if (beforeRot is null)
+                throw new InvalidOperationException("Chart rotation unavailable while rotating");
+
+            DebugWindow.LogMsg(
+                $"Voyage Place rotate: tile rot {beforeRot} → target rot {expected.Rotation} " +
+                $"(conn {TryGetTileConnections(tile)} → {expected.Connections})");
+
+            var clickPos = winOrigin + tile.GetClientRectCache.Center.ToVector2Num();
+            Input.SetCursorPos(clickPos);
+            await TaskUtils.CheckEveryFrameWithThrow(
+                () => GameController.IngameState.UIHover?.Address.Equals(tile.ItemContainer.Address) ?? false,
+                TimeSpan.FromSeconds(1));
+            Input.RightDown();
+            await TaskUtils.NextFrame();
+            Input.RightUp();
+            await TaskUtils.CheckEveryFrameWithThrow(
+                () =>
+                {
+                    if (TileMatchesPlacement(tile, expected))
+                        return true;
+                    var now = TryGetTileRotation(tile);
+                    return now is { } rot && rot != beforeRot;
+                },
+                () => $"Rotation did not change after right-click (was {beforeRot})",
+                TimeSpan.FromSeconds(1));
+        }
+
+        if (!TileMatchesPlacement(tile, expected))
+        {
+            throw new InvalidOperationException(
+                $"Tile still wrong after 4 rotations: got conn {TryGetTileConnections(tile)}/rot {TryGetTileRotation(tile)}, " +
+                $"expected conn {expected.Connections}/rot {expected.Rotation}");
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Final gate: every non-empty solution cell must match the placed chart's orientation
+    /// before PlacePieces reports success.
+    /// </summary>
+    private async SyncTask<bool> EnsureAllRotations(
+        VoyageSolution solution,
+        VoyageWindow tree,
+        Vector2 winOrigin)
+    {
+        for (var i = 0; i < 9; i++)
+        {
+            var tile = tree.Tiles[i];
+            var p = solution.Grid[i / 3, i % 3];
+            if (p?.Piece == null)
+                continue;
+
+            if (TileMatchesPlacement(tile, p))
+                continue;
+
+            DebugWindow.LogMsg(
+                $"Voyage Place: final pass fixing tile {i} " +
+                $"(got {TryGetTileConnections(tile)}/{TryGetTileRotation(tile)}, " +
+                $"want {p.Connections}/{p.Rotation})");
+            await RotateTileToMatch(tile, p, winOrigin);
+        }
+
+        for (var i = 0; i < 9; i++)
+        {
+            var tile = tree.Tiles[i];
+            var p = solution.Grid[i / 3, i % 3];
+            if (p?.Piece == null)
+                continue;
+            if (!TileMatchesPlacement(tile, p))
+            {
+                throw new InvalidOperationException(
+                    $"Board orientation check failed at tile {i}: " +
+                    $"got conn {TryGetTileConnections(tile)}/rot {TryGetTileRotation(tile)}, " +
+                    $"expected conn {p.Connections}/rot {p.Rotation}");
+            }
+        }
+
         return true;
     }
 
@@ -181,25 +314,11 @@ public partial class DeepwaterEngagementSuite
                           TileHasChart(tile),
                     TimeSpan.FromSeconds(1));
 
-                while (tile.ItemContainer?.Entity.GetComponent<DeepwaterChart>()?.Rotation is { } rot &&
-                       rot != p.Rotation)
-                {
-                    DebugWindow.LogMsg($"{rot}, {p.Rotation}");
-                    var click3Pos = winOrigin + tile.GetClientRectCache.Center.ToVector2Num();
-                    Input.SetCursorPos(click3Pos);
-                    await TaskUtils.CheckEveryFrameWithThrow(
-                        () => GameController.IngameState.UIHover?.Address.Equals(tile.ItemContainer.Address) ?? false,
-                        TimeSpan.FromSeconds(1));
-                    Input.RightDown();
-                    await TaskUtils.NextFrame();
-                    Input.RightUp();
-                    await TaskUtils.CheckEveryFrameWithThrow(
-                        () => tile.ItemContainer?.Entity?.GetComponent<DeepwaterChart>()?.Rotation is { } rot2 &&
-                              rot2 != rot,
-                        TimeSpan.FromSeconds(1));
-                }
+                await RotateTileToMatch(tile, p, winOrigin);
             }
 
+            // Gate completion: re-check (and fix) every tile's orientation before success.
+            await EnsureAllRotations(solution, tree, winOrigin);
             return true;
         }
         catch (Exception ex)
@@ -687,10 +806,18 @@ public partial class DeepwaterEngagementSuite
         if (_voyageSolving || _result != null || _lastPlacement != null)
         {
             ImGui.Text($"Nodes: {_voyageNodesExplored:N0} explored, {_voyageNodesPruned:N0} pruned");
-            if (_voyageSolve?.DroppedLockCount > 0)
+            if (_voyageSolve is { DroppedLockCount: > 0 } solve)
             {
+                var detail = solve.DroppedLocks is { Count: > 0 }
+                    ? string.Join("; ", solve.DroppedLocks)
+                    : "unknown";
                 ImGui.TextColored(Color.Orange.ToImguiVec4(),
-                    $"Dropped {_voyageSolve.DroppedLockCount} strategy lock(s) — no board satisfied all of them.");
+                    $"Dropped {solve.DroppedLockCount} strategy lock(s) — no board satisfied all of them:");
+                ImGui.TextColored(Color.Orange.ToImguiVec4(), detail);
+                if (ImGui.IsItemHovered())
+                    ImGui.SetTooltip(
+                        "Lowest-priority locks are dropped first so Divine Pelagic/support " +
+                        "survive longer than Divine fill / other soft locks.\n" + detail);
             }
 
             DrawStrategyStatus();

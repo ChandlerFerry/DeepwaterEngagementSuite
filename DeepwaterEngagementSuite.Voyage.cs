@@ -472,9 +472,11 @@ public partial class DeepwaterEngagementSuite
                     : itemMod.RawName.StartsWith("DeepwaterBorder", StringComparison.Ordinal)
                         ? itemMod.RawName["DeepwaterBorder".Length..]
                         : itemMod.RawName;
-                var color = isCombo
-                    ? Color.Orange
-                    : matchingSetting?.HighlightColor.Value is { A: > 0 } c ? c : Color.Cyan;
+                var color = itemMod.RawName.Equals(ChartIds.RareDivine, StringComparison.OrdinalIgnoreCase)
+                    ? Color.HotPink
+                    : isCombo
+                        ? Color.Orange
+                        : matchingSetting?.HighlightColor.Value is { A: > 0 } c ? c : Color.Cyan;
                 var size = Graphics.DrawTextWithBackground(text, tileCenter, color, FontAlign.Center, Color.Black);
                 tileCenter.Y += size.Y;
             }
@@ -541,7 +543,7 @@ public partial class DeepwaterEngagementSuite
         {
             var size = Graphics.MeasureText(name);
             pos.Y -= size.Y;
-            Graphics.DrawTextWithBackground(name, pos, Color.Orange, FontAlign.Center, Color.Black);
+            Graphics.DrawTextWithBackground(name, pos, StrategyDisplayColor(name), FontAlign.Center, Color.Black);
         }
     }
 
@@ -1241,8 +1243,11 @@ public partial class DeepwaterEngagementSuite
         }
 
         foreach (var name in names)
-            ImGui.TextColored(Color.Orange.ToImguiVec4(), name);
+            ImGui.TextColored(StrategyDisplayColor(name).ToImguiVec4(), name);
     }
+
+    private static Color StrategyDisplayColor(string name) =>
+        name.Equals("Divine", StringComparison.OrdinalIgnoreCase) ? Color.HotPink : Color.Orange;
 
     private static List<string> DescribeActiveStrategies(VoyagePlacementRules.Result placement)
     {

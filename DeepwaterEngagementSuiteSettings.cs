@@ -86,7 +86,7 @@ public class DeepwaterEngagementSuiteSettings : ISettings
         IconPickerIndex.TormentedSpiritEncounter => DefaultTormentedSpiritEncounterIcon,
         IconPickerIndex.LanternReplenishEncounter => DefaultLanternReplenishEncounterIcon,
         IconPickerIndex.GoldenLanternEncounter => MapIconsIndex.LabyrinthGoldKey,
-        IconPickerIndex.InfusedCoralEncounter => MapIconsIndex.RewardBreach,
+        IconPickerIndex.InfusedCoralEncounter => DefaultDeadmansSulphurHugeIcon,
         IconPickerIndex.StrongboxDivination => MapIconsIndex.CorpseTypeUndead,
         IconPickerIndex.StrongboxScarab => MapIconsIndex.CorpseTypeEldritch,
         IconPickerIndex.StrongboxArcanist => MapIconsIndex.CorpseTypeBeast,
@@ -101,7 +101,6 @@ public class DeepwaterEngagementSuiteSettings : ISettings
     public static Color? GetDefaultTint(IconPickerIndex index) => index switch
     {
         IconPickerIndex.UniqueWeaponChest or IconPickerIndex.UniqueArmourChest or IconPickerIndex.UniqueJewelleryChest => UniqueItemTint,
-        IconPickerIndex.InfusedCoralEncounter => new Color(255, 90, 180),
         IconPickerIndex.PointerTarget => Color.White,
         _ => null,
     };
@@ -109,6 +108,7 @@ public class DeepwaterEngagementSuiteSettings : ISettings
     public static float GetDefaultIconSizeScale(IconPickerIndex index) => index switch
     {
         IconPickerIndex.CurrencyTreasureChestOpulent => 2.0f,
+        IconPickerIndex.InfusedCoralEncounter => 2.5f,
         IconPickerIndex.DeadMansSulphurSmall => 0.5f,
         _ => 1f,
     };

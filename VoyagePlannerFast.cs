@@ -456,15 +456,14 @@ public class VoyagePlannerFast
             var piece = pieces[i];
             foreach (var cell in SacrificeCornerCells)
             {
-                eligible[i][cell] |= 1;
                 for (var rot = 0; rot < piece.DistinctRotations; rot++)
                 {
                     var conn = (int)piece.GetConnections(rot);
-                    if ((conn & InGrid[cell]) != 0) continue;
-                    if (conn == 0) continue;
+                    if (conn == 0 || (conn & InGrid[cell]) != 0) continue;
                     var slot = cell * 16 + 0;
                     if (rotation[i][slot] == byte.MaxValue)
                         rotation[i][slot] = (byte)rot;
+                    eligible[i][cell] |= 1;
                 }
             }
         }

@@ -1656,7 +1656,8 @@
     "SavePantheon": 2,
     "SaveSoulEater": 0,
     "SaveRareFracture": 60,
-    "SaveRarePossessed": 60
+    "SaveRarePossessed": 60,
+    "SaveStarfish": 2
   },
   "Solver": {
     "UseFastSolver": true,
@@ -1689,33 +1690,33 @@
         ]
       },
       {
-        "Row": 2,
-        "Col": 0,
-        "PieceId": 31,
+        "Row": 1,
+        "Col": 1,
+        "PieceId": 11,
         "Rotation": null,
-        "PieceRoomName": "Abyssal Plain",
+        "PieceRoomName": "Undersea Groves",
         "PieceMods": [
-          "MapDeepwaterChartAdjacentStarfish2"
+          "MapDeepwaterChartAdjacentArcanistBox1"
         ]
       },
       {
         "Row": 0,
         "Col": 0,
-        "PieceId": 51,
+        "PieceId": 13,
         "Rotation": null,
-        "PieceRoomName": "Abyssal Plain",
+        "PieceRoomName": "Seafloor Ridges",
         "PieceMods": [
-          "MapDeepwaterChartAdjacentStarfish2"
+          "MapDeepwaterChartAdjacentStrongboxes2"
         ]
       },
       {
-        "Row": 1,
-        "Col": 1,
-        "PieceId": 4,
+        "Row": 2,
+        "Col": 0,
+        "PieceId": 17,
         "Rotation": null,
-        "PieceRoomName": "Abyssal Plain",
+        "PieceRoomName": "Seafloor Ridges",
         "PieceMods": [
-          "MapDeepwaterChartAdjacentStarfish1"
+          "MapDeepwaterChartAdjacentArcanistBox1"
         ]
       }
     ],

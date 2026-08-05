@@ -147,6 +147,7 @@ public sealed class VoyageStateDump
         public int SaveSoulEater { get; set; } = ChartIds.MaxSavedSoulEater;
         public int SaveRareFracture { get; set; } = ChartIds.MaxSavedRareFracture;
         public int SaveRarePossessed { get; set; } = ChartIds.MaxSavedRarePossessed;
+        public int SaveStarfish { get; set; } = ChartIds.MaxSavedStarfish;
 
         public static StrategyOptionsDump From(VoyageStrategyOptions o)
         {
@@ -166,6 +167,7 @@ public sealed class VoyageStateDump
                 SaveSoulEater = o.SaveSoulEater,
                 SaveRareFracture = o.SaveRareFracture,
                 SaveRarePossessed = o.SaveRarePossessed,
+                SaveStarfish = o.SaveStarfish,
             };
         }
 
@@ -182,7 +184,8 @@ public sealed class VoyageStateDump
             SavePantheon,
             SaveSoulEater,
             SaveRareFracture,
-            SaveRarePossessed);
+            SaveRarePossessed,
+            SaveStarfish);
     }
 
     public sealed class SolverSettingsDump

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using DeepwaterEngagementSuite.VoyagePlannerData;
@@ -205,5 +206,100 @@ public class VoyagePlacementRulesApplyTests
 
         Assert.Contains("Divine", result.ActiveStrategies);
         Assert.Contains(result.Locks, lp => lp.PieceId == 0 && lp.Strategy == "Divine");
+    }
+
+    private static Modifier Strongbox(int tier, int value1) =>
+        new($"{ChartIds.AdjacentStrongboxesPrefix}{tier}", 10, false, ModifierTag.None, value1);
+
+    private static Modifier Starfish(int tier, int value1) =>
+        new($"{ChartIds.AdjacentStarfishPrefix}{tier}", 10, false, ModifierTag.Monsters, value1);
+
+    private static Modifier RareMonsters2() =>
+        new($"{ChartIds.AdjacentIncreasedRarePrefix}2", 10, false, ModifierTag.RareMonsters, 1);
+
+    /// <summary>
+    /// Shared rare-monsters budget: boxes first, residual slots = 6 - boxes for
+    /// starfish then rare T2. Standalone SaveStarfish is isolated via SaveStarfish=0.
+    /// </summary>
+    [Theory]
+    [InlineData(3, 3)]
+    [InlineData(4, 2)]
+    [InlineData(6, 0)]
+    public void RareMonsters_save_residual_is_six_minus_boxes(int boxCount, int expectedResidual)
+    {
+        var pieces = Fillers(12);
+        for (var i = 0; i < boxCount; i++)
+            pieces.Add(Piece(200 + i, $"Box{i}", Strongbox(2, 10 + i)));
+        for (var i = 0; i < 5; i++)
+            pieces.Add(Piece(300 + i, $"Star{i}", Starfish(2, 7)));
+        for (var i = 0; i < 5; i++)
+            pieces.Add(Piece(400 + i, $"Rare{i}", RareMonsters2()));
+
+        var options = VoyageStrategyOptions.AllEnabled with
+        {
+            RareMonstersDrop = true,
+            SaveStarfish = 0,
+        };
+
+        var result = VoyagePlacementRules.Apply(pieces, EmptyBorders(), options);
+
+        Assert.Equal(boxCount, result.SavedStrongboxCount);
+        Assert.Equal(expectedResidual,
+            result.SavedStarfishCount + result.SavedAdjacentRareCount);
+        // Starfish outranks rare T2 inside residual slots.
+        Assert.Equal(Math.Min(5, expectedResidual), result.SavedStarfishCount);
+        Assert.Equal(Math.Max(0, expectedResidual - Math.Min(5, expectedResidual)),
+            result.SavedAdjacentRareCount);
+    }
+
+    [Fact]
+    public void SaveStarfish_holds_leftover_when_boxes_consume_residual()
+    {
+        var pieces = Fillers(12);
+        for (var i = 0; i < 6; i++)
+            pieces.Add(Piece(200 + i, $"Box{i}", Strongbox(2, 10 + i)));
+        for (var i = 0; i < 4; i++)
+            pieces.Add(Piece(300 + i, $"Star{i}", Starfish(2, 7)));
+
+        var options = VoyageStrategyOptions.AllEnabled with
+        {
+            RareMonstersDrop = true,
+            SaveStarfish = 2,
+        };
+
+        var result = VoyagePlacementRules.Apply(pieces, EmptyBorders(), options);
+
+        Assert.Equal(6, result.SavedStrongboxCount);
+        Assert.Equal(2, result.SavedStarfishCount);
+        Assert.Equal(0, result.SavedAdjacentRareCount);
+    }
+
+    [Fact]
+    public void Annul_uses_strongbox_ranks_4_through_6()
+    {
+        // Boxes scored 19..11 on ids 1..9 → ranks 1–3 = ids 1–3 (save), 4–6 = ids 4–6 (Annul).
+        // Rank 7+ boxes and starfish must not be locked as Annul support.
+        var pieces = new List<MapPiece>
+        {
+            Piece(0, ChartIds.PelagicRoomName),
+        };
+        for (var i = 1; i <= 9; i++)
+            pieces.Add(Piece(i, $"Box{i}", Strongbox(2, 20 - i)));
+        for (var i = 10; i <= 12; i++)
+            pieces.Add(Piece(i, $"Star{i}", Starfish(2, 7)));
+        for (var i = 13; i < 20; i++)
+            pieces.Add(Piece(i, $"Filler{i}"));
+
+        var borders = EmptyBorders();
+        borders[1, 0] = [new BorderEffect(ChartIds.RareAnnul, ModifierTag.All, 1, false, false)];
+
+        var result = VoyagePlacementRules.Apply(pieces, borders, VoyageStrategyOptions.AllEnabled);
+
+        var annulSupports = result.Locks
+            .Where(l => l.Strategy == "Annul" && l.PieceId != 0)
+            .ToList();
+        Assert.Equal(3, annulSupports.Count);
+        Assert.All(annulSupports, l => Assert.InRange(l.PieceId, 4, 6));
+        Assert.DoesNotContain(result.Locks, l => l.PieceId is >= 7 and <= 12);
     }
 }

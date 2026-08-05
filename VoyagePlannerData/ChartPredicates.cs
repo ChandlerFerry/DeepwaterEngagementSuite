@@ -421,16 +421,28 @@ public static class ChartPredicates
                 boxes.Add((i, boxV));
         }
 
-        var supportMarked = 0;
-        foreach (var (index, _) in starfish
+        // Match RareMonstersDropSave: shared budget boxes > starfish > rare T2, then
+        // low-priority SaveStarfish extras, then voyage rares.
+        var boxesMarked = 0;
+        foreach (var (index, _) in boxes
                      .OrderByDescending(x => x.Value1)
-                     .Take(ChartIds.MaxSavedStarfish))
+                     .Take(ChartIds.MaxSavedBoxes))
         {
             marked.Add(index);
-            supportMarked++;
+            boxesMarked++;
         }
 
-        var rareSlots = Math.Max(0, ChartIds.MaxSavedStarfish - supportMarked);
+        var residual = Math.Max(0, ChartIds.MaxSavedRareMonsterSupport - boxesMarked);
+        var starfishMarked = 0;
+        foreach (var (index, _) in starfish
+                     .OrderByDescending(x => x.Value1)
+                     .Take(residual))
+        {
+            marked.Add(index);
+            starfishMarked++;
+        }
+
+        var rareSlots = residual - starfishMarked;
         if (rareSlots > 0)
         {
             foreach (var (index, _) in adjRareT2
@@ -439,12 +451,18 @@ public static class ChartPredicates
                 marked.Add(index);
         }
 
-        foreach (var (index, _) in voyageRare.Take(ChartIds.MaxSavedRareVoyage))
-            marked.Add(index);
+        // Standalone Save Starfish (default 2): mark further starfish not already taken.
+        var extraStarfish = ChartIds.MaxSavedStarfish;
+        if (extraStarfish > 0)
+        {
+            foreach (var (index, _) in starfish
+                         .OrderByDescending(x => x.Value1)
+                         .Where(x => !marked.Contains(x.Index))
+                         .Take(extraStarfish))
+                marked.Add(index);
+        }
 
-        foreach (var (index, _) in boxes
-                     .OrderByDescending(x => x.Value1)
-                     .Take(ChartIds.MaxSavedBoxes))
+        foreach (var (index, _) in voyageRare.Take(ChartIds.MaxSavedRareVoyage))
             marked.Add(index);
 
         return marked;

@@ -21,7 +21,12 @@ public sealed record VoyageStrategyOptions(
     int SavePantheon = ChartIds.MaxSavedPantheon,
     int SaveSoulEater = ChartIds.MaxSavedSoulEater,
     int SaveRareFracture = ChartIds.MaxSavedRareFracture,
-    int SaveRarePossessed = ChartIds.MaxSavedRarePossessed)
+    int SaveRarePossessed = ChartIds.MaxSavedRarePossessed,
+    /// <summary>
+    /// Low-priority starfish hold (0 = off). Runs after rare-monsters residual saves so it
+    /// only keeps starfish that stronger rules did not already claim. Default 2.
+    /// </summary>
+    int SaveStarfish = ChartIds.MaxSavedStarfish)
 {
     public static VoyageStrategyOptions AllEnabled { get; } = new();
 }

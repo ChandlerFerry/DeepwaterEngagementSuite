@@ -587,8 +587,9 @@ public class VoyageStrategySettings
 
     [Menu("Rare Monsters Drop X",
         "Lock Pelagic Abyss on Divine/Annul/Ancient orb tiles (save unused Pelagic otherwise). " +
-        "Fill orb neighbors with boxes/starfish/rare combo charts; with a Divine orb, fill remaining free tiles with voyage rares. " +
-        "Holds unused strongboxes, starfish, adjacent rare T2+, and voyage rares for later. " +
+        "Divine neighbors: boxes then starfish/rare combo; Annul/Ancient: strongbox ranks 4–6 (second set of 3) then starfish/rare. " +
+        "With a Divine orb, fill remaining free tiles with voyage rares. " +
+        "Holds unused charts with shared budget strongbox > starfish > adjacent rare T2+, plus voyage rares. " +
         "A Divine rare-drop border always forces this strategy on, even when this toggle is off.")]
     public ToggleNode RareMonstersDrop { get; set; } = new ToggleNode(true);
 
@@ -647,6 +648,13 @@ public class VoyageStrategySettings
     public RangeNode<int> SaveRarePossessed { get; set; } =
         new RangeNode<int>(ChartIds.MaxSavedRarePossessed, 0, ChartIds.MaxSaveCap);
 
+    [Menu("Save Starfish",
+        "Max Starfish charts held out of the solver (0 = off). " +
+        "Lowest-priority save: runs after Rare Monsters residual (boxes > starfish > rare T2), " +
+        "so it only keeps starfish that stronger rules left behind. Default 2.")]
+    public RangeNode<int> SaveStarfish { get; set; } =
+        new RangeNode<int>(ChartIds.MaxSavedStarfish, 0, ChartIds.MaxSaveCap);
+
     public VoyageStrategyOptions ToOptions() => new(
         UniqueAmuletClamCross: UniqueAmuletClamCross.Value,
         RareMonstersDrop: RareMonstersDrop.Value,
@@ -660,7 +668,8 @@ public class VoyageStrategySettings
         SavePantheon: SavePantheon.Value,
         SaveSoulEater: SaveSoulEater.Value,
         SaveRareFracture: SaveRareFracture.Value,
-        SaveRarePossessed: SaveRarePossessed.Value);
+        SaveRarePossessed: SaveRarePossessed.Value,
+        SaveStarfish: SaveStarfish.Value);
 }
 
 [Submenu(CollapsedByDefault = true)]

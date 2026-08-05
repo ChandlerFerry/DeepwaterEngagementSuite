@@ -15,6 +15,9 @@ public static class PlacementPipeline
         new SaveSoulEaterStrategy(),
         new SaveRareFractureStrategy(),
         new SaveRarePossessedStrategy(),
+        // Late among pure saves so rare-monsters residual can claim starfish first.
+        // Order 1050 still runs after jewelry; listed here with other save strategies.
+        new SaveStarfishStrategy(),
 
         new AmuletClamHubStrategy(),
         new RareMonstersDropLockStrategy(),

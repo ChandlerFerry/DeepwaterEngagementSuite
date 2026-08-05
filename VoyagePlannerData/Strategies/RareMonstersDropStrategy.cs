@@ -53,8 +53,16 @@ public sealed class RareMonstersDropLockStrategy : IVoyageStrategy
             new SupportPool(ChartPredicates.IsStarfishChart, ChartPredicates.StarfishScore),
             new SupportPool(ChartPredicates.IsOrbRareComboChart, ChartPredicates.OrbRareComboScore),
         };
-        var starfishPools = new[]
+
+        // Annul/Ancient use strongbox ranks 4–6 only (second set of three). Ranks 1–3 stay
+        // free for the rare-monsters save; charts below rank 6 are not pulled onto the orb.
+        // Fall back to starfish / rare combo when the second set is empty or exhausted.
+        var secondSetBoxIds = StrongboxIdsByRank(ctx, skip: 3, take: 3);
+        var secondSetBoxPools = new[]
         {
+            new SupportPool(
+                p => ChartPredicates.IsStrongboxCountChart(p) && secondSetBoxIds.Contains(p.Id),
+                ChartPredicates.BoxValue1Score),
             new SupportPool(ChartPredicates.IsStarfishChart, ChartPredicates.StarfishScore),
             new SupportPool(ChartPredicates.IsOrbRareComboChart, ChartPredicates.OrbRareComboScore),
         };
@@ -63,10 +71,10 @@ public sealed class RareMonstersDropLockStrategy : IVoyageStrategy
             LockSupportsAround(ctx, center, boxPools, "Divine", LockPriorities.DivineSupport);
 
         foreach (var center in ctx.AnnulCenters)
-            LockSupportsAround(ctx, center, starfishPools, "Annul", LockPriorities.AnnulSupport);
+            LockSupportsAround(ctx, center, secondSetBoxPools, "Annul", LockPriorities.AnnulSupport);
 
         foreach (var center in ctx.AncientCenters)
-            LockSupportsAround(ctx, center, starfishPools, "Ancient", LockPriorities.AncientSupport);
+            LockSupportsAround(ctx, center, secondSetBoxPools, "Ancient", LockPriorities.AncientSupport);
 
         if (ctx.DivineCenters.Count > 0)
         {
@@ -93,6 +101,20 @@ public sealed class RareMonstersDropLockStrategy : IVoyageStrategy
             1 => ("Ancient", isPelagic ? LockPriorities.AncientPelagic : LockPriorities.AncientSupport),
             _ => ("Rare Monsters", LockPriorities.Default),
         };
+
+    /// <summary>
+    /// Strongbox chart ids by descending value, sliced with <paramref name="skip"/>/<paramref name="take"/>
+    /// (e.g. skip 3 take 3 → ranks 4–6).
+    /// </summary>
+    private static HashSet<int> StrongboxIdsByRank(PlacementContext ctx, int skip, int take) =>
+        ctx.Working
+            .Where(p => !ctx.UsedPieceIds.Contains(p.Id) && ChartPredicates.IsStrongboxCountChart(p))
+            .OrderByDescending(ChartPredicates.BoxValue1Score)
+            .ThenByDescending(p => p.LocalModifier + p.GlobalModifier)
+            .Skip(skip)
+            .Take(take)
+            .Select(p => p.Id)
+            .ToHashSet();
 }
 
 /// <summary>A candidate source of support charts, tried in order until one yields a piece.</summary>
@@ -183,19 +205,25 @@ public sealed class RareMonstersDropSaveStrategy : IVoyageStrategy
         if (!RareMonstersDropLockStrategy.ShouldRun(ctx))
             return;
 
-        ctx.AddSaved(SaveCountKeys.Strongbox,
-            ctx.RemoveUnused(ChartPredicates.IsStrongboxCountChart, ChartPredicates.BoxValue1Score,
-                maxSave: ChartIds.MaxSavedBoxes));
-        var savedStarfish = ctx.RemoveUnused(ChartPredicates.IsStarfishChart, ChartPredicates.StarfishScore,
-            maxSave: ChartIds.MaxSavedStarfish);
+        // Shared budget: strongbox > starfish > raremonsters2 (adjacent rare T2).
+        // e.g. 3 boxes → 3 starfish/rare2; 4 boxes → 2; 6 boxes → 0.
+        var savedBoxes = ctx.RemoveUnused(ChartPredicates.IsStrongboxCountChart, ChartPredicates.BoxValue1Score,
+            maxSave: ChartIds.MaxSavedBoxes);
+        ctx.AddSaved(SaveCountKeys.Strongbox, savedBoxes);
+
+        var residual = Math.Max(0, ChartIds.MaxSavedRareMonsterSupport - savedBoxes);
+        var savedStarfish = residual > 0
+            ? ctx.RemoveUnused(ChartPredicates.IsStarfishChart, ChartPredicates.StarfishScore,
+                maxSave: residual)
+            : 0;
         ctx.AddSaved(SaveCountKeys.Starfish, savedStarfish);
 
-        var supportSlotsLeft = Math.Max(0, ChartIds.MaxSavedStarfish - savedStarfish);
-        if (supportSlotsLeft > 0)
+        var rareSlots = residual - savedStarfish;
+        if (rareSlots > 0)
         {
             ctx.AddSaved(SaveCountKeys.AdjacentRare,
                 ctx.RemoveUnused(ChartPredicates.IsAdjacentRareSaveChart, ChartPredicates.AdjacentRareScore,
-                    maxSave: supportSlotsLeft));
+                    maxSave: rareSlots));
         }
 
         ctx.AddSaved(SaveCountKeys.RareVoyage,

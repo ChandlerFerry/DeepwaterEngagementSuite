@@ -39,6 +39,7 @@ public static class VoyagePlacementRules
     public const int CenterCol = ChartIds.CenterCol;
 
     public const int MaxSavedBoxes = ChartIds.MaxSavedBoxes;
+    public const int MaxSavedRareMonsterSupport = ChartIds.MaxSavedRareMonsterSupport;
     public const int MaxSavedStarfish = ChartIds.MaxSavedStarfish;
     public const int MaxSavedRareVoyage = ChartIds.MaxSavedRareVoyage;
     public const int MaxSavedPelagic = ChartIds.MaxSavedPelagic;

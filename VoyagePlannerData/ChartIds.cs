@@ -35,7 +35,13 @@ public static class ChartIds
     public const int CenterCol = 1;
 
     public const int MaxSavedBoxes = 6;
-    public const int MaxSavedStarfish = 6;
+    /// <summary>
+    /// Shared rare-monsters save budget with boxes: after holding strongboxes,
+    /// remaining slots go to starfish then adjacent rare T2 (raremonsters2).
+    /// </summary>
+    public const int MaxSavedRareMonsterSupport = MaxSavedBoxes;
+    /// <summary>Default max for the standalone low-priority Save Starfish strategy.</summary>
+    public const int MaxSavedStarfish = 2;
     public const int MaxSavedRareVoyage = 5;
     public const int MaxSavedPelagic = 2;
     public const int MaxSavedUniqueAmulet2 = 1;

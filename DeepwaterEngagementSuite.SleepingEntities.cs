@@ -10,7 +10,7 @@ namespace DeepwaterEngagementSuite;
 public partial class DeepwaterEngagementSuite
 {
     private bool PluginSleepingEnabled =>
-        Settings?.SleepingEntitySettings?.Enabled?.Value == true;
+        Settings?.IconSettings?.ParseSleepingEntities?.Value == true;
 
     private bool SleepingEntityParsingActive =>
         PluginSleepingEnabled &&

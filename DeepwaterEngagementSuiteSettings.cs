@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 using System.Windows.Forms;
 using DeepwaterEngagementSuite.VoyagePlannerData;
 using ExileCore;
@@ -58,13 +59,26 @@ public class DeepwaterEngagementSuiteSettings : ISettings
     public BubbleSettings BubbleSettings { get; set; } = new BubbleSettings();
     public TrailSettings TrailSettings { get; set; } = new TrailSettings();
 
-    private SleepingEntitySettings _sleepingEntitySettings = new();
-
-    [Menu("Sleeping Entity Settings")]
+    // Legacy path from when this lived in its own submenu. Migrated in OnDeserialized.
+    [IgnoreMenu]
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
     public SleepingEntitySettings SleepingEntitySettings
     {
-        get => _sleepingEntitySettings ??= new();
-        set => _sleepingEntitySettings = value ?? new();
+        get => null;
+        set => _legacyParseSleepingEntities = value?.Enabled?.Value == true;
+    }
+
+    [JsonIgnore]
+    private bool _legacyParseSleepingEntities;
+
+    [OnDeserialized]
+    internal void OnDeserialized(StreamingContext _)
+    {
+        if (!_legacyParseSleepingEntities)
+            return;
+
+        IconSettings ??= new IconSettings();
+        IconSettings.ParseSleepingEntities.Value = true;
     }
 
     [Menu("Bubble planner settings")]
@@ -137,11 +151,24 @@ public class IconSettings
 {
     public Dictionary<IconPickerIndex, IconDisplaySettings> IconMapping = new();
 
+    [Menu("Parse sleeping entities",
+        "Also read entities from the game's sleeping entity list (entities outside the network bubble).\n" +
+        "Requires ExileCore's Core -> Debug -> CollectSleepingEntities setting to be enabled as well.")]
+    public ToggleNode ParseSleepingEntities { get; set; } = new ToggleNode(false);
+
+    [JsonIgnore]
+    public CustomNode CoreSettingWarning { get; set; } = new CustomNode();
+
     public RangeNode<int> WorldIconSize { get; set; } = new RangeNode<int>(50, 25, 200);
     public RangeNode<int> MapIconSize { get; set; } = new RangeNode<int>(30, 15, 200);
 
     [Menu("Show Bottled Item icons")]
     public ToggleNode ShowBottledItemIcons { get; set; } = new ToggleNode(true);
+
+    [ConditionalDisplay(nameof(ShowBottledItemIcons))]
+    [Menu("Sound alert for Message in a Bottle",
+        "Play a sound when a Message in a Bottle chest is first discovered in the zone.")]
+    public ToggleNode SoundAlertBottledItem { get; set; } = new ToggleNode(false);
 
     [Menu("Show Gold Treasure icons")]
     public ToggleNode ShowGoldTreasureIcons { get; set; } = new ToggleNode(true);
@@ -154,6 +181,11 @@ public class IconSettings
 
     [Menu("Show Opulent Currency icons")]
     public ToggleNode ShowOpulentCurrencyIcons { get; set; } = new ToggleNode(true);
+
+    [ConditionalDisplay(nameof(ShowOpulentCurrencyIcons))]
+    [Menu("Sound alert for Opulent chests",
+        "Play a sound when an Opulent Currency chest is first discovered in the zone.")]
+    public ToggleNode SoundAlertOpulentCurrency { get; set; } = new ToggleNode(false);
 
     [Menu("Show Gemcutter chest icons")]
     public ToggleNode ShowGemcutterChestIcons { get; set; } = new ToggleNode(true);
@@ -290,16 +322,10 @@ public class TrailSettings
     public TrailColorSettings Colors { get; set; } = new TrailColorSettings();
 }
 
-[Submenu(CollapsedByDefault = true)]
+// Deserialization-only shell for migrating the old top-level Sleeping Entity Settings toggle.
 public class SleepingEntitySettings
 {
-    [Menu("Parse sleeping entities",
-        "Also read entities from the game's sleeping entity list (entities outside the network bubble).\n" +
-        "Requires ExileCore's Core -> Debug -> CollectSleepingEntities setting to be enabled as well.")]
     public ToggleNode Enabled { get; set; } = new ToggleNode(false);
-
-    [JsonIgnore]
-    public CustomNode CoreSettingWarning { get; set; } = new CustomNode();
 }
 
 [Submenu(CollapsedByDefault = true)]

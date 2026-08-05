@@ -43,6 +43,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
     private const float GridToWorldMultiplier = 250 / 23f;
 
     private readonly Dictionary<uint, EntityCacheItem> _cachedEntities = new Dictionary<uint, EntityCacheItem>();
+    private readonly HashSet<uint> _soundAlertedEntityIds = new();
     private readonly ConcurrentDictionary<string, ExpeditionEntityType> _entityTypeCache = new();
     private bool _largeMapOpen;
     private Vector2 _playerGridPos;
@@ -96,9 +97,9 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
             ApplyProfile(Settings.VoyageSettings.Profiles[0].Name);
         }
         Settings.VoyageSettings.ProfileRenameNode.DrawDelegate = DrawProfileRenameNode;
-        if (Settings.SleepingEntitySettings?.CoreSettingWarning != null)
+        if (Settings.IconSettings?.CoreSettingWarning != null)
         {
-            Settings.SleepingEntitySettings.CoreSettingWarning.DrawDelegate = DrawSleepingEntityWarning;
+            Settings.IconSettings.CoreSettingWarning.DrawDelegate = DrawSleepingEntityWarning;
         }
         RegisterHotkey(Settings.PlannerSettings.StartSearchHotkey);
         RegisterHotkey(Settings.PlannerSettings.StopSearchHotkey);
@@ -164,6 +165,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
         _editedIndex = null;
         _editedPathEval = null;
         _cachedEntities.Clear();
+        _soundAlertedEntityIds.Clear();
         ResetTrailTracking();
         _zoneCleared = false;
         _pathfindingData = GameController.IngameState.Data.RawPathfindingData;
@@ -341,9 +343,15 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
                 if (newValue == null)
                     continue;
 
-                _cachedEntities[entity.Id] = _cachedEntities.TryGetValue(entity.Id, out var oldValue)
-                    ? oldValue.Merge(newValue)
-                    : newValue;
+                if (!_cachedEntities.TryGetValue(entity.Id, out var oldValue))
+                {
+                    _cachedEntities[entity.Id] = newValue;
+                    MaybePlayRareChestSoundAlert(entity.Id, GetChestType(entity.Path));
+                }
+                else
+                {
+                    _cachedEntities[entity.Id] = oldValue.Merge(newValue);
+                }
             }
             catch
             {
@@ -352,6 +360,31 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
 
         UpdateTrailTracking();
         return null;
+    }
+
+    private void MaybePlayRareChestSoundAlert(uint entityId, IconPickerIndex chestType)
+    {
+        var icons = Settings?.IconSettings;
+        if (icons == null || !_soundAlertedEntityIds.Add(entityId))
+            return;
+
+        var play = chestType switch
+        {
+            IconPickerIndex.BottledItemChest => icons.SoundAlertBottledItem?.Value == true,
+            IconPickerIndex.CurrencyTreasureChestOpulent => icons.SoundAlertOpulentCurrency?.Value == true,
+            _ => false,
+        };
+        if (!play)
+            return;
+
+        try
+        {
+            GameController?.SoundController?.PlaySound("alert");
+        }
+        catch
+        {
+            // Sound playback is best-effort; missing banks should not break entity tracking.
+        }
     }
 
     private ExpeditionEnvironment PlannerEnvironment => BuildEnvironment();
@@ -1134,7 +1167,13 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
             if (item == null)
                 return;
 
+            var isNew = !_cachedEntities.ContainsKey(entity.Id);
             _cachedEntities[entity.Id] = item;
+            if (isNew)
+            {
+                MaybePlayRareChestSoundAlert(entity.Id, GetChestType(entity.Path));
+            }
+
             TrackTrailEntity(entity);
         }
     }

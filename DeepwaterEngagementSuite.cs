@@ -96,7 +96,10 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
             ApplyProfile(Settings.VoyageSettings.Profiles[0].Name);
         }
         Settings.VoyageSettings.ProfileRenameNode.DrawDelegate = DrawProfileRenameNode;
-        Settings.SleepingEntitySettings.CoreSettingWarning.DrawDelegate = DrawSleepingEntityWarning;
+        if (Settings.SleepingEntitySettings?.CoreSettingWarning != null)
+        {
+            Settings.SleepingEntitySettings.CoreSettingWarning.DrawDelegate = DrawSleepingEntityWarning;
+        }
         RegisterHotkey(Settings.PlannerSettings.StartSearchHotkey);
         RegisterHotkey(Settings.PlannerSettings.StopSearchHotkey);
         RegisterHotkey(Settings.PlannerSettings.ClearSearchHotkey);
@@ -170,6 +173,11 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
 
     private ExpeditionEntityType GetEntityType(string path)
     {
+        if (string.IsNullOrEmpty(path))
+        {
+            return ExpeditionEntityType.None;
+        }
+
         return _entityTypeCache.GetOrAdd(path, p => p switch
         {
             "Metadata/Chests/StrongBoxes/StrongboxDivination" => ExpeditionEntityType.Marker,
@@ -189,40 +197,48 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
         });
     }
 
-    private static IconPickerIndex GetChestType(string path) => path switch
+    private static IconPickerIndex GetChestType(string path)
     {
-        "Metadata/Chests/StrongBoxes/StrongboxDivination" => IconPickerIndex.StrongboxDivination,
-        "Metadata/Chests/StrongBoxes/StrongboxScarab" => IconPickerIndex.StrongboxScarab,
-        "Metadata/Chests/StrongBoxes/Arcanist" => IconPickerIndex.StrongboxArcanist,
-        var p when p.Contains("BottledItemChest", StringComparison.Ordinal) => IconPickerIndex.BottledItemChest,
-        var p when p.Contains("ClamTreasureChest", StringComparison.Ordinal) => IconPickerIndex.ClamTreasureChest,
-        var p when p.Contains("CurrencyTreasureChestOpulent", StringComparison.Ordinal) => IconPickerIndex.CurrencyTreasureChestOpulent,
-        var p when p.Contains("CurrencyTreasureChest", StringComparison.Ordinal) => IconPickerIndex.CurrencyTreasureChest,
-        var p when p.Contains("CurrencyGemcuttersChest", StringComparison.Ordinal) => IconPickerIndex.CurrencyGemcuttersChest,
-        var p when p.Contains("DeepwaterAnchorUniqueWeapon", StringComparison.Ordinal) => IconPickerIndex.UniqueWeaponChest,
-        var p when p.Contains("DeepwaterAnchorUniqueArmour", StringComparison.Ordinal) => IconPickerIndex.UniqueArmourChest,
-        var p when p.Contains("DeepwaterAnchorUniqueJewellery", StringComparison.Ordinal) => IconPickerIndex.UniqueJewelleryChest,
-        var p when p.Contains("DeepwaterChestScarabs", StringComparison.Ordinal) => IconPickerIndex.ScarabChest,
-        var p when p.Contains("DeepwaterChestStackedDecks", StringComparison.Ordinal) => IconPickerIndex.StackedDecksChest,
-        var p when p.Contains("DeepwaterChestMaps", StringComparison.Ordinal) => IconPickerIndex.MapsChest,
-        var p when p.Contains("DeepwaterChestAllflameEmbers", StringComparison.Ordinal) => IconPickerIndex.AllflameEmbersChest,
-        var p when p.Contains("GoldTreasureChest", StringComparison.Ordinal) => IconPickerIndex.GoldTreasureChest,
-        var p when p.Contains("DeepwaterCursedDucatDrop", StringComparison.Ordinal) => IconPickerIndex.CursedDucatDrop,
-        var p when p.Contains("RandomDucatChest", StringComparison.Ordinal) => IconPickerIndex.RandomDucatChest,
-        var p when p.Contains("DeepwaterChestHazardBoat", StringComparison.Ordinal) => IconPickerIndex.HazardBoatChest,
-        var p when p.Contains("DeepwaterIzaroObject", StringComparison.Ordinal) => IconPickerIndex.IzaroObject,
-        var p when p.Contains("DeepwaterAltarCrab", StringComparison.Ordinal) => IconPickerIndex.AltarCrab,
-        var p when p.Contains("DeepwaterAltarOctopus", StringComparison.Ordinal) => IconPickerIndex.AltarOctopus,
-        var p when p.Contains("DeepwaterTormentedSpiritEncounter", StringComparison.Ordinal) => IconPickerIndex.TormentedSpiritEncounter,
-        var p when p.Contains("DeepwaterLanternReplenishEncounter", StringComparison.Ordinal) => IconPickerIndex.LanternReplenishEncounter,
-        var p when p.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterGoldenLantern", StringComparison.Ordinal) => IconPickerIndex.GoldenLanternEncounter,
-        var p when p.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterBrineCoralEncounter", StringComparison.Ordinal) => IconPickerIndex.InfusedCoralEncounter,
-        var p when p.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/ResourceChestSmall", StringComparison.Ordinal) => IconPickerIndex.DeadMansSulphurSmall,
-        var p when p.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/ResourceChestBase", StringComparison.Ordinal) => IconPickerIndex.DeadMansSulphurBase,
-        var p when p.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/ResourceChestLarge", StringComparison.Ordinal) => IconPickerIndex.DeadMansSulphurLarge,
-        var p when p.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/ResourceChestHuge", StringComparison.Ordinal) => IconPickerIndex.DeadMansSulphurHuge,
-        _ => IconPickerIndex.OtherChests,
-    };
+        if (string.IsNullOrEmpty(path))
+        {
+            return IconPickerIndex.OtherChests;
+        }
+
+        return path switch
+        {
+            "Metadata/Chests/StrongBoxes/StrongboxDivination" => IconPickerIndex.StrongboxDivination,
+            "Metadata/Chests/StrongBoxes/StrongboxScarab" => IconPickerIndex.StrongboxScarab,
+            "Metadata/Chests/StrongBoxes/Arcanist" => IconPickerIndex.StrongboxArcanist,
+            var p when p.Contains("BottledItemChest", StringComparison.Ordinal) => IconPickerIndex.BottledItemChest,
+            var p when p.Contains("ClamTreasureChest", StringComparison.Ordinal) => IconPickerIndex.ClamTreasureChest,
+            var p when p.Contains("CurrencyTreasureChestOpulent", StringComparison.Ordinal) => IconPickerIndex.CurrencyTreasureChestOpulent,
+            var p when p.Contains("CurrencyTreasureChest", StringComparison.Ordinal) => IconPickerIndex.CurrencyTreasureChest,
+            var p when p.Contains("CurrencyGemcuttersChest", StringComparison.Ordinal) => IconPickerIndex.CurrencyGemcuttersChest,
+            var p when p.Contains("DeepwaterAnchorUniqueWeapon", StringComparison.Ordinal) => IconPickerIndex.UniqueWeaponChest,
+            var p when p.Contains("DeepwaterAnchorUniqueArmour", StringComparison.Ordinal) => IconPickerIndex.UniqueArmourChest,
+            var p when p.Contains("DeepwaterAnchorUniqueJewellery", StringComparison.Ordinal) => IconPickerIndex.UniqueJewelleryChest,
+            var p when p.Contains("DeepwaterChestScarabs", StringComparison.Ordinal) => IconPickerIndex.ScarabChest,
+            var p when p.Contains("DeepwaterChestStackedDecks", StringComparison.Ordinal) => IconPickerIndex.StackedDecksChest,
+            var p when p.Contains("DeepwaterChestMaps", StringComparison.Ordinal) => IconPickerIndex.MapsChest,
+            var p when p.Contains("DeepwaterChestAllflameEmbers", StringComparison.Ordinal) => IconPickerIndex.AllflameEmbersChest,
+            var p when p.Contains("GoldTreasureChest", StringComparison.Ordinal) => IconPickerIndex.GoldTreasureChest,
+            var p when p.Contains("DeepwaterCursedDucatDrop", StringComparison.Ordinal) => IconPickerIndex.CursedDucatDrop,
+            var p when p.Contains("RandomDucatChest", StringComparison.Ordinal) => IconPickerIndex.RandomDucatChest,
+            var p when p.Contains("DeepwaterChestHazardBoat", StringComparison.Ordinal) => IconPickerIndex.HazardBoatChest,
+            var p when p.Contains("DeepwaterIzaroObject", StringComparison.Ordinal) => IconPickerIndex.IzaroObject,
+            var p when p.Contains("DeepwaterAltarCrab", StringComparison.Ordinal) => IconPickerIndex.AltarCrab,
+            var p when p.Contains("DeepwaterAltarOctopus", StringComparison.Ordinal) => IconPickerIndex.AltarOctopus,
+            var p when p.Contains("DeepwaterTormentedSpiritEncounter", StringComparison.Ordinal) => IconPickerIndex.TormentedSpiritEncounter,
+            var p when p.Contains("DeepwaterLanternReplenishEncounter", StringComparison.Ordinal) => IconPickerIndex.LanternReplenishEncounter,
+            var p when p.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterGoldenLantern", StringComparison.Ordinal) => IconPickerIndex.GoldenLanternEncounter,
+            var p when p.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterBrineCoralEncounter", StringComparison.Ordinal) => IconPickerIndex.InfusedCoralEncounter,
+            var p when p.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/ResourceChestSmall", StringComparison.Ordinal) => IconPickerIndex.DeadMansSulphurSmall,
+            var p when p.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/ResourceChestBase", StringComparison.Ordinal) => IconPickerIndex.DeadMansSulphurBase,
+            var p when p.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/ResourceChestLarge", StringComparison.Ordinal) => IconPickerIndex.DeadMansSulphurLarge,
+            var p when p.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/ResourceChestHuge", StringComparison.Ordinal) => IconPickerIndex.DeadMansSulphurHuge,
+            _ => IconPickerIndex.OtherChests,
+        };
+    }
 
     private Vector3 ExpandWithTerrainHeight(Vector2 gridPosition)
     {
@@ -302,22 +318,36 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
 
         _bubbleRadius = Settings.BubbleSettings.BubbleRadiusOverride.Value is > 0 and var o ? o : Bubbles.Min(x => x.Radius);
 
+        DropProvisionalSleepingCacheEntries();
+
         foreach (var (entity, sleepingOnly) in ExpeditionSourceEntitiesTagged(
                      EntityType.Chest, EntityType.Terrain, EntityType.IngameIcon))
         {
+            if (entity == null || string.IsNullOrEmpty(entity.Path))
+                continue;
+
             if (GetEntityType(entity.Path) == ExpeditionEntityType.None)
                 continue;
 
-            if (IsEntityCompleted(entity, GetChestType(entity.Path)))
+            try
             {
-                _cachedEntities.Remove(entity.Id);
-                continue;
-            }
+                if (IsEntityCompleted(entity, GetChestType(entity.Path)))
+                {
+                    _cachedEntities.Remove(entity.Id);
+                    continue;
+                }
 
-            var newValue = BuildCacheItem(entity, sleepingOnly);
-            _cachedEntities[entity.Id] = _cachedEntities.TryGetValue(entity.Id, out var oldValue)
-                ? oldValue.Merge(newValue)
-                : newValue;
+                var newValue = BuildCacheItem(entity, sleepingOnly);
+                if (newValue == null)
+                    continue;
+
+                _cachedEntities[entity.Id] = _cachedEntities.TryGetValue(entity.Id, out var oldValue)
+                    ? oldValue.Merge(newValue)
+                    : newValue;
+            }
+            catch
+            {
+            }
         }
 
         UpdateTrailTracking();
@@ -1093,33 +1123,72 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
 
     public override void EntityAdded(Entity entity)
     {
+        if (entity == null || string.IsNullOrEmpty(entity.Path))
+            return;
+
         if ((entity.Type is EntityType.Chest or EntityType.Terrain or EntityType.IngameIcon)
             && GetEntityType(entity.Path) != ExpeditionEntityType.None
             && !IsEntityCompleted(entity, GetChestType(entity.Path)))
         {
-            _cachedEntities[entity.Id] = BuildCacheItem(entity);
+            var item = BuildCacheItem(entity);
+            if (item == null)
+                return;
+
+            _cachedEntities[entity.Id] = item;
             TrackTrailEntity(entity);
         }
     }
 
     public override void EntityRemoved(Entity entity)
     {
+        if (entity == null)
+            return;
+
         _cachedEntities.Remove(entity.Id);
     }
 
     private static EntityCacheItem BuildCacheItem(Entity entity, bool sleepingOnly = false)
     {
-        return new EntityCacheItem(
-            entity.Path,
-            new Lazy<string>(() => entity.GetComponent<Animated>()?.BaseAnimatedObjectEntity?.Metadata, LazyThreadSafetyMode.None),
-            entity.GetComponent<ObjectMagicProperties>()?.Mods,
-            entity.PosNum,
-            entity.PosNum.WorldToGrid(),
-            entity.GetComponent<Render>()?.Z,
-            entity.GetComponent<Render>()?.BoundsNum is { } b ? Math.Min(b.X, b.Y) : null,
-            entity.GetComponent<MinimapIcon>()?.IsHide,
-            IsEntityCompleted(entity, GetChestType(entity.Path)),
-            sleepingOnly);
+        if (entity == null || string.IsNullOrEmpty(entity.Path))
+            return null;
+
+        try
+        {
+            float? renderZ = null;
+            float? renderSize = null;
+            bool? minimapHide = null;
+            List<string> mods = null;
+
+            try { mods = entity.GetComponent<ObjectMagicProperties>()?.Mods; } catch { }
+            try
+            {
+                var render = entity.GetComponent<Render>();
+                renderZ = render?.Z;
+                renderSize = render?.BoundsNum is { } b ? Math.Min(b.X, b.Y) : null;
+            }
+            catch { }
+            try { minimapHide = entity.GetComponent<MinimapIcon>()?.IsHide; } catch { }
+
+            return new EntityCacheItem(
+                entity.Path,
+                new Lazy<string>(() =>
+                {
+                    try { return entity.GetComponent<Animated>()?.BaseAnimatedObjectEntity?.Metadata; }
+                    catch { return null; }
+                }, LazyThreadSafetyMode.None),
+                mods,
+                entity.PosNum,
+                entity.PosNum.WorldToGrid(),
+                renderZ,
+                renderSize,
+                minimapHide,
+                IsEntityCompleted(entity, GetChestType(entity.Path)),
+                sleepingOnly);
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private bool IsEntityInBubble(Vector2 gridPos)
@@ -1161,26 +1230,36 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
 
     private static bool IsEntityCompleted(Entity entity, IconPickerIndex type)
     {
-        if (entity.IsOpened)
-            return true;
+        if (entity == null)
+            return false;
 
-        if (entity.TryGetComponent(out Chest chest) && chest.IsOpened)
-            return true;
+        try
+        {
+            if (entity.IsOpened)
+                return true;
 
-        var softCompletedType = type is
-            IconPickerIndex.CursedDucatDrop or
-            IconPickerIndex.LanternReplenishEncounter or
-            IconPickerIndex.InfusedCoralEncounter or
-            IconPickerIndex.AltarOctopus or
-            IconPickerIndex.AltarCrab or
-            IconPickerIndex.DeadMansSulphurSmall or
-            IconPickerIndex.DeadMansSulphurBase or
-            IconPickerIndex.DeadMansSulphurLarge or
-            IconPickerIndex.DeadMansSulphurHuge
-            ;
+            if (entity.TryGetComponent(out Chest chest) && chest.IsOpened)
+                return true;
 
-        return softCompletedType &&
-               entity.TryGetComponent(out StateMachine stateMachine) &&
-               stateMachine.States.Any(x => (x.Name == "activated" || x.Name == "collected") && x.Value == 1);
+            var softCompletedType = type is
+                IconPickerIndex.CursedDucatDrop or
+                IconPickerIndex.LanternReplenishEncounter or
+                IconPickerIndex.InfusedCoralEncounter or
+                IconPickerIndex.AltarOctopus or
+                IconPickerIndex.AltarCrab or
+                IconPickerIndex.DeadMansSulphurSmall or
+                IconPickerIndex.DeadMansSulphurBase or
+                IconPickerIndex.DeadMansSulphurLarge or
+                IconPickerIndex.DeadMansSulphurHuge
+                ;
+
+            return softCompletedType &&
+                   entity.TryGetComponent(out StateMachine stateMachine) &&
+                   stateMachine.States.Any(x => (x.Name == "activated" || x.Name == "collected") && x.Value == 1);
+        }
+        catch
+        {
+            return false;
+        }
     }
 }

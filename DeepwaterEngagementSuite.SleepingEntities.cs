@@ -9,27 +9,52 @@ namespace DeepwaterEngagementSuite;
 
 public partial class DeepwaterEngagementSuite
 {
-    
-    
+    private bool PluginSleepingEnabled =>
+        Settings?.SleepingEntitySettings?.Enabled?.Value == true;
+
     private bool SleepingEntityParsingActive =>
-        Settings.SleepingEntitySettings.Enabled &&
+        PluginSleepingEnabled &&
         CoreSleepingCollectionEnabled &&
-        GameController.SleepingEntityListWrapper != null;
+        GameController?.SleepingEntityListWrapper != null;
 
-    private bool CoreSleepingCollectionEnabled =>
-        GameController?.Settings?.CoreSettings?.DebugSettings?.CollectSleepingEntities?.Value == true;
+    private bool CoreSleepingCollectionEnabled
+    {
+        get
+        {
+            try
+            {
+                return GameController?.Settings?.CoreSettings?.DebugSettings?.CollectSleepingEntities?.Value == true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+    }
 
-    
     private IEnumerable<(Entity Entity, bool SleepingOnly)> ExpeditionSourceEntitiesTagged(params EntityType[] types)
     {
         var seen = new HashSet<uint>();
-
-        foreach (var type in types)
+        var awakeByType = GameController?.EntityListWrapper?.ValidEntitiesByType;
+        if (awakeByType != null)
         {
-            foreach (var entity in GameController.EntityListWrapper.ValidEntitiesByType[type])
+            foreach (var type in types)
             {
-                seen.Add(entity.Id);
-                yield return (entity, false);
+                if (!awakeByType.TryGetValue(type, out var entities) || entities == null)
+                {
+                    continue;
+                }
+
+                foreach (var entity in entities)
+                {
+                    if (entity == null || string.IsNullOrEmpty(entity.Path))
+                    {
+                        continue;
+                    }
+
+                    seen.Add(entity.Id);
+                    yield return (entity, false);
+                }
             }
         }
 
@@ -38,16 +63,26 @@ public partial class DeepwaterEngagementSuite
             yield break;
         }
 
-        var sleepingByType = GameController.SleepingEntityListWrapper.ValidEntitiesByType;
+        var sleepingByType = GameController.SleepingEntityListWrapper?.ValidEntitiesByType;
+        if (sleepingByType == null)
+        {
+            yield break;
+        }
+
         foreach (var type in types)
         {
-            if (!sleepingByType.TryGetValue(type, out var entities))
+            if (!sleepingByType.TryGetValue(type, out var entities) || entities == null)
             {
                 continue;
             }
 
             foreach (var entity in entities)
             {
+                if (entity == null || string.IsNullOrEmpty(entity.Path))
+                {
+                    continue;
+                }
+
                 if (seen.Add(entity.Id))
                 {
                     yield return (entity, true);
@@ -56,7 +91,6 @@ public partial class DeepwaterEngagementSuite
         }
     }
 
-    
     private IEnumerable<Entity> ExpeditionSourceEntities(params EntityType[] types)
     {
         foreach (var (entity, _) in ExpeditionSourceEntitiesTagged(types))
@@ -65,13 +99,39 @@ public partial class DeepwaterEngagementSuite
         }
     }
 
-    
-    private const float SleepingIconAlphaScale = 0.45f;
+    private void DropProvisionalSleepingCacheEntries()
+    {
+        if (SleepingEntityParsingActive || _cachedEntities.Count == 0)
+        {
+            return;
+        }
 
-    
+        List<uint> remove = null;
+        foreach (var (id, item) in _cachedEntities)
+        {
+            if (!item.SleepingOnly)
+            {
+                continue;
+            }
+
+            remove ??= new List<uint>();
+            remove.Add(id);
+        }
+
+        if (remove == null)
+        {
+            return;
+        }
+
+        foreach (var id in remove)
+        {
+            _cachedEntities.Remove(id);
+        }
+    }
+
+    private const float SleepingIconAlphaScale = 0.45f;
     private const float SleepingIconDesaturation = 0.5f;
 
-    
     private static Color? DimForSleeping(Color? tint)
     {
         var color = tint ?? Color.White;
@@ -89,7 +149,7 @@ public partial class DeepwaterEngagementSuite
 
     private void DrawSleepingEntityWarning()
     {
-        if (!Settings.SleepingEntitySettings.Enabled || CoreSleepingCollectionEnabled)
+        if (!PluginSleepingEnabled || CoreSleepingCollectionEnabled)
         {
             return;
         }

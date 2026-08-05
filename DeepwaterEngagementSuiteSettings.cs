@@ -58,8 +58,14 @@ public class DeepwaterEngagementSuiteSettings : ISettings
     public BubbleSettings BubbleSettings { get; set; } = new BubbleSettings();
     public TrailSettings TrailSettings { get; set; } = new TrailSettings();
 
+    private SleepingEntitySettings _sleepingEntitySettings = new();
+
     [Menu("Sleeping Entity Settings")]
-    public SleepingEntitySettings SleepingEntitySettings { get; set; } = new SleepingEntitySettings();
+    public SleepingEntitySettings SleepingEntitySettings
+    {
+        get => _sleepingEntitySettings ??= new();
+        set => _sleepingEntitySettings = value ?? new();
+    }
 
     [Menu("Bubble planner settings")]
     public PlannerSettings PlannerSettings { get; set; } = new PlannerSettings();

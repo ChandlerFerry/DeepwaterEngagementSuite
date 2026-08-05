@@ -1085,8 +1085,8 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
                 RenderSize ?? other.RenderSize,
                 MinimapIconHide ?? other.MinimapIconHide,
                 IsOpened || other.IsOpened,
-                // Once an entity has been observed awake it is never provisional again, and since Merge runs every
-                // tick this has to latch in that direction rather than tracking the most recent observation.
+                
+                
                 SleepingOnly && other.SleepingOnly);
         }
     }

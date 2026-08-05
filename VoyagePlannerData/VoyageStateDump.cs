@@ -4,16 +4,7 @@ using System.Linq;
 
 namespace DeepwaterEngagementSuite.VoyagePlannerData;
 
-/// <summary>
-/// A fully self-contained snapshot of a live voyage board. Everything the solver
-/// consumes is captured in already-resolved form (weights, tags, multipliers folded
-/// in from settings) so a dump can be replayed in a unit test without ExileCore,
-/// game memory, or the user's settings file.
-///
-/// Raw game-side values are captured alongside the resolved ones so you can tell
-/// "the mod had no settings entry so it resolved to weight 0" apart from
-/// "the mod was genuinely weighted 0".
-/// </summary>
+
 public sealed class VoyageStateDump
 {
     public const int CurrentVersion = 1;
@@ -23,28 +14,25 @@ public sealed class VoyageStateDump
     public string Note { get; set; }
     public string ProfileName { get; set; }
 
-    /// <summary>Raw border mod names exactly as the game exposes them, in engine index order (usually 12).</summary>
+    
     public List<string> RawBorderMods { get; set; } = [];
 
-    /// <summary>9 entries, row-major (index = row * 3 + col).</summary>
+    
     public List<TileDump> Tiles { get; set; } = [];
 
-    /// <summary>
-    /// Every chart in the voyage inventory, in inventory order. <see cref="ChartDump.PieceId"/>
-    /// is the id the solver sees; charts excluded by the ignore filters have PieceId -1.
-    /// </summary>
+    
     public List<ChartDump> Charts { get; set; } = [];
 
     public StrategyOptionsDump StrategyOptions { get; set; } = new();
     public SolverSettingsDump Solver { get; set; } = new();
 
-    /// <summary>Derived orb centers, so you can eyeball whether a cell registered as Divine/Annul/Ancient.</summary>
+    
     public DerivedDump Derived { get; set; } = new();
 
-    /// <summary>Output of VoyagePlacementRules.Apply at capture time. Null if capture failed.</summary>
+    
     public PlacementDump Placement { get; set; }
 
-    /// <summary>Best solution the solver had produced at capture time, if any.</summary>
+    
     public SolutionDump Solution { get; set; }
 
     public sealed class TileDump
@@ -54,7 +42,7 @@ public sealed class VoyageStateDump
         public int Col { get; set; }
         public List<BorderDump> Borders { get; set; } = [];
 
-        /// <summary>Chart currently sitting on this tile in-game, if any. Not solver input; useful for context.</summary>
+        
         public PlacedChartDump PlacedChart { get; set; }
     }
 
@@ -77,16 +65,16 @@ public sealed class VoyageStateDump
 
     public sealed class ChartDump
     {
-        /// <summary>Index in the unfiltered voyage inventory.</summary>
+        
         public int InventoryIndex { get; set; }
 
-        /// <summary>Id the solver uses, or -1 if this chart was filtered out and never reaches the solver.</summary>
+        
         public int PieceId { get; set; } = -1;
 
         public bool IncludedInSolve { get; set; }
         public string RoomName { get; set; }
 
-        /// <summary>DeepwaterChart.Room.Path, i.e. the raw connection bitmask.</summary>
+        
         public int RoomPath { get; set; }
 
         public string BaseConnections { get; set; }
@@ -115,7 +103,7 @@ public sealed class VoyageStateDump
     {
         public string RawName { get; set; }
 
-        /// <summary>False means no ChartModifiers settings entry matched, so Weight/Tags fell back to defaults.</summary>
+        
         public bool HasSettingsEntry { get; set; }
 
         public double Weight { get; set; }
@@ -219,10 +207,10 @@ public sealed class VoyageStateDump
         public bool PreferClamsAdjacentToAmulet { get; set; }
         public bool NoConsumeActive { get; set; }
 
-        /// <summary>Locks the solver had to give up because no topology satisfied them all.</summary>
+        
         public int DroppedLockCount { get; set; }
 
-        /// <summary>Descriptions of each dropped lock (strategy, cell, piece), drop order.</summary>
+        
         public List<string> DroppedLocks { get; set; } = [];
     }
 
@@ -246,13 +234,11 @@ public sealed class VoyageStateDump
         public long NodesExplored { get; set; }
         public long NodesPruned { get; set; }
 
-        /// <summary>9 entries row-major: "pieceId:rot:connections", or "-" for an empty cell.</summary>
+        
         public List<string> Grid { get; set; } = [];
     }
 
-    // ---- Rehydration -------------------------------------------------------
-
-    /// <summary>Charts the solver actually receives, in solver id order.</summary>
+    
     public List<MapPiece> ToMapPieces() =>
         Charts.Where(c => c.IncludedInSolve)
             .OrderBy(c => c.PieceId)
@@ -294,7 +280,7 @@ public sealed class VoyageStateDump
             _ => PieceType.Single,
         };
 
-    /// <summary>Short human-readable summary for logs and test failure messages.</summary>
+    
     public string Describe()
     {
         var lines = new List<string>

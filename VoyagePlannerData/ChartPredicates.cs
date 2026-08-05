@@ -237,7 +237,7 @@ public static class ChartPredicates
         return IsStrongTreasureAnchorsCounts(treasureT1, treasureT2);
     }
 
-    /// <summary>Board is "strong" Infinite Lanterns when at least two of that border are present.</summary>
+    
     public static bool IsStrongInfiniteLanternsCount(int count) => count >= 2;
 
     public static bool IsStrongInfiniteLanterns(IEnumerable<string> borderNames)
@@ -275,12 +275,7 @@ public static class ChartPredicates
         return IsStrongInfiniteLanternsCount(count);
     }
 
-    /// <summary>
-    /// How many orthogonal neighbours a cell has inside the 3x3 grid: 2 for a corner,
-    /// 3 for an edge, 4 for the centre. This is the cell's routing pressure — a chart with
-    /// few connections is cheap in a corner and expensive in the centre, because every
-    /// topology that routes through the centre needs connections there.
-    /// </summary>
+    
     public static int InGridDegree(int row, int col)
     {
         var degree = 0;
@@ -421,8 +416,7 @@ public static class ChartPredicates
                 boxes.Add((i, boxV));
         }
 
-        // Match RareMonstersDropSave: shared budget boxes > starfish > rare T2, then
-        // low-priority SaveStarfish extras, then voyage rares.
+        
         var boxesMarked = 0;
         foreach (var (index, _) in boxes
                      .OrderByDescending(x => x.Value1)
@@ -451,7 +445,7 @@ public static class ChartPredicates
                 marked.Add(index);
         }
 
-        // Standalone Save Starfish (default 2): mark further starfish not already taken.
+        
         var extraStarfish = ChartIds.MaxSavedStarfish;
         if (extraStarfish > 0)
         {
@@ -471,19 +465,16 @@ public static class ChartPredicates
     public static double FarmPriority(MapPiece p) =>
         p.LocalModifier + p.GlobalModifier;
 
-    /// <summary>
-    /// Save priority for golden lantern charts. Prefer Tee (3 connections) over
-    /// Cross, long (Straight), and dead end (Single) so better pathing shapes are kept.
-    /// </summary>
+    
     public static double GoldenLanternsSaveScore(MapPiece p)
     {
         var shape = p.Type switch
         {
-            PieceType.Tee => 4_000,      // 3 connections — preferred keep
+            PieceType.Tee => 4_000,      
             PieceType.Corner => 3_000,
             PieceType.Cross => 2_000,
-            PieceType.Straight => 1_000, // long
-            PieceType.Single => 0,        // dead end
+            PieceType.Straight => 1_000, 
+            PieceType.Single => 0,        
             _ => 0
         };
         return shape + MaxFamilyTierScore(p, ChartIds.AdjacentGoldenLanternsPrefix);

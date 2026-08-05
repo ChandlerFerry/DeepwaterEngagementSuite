@@ -7,11 +7,7 @@ using Xunit.Abstractions;
 
 namespace DeepwaterEngagementSuite.Tests;
 
-/// <summary>
-/// Replays captured in-game boards. These tests are data-driven: drop a dump JSON into
-/// tests/DeepwaterEngagementSuite.Tests/fixtures and it runs automatically. With no
-/// fixtures present the theories are simply skipped (no rows), so the suite stays green.
-/// </summary>
+
 public class VoyageDumpReplayTests(ITestOutputHelper output)
 {
     [Theory]
@@ -28,11 +24,7 @@ public class VoyageDumpReplayTests(ITestOutputHelper output)
         if (dump.Placement == null)
             return;
 
-        // Compares which cells get locked and which charts get chosen, not the pairing between
-        // them. The pairing is deliberately allowed to change — shape-aware assignment reorders
-        // supports across the same cells. What must stay stable is the set, because a dump that
-        // failed to capture some input the pipeline reads would change the chosen charts or the
-        // cell count, not merely their arrangement.
+        
         static string Cells(IEnumerable<(int Row, int Col)> cells) =>
             string.Join(" ", cells.Select(c => $"({c.Row},{c.Col})").OrderBy(s => s, StringComparer.Ordinal));
         static string Ids(IEnumerable<int> ids) =>

@@ -85,7 +85,7 @@ public class VoyagePlacementRulesApplyTests
     public void Apply_caps_GoldenLanterns_at_default_max_of_four()
     {
         var pieces = Fillers(9);
-        // 6 golden lanterns of the same low-priority shape
+        
         for (var i = 0; i < 6; i++)
             pieces.Add(Piece(100 + i, PieceType.Cross, Direction.All, $"Golden{i}", GoldenLanternMod));
 
@@ -129,10 +129,10 @@ public class VoyagePlacementRulesApplyTests
         var result = VoyagePlacementRules.Apply(pieces, EmptyBorders(), options);
 
         Assert.Equal(1, result.SavedGoldenLanternsCount);
-        Assert.DoesNotContain(result.Pieces, p => p.Id == 203); // Tee saved
-        Assert.Contains(result.Pieces, p => p.Id == 200); // Cross kept for solver
-        Assert.Contains(result.Pieces, p => p.Id == 201); // Long kept
-        Assert.Contains(result.Pieces, p => p.Id == 202); // Dead end kept (lowest shape priority)
+        Assert.DoesNotContain(result.Pieces, p => p.Id == 203); 
+        Assert.Contains(result.Pieces, p => p.Id == 200); 
+        Assert.Contains(result.Pieces, p => p.Id == 201); 
+        Assert.Contains(result.Pieces, p => p.Id == 202); 
     }
 
     [Fact]
@@ -217,10 +217,7 @@ public class VoyagePlacementRulesApplyTests
     private static Modifier RareMonsters2() =>
         new($"{ChartIds.AdjacentIncreasedRarePrefix}2", 10, false, ModifierTag.RareMonsters, 1);
 
-    /// <summary>
-    /// Shared rare-monsters budget: boxes first, residual slots = 6 - boxes for
-    /// starfish then rare T2. Standalone SaveStarfish is isolated via SaveStarfish=0.
-    /// </summary>
+    
     [Theory]
     [InlineData(3, 3)]
     [InlineData(4, 2)]
@@ -246,7 +243,7 @@ public class VoyagePlacementRulesApplyTests
         Assert.Equal(boxCount, result.SavedStrongboxCount);
         Assert.Equal(expectedResidual,
             result.SavedStarfishCount + result.SavedAdjacentRareCount);
-        // Starfish outranks rare T2 inside residual slots.
+        
         Assert.Equal(Math.Min(5, expectedResidual), result.SavedStarfishCount);
         Assert.Equal(Math.Max(0, expectedResidual - Math.Min(5, expectedResidual)),
             result.SavedAdjacentRareCount);
@@ -277,8 +274,8 @@ public class VoyagePlacementRulesApplyTests
     [Fact]
     public void Annul_uses_strongbox_ranks_4_through_6()
     {
-        // Boxes scored 19..11 on ids 1..9 → ranks 1–3 = ids 1–3 (save), 4–6 = ids 4–6 (Annul).
-        // Rank 7+ boxes and starfish must not be locked as Annul support.
+        
+        
         var pieces = new List<MapPiece>
         {
             Piece(0, ChartIds.PelagicRoomName),

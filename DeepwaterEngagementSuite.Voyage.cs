@@ -96,10 +96,7 @@ public partial class DeepwaterEngagementSuite
     private static int? TryGetTileRotation(VoyageTileElement tile) =>
         TryGetTileChart(tile)?.Rotation;
 
-    /// <summary>
-    /// Effective board connections for a placed chart (base path rotated by the game's Rotation).
-    /// This is what topology cares about; raw Rotation alone can miss-match equivalent encodings.
-    /// </summary>
+    
     private static Direction? TryGetTileConnections(VoyageTileElement tile)
     {
         var chart = TryGetTileChart(tile);
@@ -113,8 +110,7 @@ public partial class DeepwaterEngagementSuite
         if (expected?.Piece == null)
             return !TileHasChart(tile);
 
-        // Match by effective connections (what the board topology uses). Raw Rotation can
-        // differ for equivalent orientations (e.g. straight pieces: rot 0 ≡ rot 2).
+        
         return TryGetTileConnections(tile) == expected.Connections;
     }
 
@@ -132,10 +128,7 @@ public partial class DeepwaterEngagementSuite
         return true;
     }
 
-    /// <summary>
-    /// Right-clicks a placed tile until its effective connections match the solution placement.
-    /// Throws if the chart never appears or cannot be rotated into the target orientation.
-    /// </summary>
+    
     private async SyncTask<bool> RotateTileToMatch(
         VoyageTileElement tile,
         MapPiecePlacement expected,
@@ -149,7 +142,7 @@ public partial class DeepwaterEngagementSuite
         if (TileMatchesPlacement(tile, expected))
             return true;
 
-        // At most 4 distinct orientations in-game.
+        
         for (var click = 0; click < 4; click++)
         {
             if (TileMatchesPlacement(tile, expected))
@@ -193,10 +186,7 @@ public partial class DeepwaterEngagementSuite
         return true;
     }
 
-    /// <summary>
-    /// Final gate: every non-empty solution cell must match the placed chart's orientation
-    /// before PlacePieces reports success.
-    /// </summary>
+    
     private async SyncTask<bool> EnsureAllRotations(
         VoyageSolution solution,
         VoyageWindow tree,
@@ -317,7 +307,7 @@ public partial class DeepwaterEngagementSuite
                 await RotateTileToMatch(tile, p, winOrigin);
             }
 
-            // Gate completion: re-check (and fix) every tile's orientation before success.
+            
             await EnsureAllRotations(solution, tree, winOrigin);
             return true;
         }

@@ -20,7 +20,7 @@ public static class StrategyOrders
     public const int CenterSpecialtySave = 800;
     public const int AmuletSave = 900;
     public const int CenterOnlyJewelrySave = 1000;
-    /// <summary>After jewelry saves — only holds starfish leftover from higher strategies.</summary>
+    
     public const int SaveStarfish = 1050;
     public const int ActiveLabels = 1100;
 }

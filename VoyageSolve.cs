@@ -10,15 +10,15 @@ public sealed class VoyageSolve
     public VoyagePlacementRules.Result Placement { get; private set; }
     public VoyagePuzzle Puzzle { get; private set; }
 
-    /// <summary>How many strategy locks had to be given up before the board became solvable.</summary>
+    
     public int DroppedLockCount => DroppedLocks.Count;
 
-    /// <summary>Human-readable descriptions of each lock that was dropped (order = drop order).</summary>
+    
     public List<string> DroppedLocks { get; } = [];
 
     public void Cancel()
     {
-        // Fast solver runs to completion; generation counters handle obsolete results.
+        
     }
 
     public IEnumerable<VoyageSolutionResult> Run(
@@ -56,10 +56,7 @@ public sealed class VoyageSolve
             if (locks.Count == 0)
                 yield break;
 
-            // No topology satisfied the full lock set. Drop the lowest-priority lock
-            // (Divine Pelagic/support outrank Divine fill, Annul, etc.) so important
-            // strategies are kept as long as possible. Among equal priority, drop the
-            // later-appended lock first (fill/support tails).
+            
             var dropIdx = IndexOfLockToDrop(locks);
             var dropped = locks[dropIdx];
             locks.RemoveAt(dropIdx);

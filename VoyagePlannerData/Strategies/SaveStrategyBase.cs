@@ -17,7 +17,7 @@ public abstract class SaveStrategyBase : IVoyageStrategy
 
     public bool IsEnabled(VoyageStrategyOptions options) => EffectiveMaxSave(options) > 0;
 
-    /// <summary>Max charts to hold out; 0 disables. Clamped to <see cref="ChartIds.MaxSaveCap"/>.</summary>
+    
     protected abstract int MaxSave(VoyageStrategyOptions options);
 
     protected int EffectiveMaxSave(VoyageStrategyOptions options) =>
@@ -25,7 +25,7 @@ public abstract class SaveStrategyBase : IVoyageStrategy
 
     protected abstract bool Matches(MapPiece piece);
 
-    /// <summary>Optional priority when choosing which charts to save under the cap.</summary>
+    
     protected virtual Func<MapPiece, double> SaveScore => null;
 
     public virtual void Apply(PlacementContext ctx)

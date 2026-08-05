@@ -5,11 +5,7 @@ using Xunit;
 
 namespace DeepwaterEngagementSuite.Tests;
 
-/// <summary>
-/// Regression cover for the annul-centre board that produced zero solutions: three starfish
-/// around an annul orb at (1,0), where the strategy put the one-connection chart on the grid
-/// centre and killed every topology.
-/// </summary>
+
 public class SupportPlacementShapeTests
 {
     private static IReadOnlyList<BorderEffect>[,] BordersWithAnnulAt(int row, int col)
@@ -29,7 +25,7 @@ public class SupportPlacementShapeTests
     private static Modifier Starfish(int tier, int value1) =>
         new($"{ChartIds.AdjacentStarfishPrefix}{tier}", 10, false, ModifierTag.Monsters, value1);
 
-    /// <summary>Mirrors the captured board: two straights and a dead-end, plus filler.</summary>
+    
     private static List<MapPiece> BoardWithThreeStarfish()
     {
         var pieces = new List<MapPiece>
@@ -67,7 +63,7 @@ public class SupportPlacementShapeTests
             BordersWithAnnulAt(1, 0),
             VoyageStrategyOptions.AllEnabled);
 
-        // Shape-aware assignment reorders placements; it must never drop a support.
+        
         var starfishCells = result.Locks
             .Where(l => l.PieceId is 1 or 2 or 3)
             .Select(l => $"({l.Row},{l.Col})")
@@ -90,7 +86,7 @@ public class SupportPlacementShapeTests
         {
             var degree = ChartPredicates.InGridDegree(placed.Row, placed.Col);
             var connections = placed.PieceId == 3 ? 1 : 2;
-            // The dead-end (piece 3) belongs on a degree-2 corner, the straights elsewhere.
+            
             if (connections == 1)
                 Assert.Equal(2, degree);
         }
@@ -113,7 +109,7 @@ public class SupportPlacementShapeTests
 
         Assert.NotNull(last);
         Assert.True(last.Solutions.Count > 0, "Expected at least one solution for the annul board.");
-        // Soft locks may still degrade on shape-poor boards; every drop must be named.
+        
         Assert.Equal(session.DroppedLockCount, session.DroppedLocks.Count);
         if (session.DroppedLockCount > 0)
             Assert.All(session.DroppedLocks, d => Assert.Contains("Annul", d));
@@ -122,7 +118,7 @@ public class SupportPlacementShapeTests
     [Fact]
     public void Unsatisfiable_locks_degrade_instead_of_returning_nothing()
     {
-        // Every chart is a dead-end, so no full-grid topology can hold all the locks.
+        
         var pieces = new List<MapPiece> { Chart(0, Direction.All, ChartIds.PelagicRoomName) };
         for (var i = 1; i < 12; i++)
             pieces.Add(Chart(i, Direction.Down, "Abyssal Plain", Starfish(2, 7)));

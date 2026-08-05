@@ -15,8 +15,8 @@ public static class PlacementPipeline
         new SaveSoulEaterStrategy(),
         new SaveRareFractureStrategy(),
         new SaveRarePossessedStrategy(),
-        // Late among pure saves so rare-monsters residual can claim starfish first.
-        // Order 1050 still runs after jewelry; listed here with other save strategies.
+        
+        
         new SaveStarfishStrategy(),
 
         new AmuletClamHubStrategy(),
@@ -51,10 +51,7 @@ public static class PlacementPipeline
         return ctx;
     }
 
-    /// <summary>
-    /// Normal option gates, plus force-run rare-monsters lock/save when a Divine orb is
-    /// present so that strategy is never skipped for the highest-value orb.
-    /// </summary>
+    
     private static bool IsStrategyEnabled(IVoyageStrategy strategy, PlacementContext ctx)
     {
         if (strategy.IsEnabled(ctx.Options))

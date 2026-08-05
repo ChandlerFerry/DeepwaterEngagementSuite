@@ -21,12 +21,7 @@ public partial class DeepwaterEngagementSuite
 
     private string VoyageDumpDirectory => Path.Combine(ConfigDirectory, "voyage-dumps");
 
-    /// <summary>
-    /// Captures everything needed to replay the current board offline: raw border mods,
-    /// resolved per-tile border effects, every chart with resolved + raw modifier data,
-    /// the charts currently placed on the board, the strategy/solver settings in effect,
-    /// the placement-rule output (locks + saves), and the current best solution.
-    /// </summary>
+    
     private VoyageStateDump CaptureVoyageState(VoyageWindow tree, string note = null)
     {
         var dump = new VoyageStateDump
@@ -149,8 +144,8 @@ public partial class DeepwaterEngagementSuite
                 chartDump.BaseConnections = connections.ToString();
                 chartDump.PieceType = VoyageStateDump.ClassifyPieceType(connections).ToString();
                 chartDump.Mods = CaptureMods(item.Item.GetComponent<Mods>()?.ImplicitMods);
-                // The solver only sees charts that survived the ignore filters AND have a
-                // readable DeepwaterChart component; both conditions must hold.
+                
+                
                 chartDump.IncludedInSolve = chartDump.PieceId >= 0;
             }
             else
@@ -185,7 +180,7 @@ public partial class DeepwaterEngagementSuite
             }
             catch (Exception)
             {
-                // Unreadable value array; Value1 below still gives us the number the solver used.
+                
             }
 
             result.Add(new VoyageStateDump.ModDump
@@ -310,7 +305,7 @@ public partial class DeepwaterEngagementSuite
         dump.Solution = solutionDump;
     }
 
-    /// <summary>Captures and writes a dump to ConfigDirectory/voyage-dumps. Returns the path, or null on failure.</summary>
+    
     private string DumpVoyageStateToFile(VoyageWindow tree, string note = null)
     {
         _lastVoyageDumpError = null;

@@ -9,7 +9,7 @@ public sealed class ActiveStrategyLabelsStrategy : IVoyageStrategy
 
     public void Apply(PlacementContext ctx)
     {
-        // Divine always surfaces when present (rare-monsters path is force-enabled for it).
+        
         if (RareMonstersDropLockStrategy.ShouldRun(ctx))
         {
             if (ctx.DivineCenters.Count > 0)

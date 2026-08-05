@@ -388,7 +388,8 @@ public partial class DeepwaterEngagementSuite
         var allBorderNames = modsPerTileIndex.Values
             .SelectMany(tileMods => tileMods.Select(m => m.RawName))
             .ToList();
-        var boardStrongTreasureAnchors = VoyagePlacementRules.IsStrongTreasureAnchors(allBorderNames);
+        var boardStrongTreasureAnchors = Settings.VoyageSettings.Strategies.TreasureAnchors.Value
+            && VoyagePlacementRules.IsStrongTreasureAnchors(allBorderNames);
         var boardStrongInfiniteLanterns = Settings.VoyageSettings.Strategies.InfiniteLanterns.Value
             && VoyagePlacementRules.IsStrongInfiniteLanterns(allBorderNames);
 

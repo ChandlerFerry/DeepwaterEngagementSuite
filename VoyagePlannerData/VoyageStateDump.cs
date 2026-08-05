@@ -126,6 +126,7 @@ public sealed class VoyageStateDump
         public bool RareMonstersDrop { get; set; } = true;
         public bool NoConsumeAnchorfield { get; set; } = true;
         public bool CenterSpecialty { get; set; } = true;
+        public bool TreasureAnchors { get; set; } = true;
         public bool InfiniteLanterns { get; set; }
         public int SaveKishara { get; set; } = ChartIds.MaxSavedKishara;
         public int SaveNoEquipment { get; set; } = ChartIds.MaxSavedNoEquipment;
@@ -146,6 +147,7 @@ public sealed class VoyageStateDump
                 RareMonstersDrop = o.RareMonstersDrop,
                 NoConsumeAnchorfield = o.NoConsumeAnchorfield,
                 CenterSpecialty = o.CenterSpecialty,
+                TreasureAnchors = o.TreasureAnchors,
                 InfiniteLanterns = o.InfiniteLanterns,
                 SaveKishara = o.SaveKishara,
                 SaveNoEquipment = o.SaveNoEquipment,
@@ -164,6 +166,7 @@ public sealed class VoyageStateDump
             RareMonstersDrop,
             NoConsumeAnchorfield,
             CenterSpecialty,
+            TreasureAnchors,
             InfiniteLanterns,
             SaveKishara,
             SaveNoEquipment,

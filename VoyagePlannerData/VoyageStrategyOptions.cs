@@ -6,8 +6,7 @@ public sealed record VoyageStrategyOptions(
     bool RareMonstersDrop = true,
     bool NoConsumeAnchorfield = true,
     bool CenterSpecialty = true,
-    
-    
+    bool TreasureAnchors = true,
     bool InfiniteLanterns = false,
     int SaveKishara = ChartIds.MaxSavedKishara,
     int SaveNoEquipment = ChartIds.MaxSavedNoEquipment,

@@ -96,6 +96,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
             ApplyProfile(Settings.VoyageSettings.Profiles[0].Name);
         }
         Settings.VoyageSettings.ProfileRenameNode.DrawDelegate = DrawProfileRenameNode;
+        Settings.SleepingEntitySettings.CoreSettingWarning.DrawDelegate = DrawSleepingEntityWarning;
         RegisterHotkey(Settings.PlannerSettings.StartSearchHotkey);
         RegisterHotkey(Settings.PlannerSettings.StopSearchHotkey);
         RegisterHotkey(Settings.PlannerSettings.ClearSearchHotkey);
@@ -301,8 +302,8 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
 
         _bubbleRadius = Settings.BubbleSettings.BubbleRadiusOverride.Value is > 0 and var o ? o : Bubbles.Min(x => x.Radius);
 
-        foreach (var entity in new[] { EntityType.Chest, EntityType.Terrain, EntityType.IngameIcon, }
-                     .SelectMany(x => GameController.EntityListWrapper.ValidEntitiesByType[x]))
+        foreach (var (entity, sleepingOnly) in ExpeditionSourceEntitiesTagged(
+                     EntityType.Chest, EntityType.Terrain, EntityType.IngameIcon))
         {
             if (GetEntityType(entity.Path) == ExpeditionEntityType.None)
                 continue;
@@ -313,7 +314,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
                 continue;
             }
 
-            var newValue = BuildCacheItem(entity);
+            var newValue = BuildCacheItem(entity, sleepingOnly);
             _cachedEntities[entity.Id] = _cachedEntities.TryGetValue(entity.Id, out var oldValue)
                 ? oldValue.Merge(newValue)
                 : newValue;
@@ -397,11 +398,13 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
             .Select(x => (
                 Type: GetChestType(x.Path),
                 Distance: Vector2.Distance(x.GridPos, _playerGridPos),
-                Reachable: IsEntityInBubble(x.GridPos)))
+                Reachable: IsEntityInBubble(x.GridPos),
+                SleepingOnly: x.SleepingOnly))
             .Concat(GetUnknownPointerTargets().Select(x => (
                 Type: IconPickerIndex.PointerTarget,
                 Distance: Vector2.Distance(x, _playerGridPos),
-                Reachable: IsEntityInBubble(x))))
+                Reachable: IsEntityInBubble(x),
+                SleepingOnly: false)))
             .ToList();
 
         if (entries.Count == 0)
@@ -418,12 +421,21 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
                 Total: x.Count(),
                 Reachable: x.Count(y => y.Reachable),
                 NeedsLantern: x.Count(y => !y.Reachable),
-                Nearest: x.Min(y => y.Distance)))
+                Nearest: x.Min(y => y.Distance),
+                SleepingOnly: x.Count(y => y.SleepingOnly)))
             .OrderByDescending(x => x.NeedsLantern)
             .ThenBy(x => x.Nearest)
             .ToList();
 
         ImGui.Text($"Found: {entries.Count} ({entries.Count(x => x.Reachable)} reachable, {entries.Count(x => !x.Reachable)} need pylon)");
+
+        var sleepingCount = entries.Count(x => x.SleepingOnly);
+        if (sleepingCount > 0)
+        {
+            ImGui.TextColored(new Vector4(0.55f, 0.55f, 0.6f, 1f),
+                $"{sleepingCount} out of network bubble (details may be incomplete)");
+        }
+
         ImGui.Separator();
 
         if (ImGui.BeginTable("DeepwaterLootTable", 4, ImGuiTableFlags.None))
@@ -438,11 +450,18 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
             {
                 ImGui.TableNextRow();
                 ImGui.TableNextColumn();
-                ImGui.TextColored(
-                    group.NeedsLantern > 0
+
+                var allSleeping = group.SleepingOnly > 0 && group.SleepingOnly == group.Total;
+                var nameColor = allSleeping
+                    ? new Vector4(0.55f, 0.55f, 0.6f, 1f)
+                    : group.NeedsLantern > 0
                         ? new Vector4(1f, 0.7f, 0.2f, 1f)
-                        : new Vector4(0.3f, 0.9f, 0.3f, 1f),
-                    GetEntityDisplayName(group.Type));
+                        : new Vector4(0.3f, 0.9f, 0.3f, 1f);
+                var nameText = group.SleepingOnly > 0 && !allSleeping
+                    ? $"{GetEntityDisplayName(group.Type)} ({group.SleepingOnly} asleep)"
+                    : GetEntityDisplayName(group.Type);
+
+                ImGui.TextColored(nameColor, nameText);
 
                 ImGui.TableNextColumn();
                 ImGui.TextColored(
@@ -468,7 +487,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
     private IEnumerable<Vector2i> GetUnknownPointerTargets()
     {
         var knownEntityPositions = _cachedEntities.Values.Where(x => !x.IsOpened).Select(x => x.GridPos).ToList();
-        foreach (var e in GameController.EntityListWrapper.ValidEntitiesByType[EntityType.Terrain]
+        foreach (var e in ExpeditionSourceEntities(EntityType.Terrain)
                      .Where(x => x.Path == "Metadata/Terrain/Leagues/Deepwater/Objects/Pointer"))
         {
             if (!e.TryGetComponent(out Pointer pointer))
@@ -633,6 +652,11 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
                         var mapSettings = icons.IconMapping.GetValueOrDefault(chestType, new IconDisplaySettings());
                         var icon = mapSettings.Icon ?? DeepwaterEngagementSuiteSettings.GetDefaultIcon(chestType);
                         var tint = mapSettings.Tint ?? DeepwaterEngagementSuiteSettings.GetDefaultTint(chestType);
+                        if (e.SleepingOnly)
+                        {
+                            tint = DimForSleeping(tint);
+                        }
+
                         var sizeScale = mapSettings.SizeScale ?? DeepwaterEngagementSuiteSettings.GetDefaultIconSizeScale(chestType);
                         var drawOnMap = mapSettings.ShowOnMap;
                         var drawInWorld = mapSettings.ShowInWorld;
@@ -1044,7 +1068,8 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
         float? RenderZ,
         float? RenderSize,
         bool? MinimapIconHide,
-        bool IsOpened)
+        bool IsOpened,
+        bool SleepingOnly = false)
     {
         public string BaseAnimatedEntityMetadata => BaseAnimatedEntityMetadataCache.Value;
 
@@ -1059,7 +1084,10 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
                 RenderZ ?? other.RenderZ,
                 RenderSize ?? other.RenderSize,
                 MinimapIconHide ?? other.MinimapIconHide,
-                IsOpened || other.IsOpened);
+                IsOpened || other.IsOpened,
+                // Once an entity has been observed awake it is never provisional again, and since Merge runs every
+                // tick this has to latch in that direction rather than tracking the most recent observation.
+                SleepingOnly && other.SleepingOnly);
         }
     }
 
@@ -1079,7 +1107,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
         _cachedEntities.Remove(entity.Id);
     }
 
-    private static EntityCacheItem BuildCacheItem(Entity entity)
+    private static EntityCacheItem BuildCacheItem(Entity entity, bool sleepingOnly = false)
     {
         return new EntityCacheItem(
             entity.Path,
@@ -1090,7 +1118,8 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
             entity.GetComponent<Render>()?.Z,
             entity.GetComponent<Render>()?.BoundsNum is { } b ? Math.Min(b.X, b.Y) : null,
             entity.GetComponent<MinimapIcon>()?.IsHide,
-            IsEntityCompleted(entity, GetChestType(entity.Path)));
+            IsEntityCompleted(entity, GetChestType(entity.Path)),
+            sleepingOnly);
     }
 
     private bool IsEntityInBubble(Vector2 gridPos)

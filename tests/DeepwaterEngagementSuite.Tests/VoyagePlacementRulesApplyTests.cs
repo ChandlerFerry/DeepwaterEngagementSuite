@@ -169,6 +169,50 @@ public class VoyagePlacementRulesApplyTests
     }
 
     [Fact]
+    public void Apply_when_SaveKishara_off_caps_placeable_Kishara_at_one()
+    {
+        var pieces = Fillers(9);
+        for (var i = 0; i < 3; i++)
+            pieces.Add(Piece(100 + i, ChartIds.KisharaRoomName));
+
+        var options = VoyageStrategyOptions.AllEnabled with { SaveKishara = 0 };
+
+        var result = VoyagePlacementRules.Apply(pieces, EmptyBorders(), options);
+
+        Assert.Equal(1, result.Pieces.Count(ChartPredicates.IsKishara));
+        Assert.Equal(2, result.SavedKisharaCount);
+    }
+
+    [Fact]
+    public void Apply_when_SaveKishara_off_keeps_single_Kishara_available()
+    {
+        var pieces = Fillers(9);
+        pieces.Add(Piece(100, ChartIds.KisharaRoomName));
+
+        var options = VoyageStrategyOptions.AllEnabled with { SaveKishara = 0 };
+
+        var result = VoyagePlacementRules.Apply(pieces, EmptyBorders(), options);
+
+        Assert.Equal(1, result.Pieces.Count(ChartPredicates.IsKishara));
+        Assert.Equal(0, result.SavedKisharaCount);
+    }
+
+    [Fact]
+    public void Apply_when_SaveKishara_on_holds_out_up_to_max()
+    {
+        var pieces = Fillers(9);
+        for (var i = 0; i < 3; i++)
+            pieces.Add(Piece(100 + i, ChartIds.KisharaRoomName));
+
+        var options = VoyageStrategyOptions.AllEnabled with { SaveKishara = 2 };
+
+        var result = VoyagePlacementRules.Apply(pieces, EmptyBorders(), options);
+
+        Assert.Equal(2, result.SavedKisharaCount);
+        Assert.Equal(1, result.Pieces.Count(ChartPredicates.IsKishara));
+    }
+
+    [Fact]
     public void Apply_pipeline_labels_orbs_when_RareMonstersDrop_enabled()
     {
         var pieces = new List<MapPiece>();

@@ -49,6 +49,8 @@ public static class ChartIds
     
     public const int MaxSavedDefault = MaxSaveCap;
     public const int MaxSavedKishara = MaxSavedDefault;
+    /// <summary>When SaveKishara is 0, at most this many Kishara charts stay available for placement.</summary>
+    public const int MaxPlacedKisharaWhenNotSaving = 1;
     public const int MaxSavedNoEquipment = MaxSavedDefault;
     public const int MaxSavedFractured = MaxSavedDefault;
     public const int MaxSavedGoldenLanterns = 4;

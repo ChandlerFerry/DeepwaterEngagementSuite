@@ -663,7 +663,7 @@ public class VoyageStrategySettings
     public ToggleNode InfiniteLanterns { get; set; } = new ToggleNode(false);
 
     [Menu("Save Kishara",
-        "Max Kishara's Rest charts held out of the solver (0 = off; place boss yourself).")]
+        "Max Kishara's Rest charts held out of the solver (0 = place at most one boss in the voyage).")]
     public RangeNode<int> SaveKishara { get; set; } =
         new RangeNode<int>(ChartIds.MaxSavedKishara, 0, ChartIds.MaxSaveCap);
 

@@ -15,7 +15,7 @@ public abstract class SaveStrategyBase : IVoyageStrategy
     public string SaveKey { get; }
     public int Order { get; }
 
-    public bool IsEnabled(VoyageStrategyOptions options) => EffectiveMaxSave(options) > 0;
+    public virtual bool IsEnabled(VoyageStrategyOptions options) => EffectiveMaxSave(options) > 0;
 
     
     protected abstract int MaxSave(VoyageStrategyOptions options);

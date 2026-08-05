@@ -48,6 +48,7 @@ public static class VoyagePlacementRules
     public const int MaxSaveCap = ChartIds.MaxSaveCap;
     public const int MaxSavedDefault = ChartIds.MaxSavedDefault;
     public const int MaxSavedKishara = ChartIds.MaxSavedKishara;
+    public const int MaxPlacedKisharaWhenNotSaving = ChartIds.MaxPlacedKisharaWhenNotSaving;
     public const int MaxSavedNoEquipment = ChartIds.MaxSavedNoEquipment;
     public const int MaxSavedFractured = ChartIds.MaxSavedFractured;
     public const int MaxSavedGoldenLanterns = ChartIds.MaxSavedGoldenLanterns;

@@ -58,6 +58,9 @@ public class DeepwaterEngagementSuiteSettings : ISettings
     public BubbleSettings BubbleSettings { get; set; } = new BubbleSettings();
     public TrailSettings TrailSettings { get; set; } = new TrailSettings();
 
+    [Menu("Sleeping Entity Settings")]
+    public SleepingEntitySettings SleepingEntitySettings { get; set; } = new SleepingEntitySettings();
+
     [Menu("Bubble planner settings")]
     public PlannerSettings PlannerSettings { get; set; } = new PlannerSettings();
     public VoyageSettings VoyageSettings { get; set; } = new VoyageSettings();
@@ -279,6 +282,18 @@ public class TrailSettings
     public ToggleNode ShowUndiscoveredTargets { get; set; } = new ToggleNode(true);
     public ColorNode UndiscoveredColor { get; set; } = new Color(255, 255, 255, 220);
     public TrailColorSettings Colors { get; set; } = new TrailColorSettings();
+}
+
+[Submenu(CollapsedByDefault = true)]
+public class SleepingEntitySettings
+{
+    [Menu("Parse sleeping entities",
+        "Also read entities from the game's sleeping entity list (entities outside the network bubble).\n" +
+        "Requires ExileCore's Core -> Debug -> CollectSleepingEntities setting to be enabled as well.")]
+    public ToggleNode Enabled { get; set; } = new ToggleNode(false);
+
+    [JsonIgnore]
+    public CustomNode CoreSettingWarning { get; set; } = new CustomNode();
 }
 
 [Submenu(CollapsedByDefault = true)]

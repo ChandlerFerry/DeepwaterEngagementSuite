@@ -316,14 +316,13 @@ public class VoyagePlacementRulesApplyTests
     }
 
     [Fact]
-    public void Annul_uses_strongbox_ranks_4_through_6()
+    public void Annul_uses_starfish_not_reserved_strongboxes()
     {
-        
-        
         var pieces = new List<MapPiece>
         {
             Piece(0, ChartIds.PelagicRoomName),
         };
+        // Ranks 1–6 strongboxes (value1 19..14) are reserved; Annul must not burn them.
         for (var i = 1; i <= 9; i++)
             pieces.Add(Piece(i, $"Box{i}", Strongbox(2, 20 - i)));
         for (var i = 10; i <= 12; i++)
@@ -340,7 +339,36 @@ public class VoyagePlacementRulesApplyTests
             .Where(l => l.Strategy == "Annul" && l.PieceId != 0)
             .ToList();
         Assert.Equal(3, annulSupports.Count);
-        Assert.All(annulSupports, l => Assert.InRange(l.PieceId, 4, 6));
-        Assert.DoesNotContain(result.Locks, l => l.PieceId is >= 7 and <= 12);
+        Assert.All(annulSupports, l => Assert.InRange(l.PieceId, 10, 12));
+        Assert.DoesNotContain(result.Locks, l => l.PieceId is >= 1 and <= 9);
+        Assert.Equal(6, result.SavedStrongboxCount);
+    }
+
+    [Fact]
+    public void Divine_may_spend_reserved_strongboxes_as_supports()
+    {
+        var pieces = new List<MapPiece>
+        {
+            Piece(0, ChartIds.PelagicRoomName),
+        };
+        for (var i = 1; i <= 6; i++)
+            pieces.Add(Piece(i, $"Box{i}", Strongbox(2, 5)));
+        for (var i = 7; i < 20; i++)
+            pieces.Add(Piece(i, $"Filler{i}"));
+
+        var borders = EmptyBorders();
+        // Corner divine: 2 free neighbors for supports after pelagic takes the orb cell.
+        borders[0, 0] = [new BorderEffect(ChartIds.RareDivine, ModifierTag.All, 1, false, false)];
+
+        var result = VoyagePlacementRules.Apply(pieces, borders, VoyageStrategyOptions.AllEnabled);
+
+        var divineSupports = result.Locks
+            .Where(l => l.Strategy == "Divine" && l.PieceId != 0)
+            .ToList();
+        Assert.NotEmpty(divineSupports);
+        Assert.All(divineSupports, l => Assert.InRange(l.PieceId, 1, 6));
+        // Unused reserved boxes remain held out of the working pool.
+        Assert.True(result.SavedStrongboxCount + divineSupports.Count <= 6);
+        Assert.Equal(6 - divineSupports.Count, result.SavedStrongboxCount);
     }
 }

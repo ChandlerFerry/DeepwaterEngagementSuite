@@ -19,7 +19,7 @@ public sealed class SaveKisharaStrategy()
         if (maxSave > 0)
         {
             ctx.AddSaved(SaveKey,
-                ctx.RemoveUnused(Matches, SaveScore, maxSave: maxSave));
+                ctx.RemoveUnused(Matches, SaveScore, maxSave: maxSave, force: true));
             return;
         }
 

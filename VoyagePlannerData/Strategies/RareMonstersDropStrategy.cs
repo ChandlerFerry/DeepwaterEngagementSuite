@@ -10,7 +10,6 @@ public sealed class RareMonstersDropLockStrategy : IVoyageStrategy
     public string Id => "RareMonstersDrop.Lock";
     public int Order => StrategyOrders.RareMonstersLock;
 
-    
     public bool IsEnabled(VoyageStrategyOptions options) => options.RareMonstersDrop;
 
     public static bool ShouldRun(PlacementContext ctx) =>
@@ -36,7 +35,7 @@ public sealed class RareMonstersDropLockStrategy : IVoyageStrategy
                 ctx.OrbCenters.RemoveAll(c => c.Row == target.Row && c.Col == target.Col);
                 ctx.PelagicLocked = true;
             }
-            else if (savedPelagic < ChartIds.MaxSavedPelagic && ctx.TrySavePiece(pelagic.Id))
+            else if (savedPelagic < ChartIds.MaxSavedPelagic && ctx.TrySavePiece(pelagic.Id, force: true))
             {
                 savedPelagic++;
             }
@@ -44,37 +43,40 @@ public sealed class RareMonstersDropLockStrategy : IVoyageStrategy
 
         ctx.AddSaved(SaveCountKeys.Pelagic, savedPelagic);
 
-        var boxPools = new[]
+        // Hold top strongbox charts before any non-Divine placement. Only Divine may spend
+        // these reservations (allowReserved). Annul/Ancient/solver never touch them.
+        ctx.ReserveUnused(
+            ChartPredicates.IsStrongboxCountChart,
+            ChartPredicates.BoxValue1Score,
+            maxReserve: ChartIds.MaxSavedBoxes);
+
+        // Divine is explicitly allowed to consume reserved strongboxes (incl. value1=5).
+        var divinePools = new[]
         {
             new SupportPool(ChartPredicates.IsStrongboxCountChart, ChartPredicates.BoxValue1Score),
             new SupportPool(ChartPredicates.IsStarfishChart, ChartPredicates.StarfishScore),
             new SupportPool(ChartPredicates.IsOrbRareComboChart, ChartPredicates.OrbRareComboScore),
         };
 
-        
-        var secondSetBoxIds = StrongboxIdsByRank(ctx, skip: 3, take: 3);
-        var secondSetBoxPools = new[]
+        // Annul/Ancient never burn reserved boxes — starfish / rare combo only.
+        var nonDivinePools = new[]
         {
-            new SupportPool(
-                p => ChartPredicates.IsStrongboxCountChart(p) && secondSetBoxIds.Contains(p.Id),
-                ChartPredicates.BoxValue1Score),
             new SupportPool(ChartPredicates.IsStarfishChart, ChartPredicates.StarfishScore),
             new SupportPool(ChartPredicates.IsOrbRareComboChart, ChartPredicates.OrbRareComboScore),
         };
 
         foreach (var center in ctx.DivineCenters)
-            LockSupportsAround(ctx, center, boxPools, "Divine", LockPriorities.DivineSupport);
+            LockSupportsAround(ctx, center, divinePools, "Divine", LockPriorities.DivineSupport,
+                allowReserved: true);
 
         foreach (var center in ctx.AnnulCenters)
-            LockSupportsAround(ctx, center, secondSetBoxPools, "Annul", LockPriorities.AnnulSupport);
+            LockSupportsAround(ctx, center, nonDivinePools, "Annul", LockPriorities.AnnulSupport);
 
         foreach (var center in ctx.AncientCenters)
-            LockSupportsAround(ctx, center, secondSetBoxPools, "Ancient", LockPriorities.AncientSupport);
+            LockSupportsAround(ctx, center, nonDivinePools, "Ancient", LockPriorities.AncientSupport);
 
         if (ctx.DivineCenters.Count > 0)
         {
-            
-            
             foreach (var cell in ChartPredicates.EnumerateCells().Where(c => ctx.CellFree(c.Row, c.Col)))
             {
                 var rare = ctx.TakeBest(ChartPredicates.IsOrbRareGlobalChart, ChartPredicates.OrbRareComboScore);
@@ -94,17 +96,6 @@ public sealed class RareMonstersDropLockStrategy : IVoyageStrategy
             1 => ("Ancient", isPelagic ? LockPriorities.AncientPelagic : LockPriorities.AncientSupport),
             _ => ("Rare Monsters", LockPriorities.Default),
         };
-
-    
-    private static HashSet<int> StrongboxIdsByRank(PlacementContext ctx, int skip, int take) =>
-        ctx.Working
-            .Where(p => !ctx.UsedPieceIds.Contains(p.Id) && ChartPredicates.IsStrongboxCountChart(p))
-            .OrderByDescending(ChartPredicates.BoxValue1Score)
-            .ThenByDescending(p => p.LocalModifier + p.GlobalModifier)
-            .Skip(skip)
-            .Take(take)
-            .Select(p => p.Id)
-            .ToHashSet();
 }
 
 
@@ -112,21 +103,18 @@ internal readonly record struct SupportPool(Func<MapPiece, bool> Pred, Func<MapP
 
 internal static class SupportPlacement
 {
-    
-    
     public static void LockSupportsAround(
         PlacementContext ctx,
         (int Row, int Col) center,
         IReadOnlyList<SupportPool> pools,
         string strategy,
-        int priority)
+        int priority,
+        bool allowReserved = false)
     {
-        
         var cells = ctx.FreeNeighbors(center.Row, center.Col).ToList();
         if (cells.Count == 0)
             return;
 
-        
         var picked = new HashSet<int>();
         var supports = new List<MapPiece>();
         for (var slot = 0; slot < cells.Count; slot++)
@@ -134,7 +122,10 @@ internal static class SupportPlacement
             MapPiece support = null;
             foreach (var pool in pools)
             {
-                support = ctx.TakeBest(p => !picked.Contains(p.Id) && pool.Pred(p), pool.Score);
+                support = ctx.TakeBest(
+                    p => !picked.Contains(p.Id) && pool.Pred(p),
+                    pool.Score,
+                    allowReserved: allowReserved);
                 if (support != null)
                     break;
             }
@@ -155,7 +146,6 @@ internal static class SupportPlacement
             .ThenBy(c => c.Col)
             .ToList();
 
-        
         var orderedSupports = supports
             .Select((piece, rank) => (Piece: piece, Rank: rank))
             .OrderByDescending(x => x.Piece.BaseConnections.CountConnections())
@@ -181,15 +171,19 @@ public sealed class RareMonstersDropSaveStrategy : IVoyageStrategy
         if (!RareMonstersDropLockStrategy.ShouldRun(ctx))
             return;
 
-        
-        var savedBoxes = ctx.RemoveUnused(ChartPredicates.IsStrongboxCountChart, ChartPredicates.BoxValue1Score,
-            maxSave: ChartIds.MaxSavedBoxes);
+        // Force holds out of the solver pool. Floor-of-9 must not reintroduce reserved boxes
+        // when only a short inventory page is loaded.
+        var savedBoxes = ctx.RemoveUnused(
+            ChartPredicates.IsStrongboxCountChart,
+            ChartPredicates.BoxValue1Score,
+            maxSave: ChartIds.MaxSavedBoxes,
+            force: true);
         ctx.AddSaved(SaveCountKeys.Strongbox, savedBoxes);
 
         var residual = Math.Max(0, ChartIds.MaxSavedRareMonsterSupport - savedBoxes);
         var savedStarfish = residual > 0
             ? ctx.RemoveUnused(ChartPredicates.IsStarfishChart, ChartPredicates.StarfishScore,
-                maxSave: residual)
+                maxSave: residual, force: true)
             : 0;
         ctx.AddSaved(SaveCountKeys.Starfish, savedStarfish);
 
@@ -198,11 +192,11 @@ public sealed class RareMonstersDropSaveStrategy : IVoyageStrategy
         {
             ctx.AddSaved(SaveCountKeys.AdjacentRare,
                 ctx.RemoveUnused(ChartPredicates.IsAdjacentRareSaveChart, ChartPredicates.AdjacentRareScore,
-                    maxSave: rareSlots));
+                    maxSave: rareSlots, force: true));
         }
 
         ctx.AddSaved(SaveCountKeys.RareVoyage,
             ctx.RemoveUnused(ChartPredicates.IsRareVoyageChart, ChartPredicates.RareVoyageScore,
-                maxSave: ChartIds.MaxSavedRareVoyage));
+                maxSave: ChartIds.MaxSavedRareVoyage, force: true));
     }
 }

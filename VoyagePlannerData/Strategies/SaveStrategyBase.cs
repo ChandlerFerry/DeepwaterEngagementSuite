@@ -33,7 +33,9 @@ public abstract class SaveStrategyBase : IVoyageStrategy
         if (!IsEnabled(ctx.Options))
             return;
 
+        // Holds always force out of the working pool. Short inventory must not leak
+        // reserved charts into the solver as filler.
         ctx.AddSaved(SaveKey,
-            ctx.RemoveUnused(Matches, SaveScore, maxSave: EffectiveMaxSave(ctx.Options)));
+            ctx.RemoveUnused(Matches, SaveScore, maxSave: EffectiveMaxSave(ctx.Options), force: true));
     }
 }

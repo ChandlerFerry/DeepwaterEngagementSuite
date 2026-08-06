@@ -17,6 +17,7 @@ public sealed class PlacementContext
         TileBorders = tileBorders;
         Locks = [];
         UsedPieceIds = [];
+        ReservedPieceIds = [];
         LockedCells = [];
         SavedCounts = new Dictionary<string, int>(StringComparer.Ordinal);
         ActiveStrategies = [];
@@ -51,6 +52,11 @@ public sealed class PlacementContext
     public List<MapPiece> Working { get; }
     public List<LockedPlacement> Locks { get; }
     public HashSet<int> UsedPieceIds { get; }
+    /// <summary>
+    /// Charts held for later voyages. Unavailable to placement/solver unless a strategy
+    /// explicitly opts in via <see cref="TakeBest"/> allowReserved.
+    /// </summary>
+    public HashSet<int> ReservedPieceIds { get; }
     public HashSet<(int Row, int Col)> LockedCells { get; }
     public IReadOnlyList<BorderEffect>[,] TileBorders { get; }
     public Dictionary<string, int> SavedCounts { get; }
@@ -97,7 +103,8 @@ public sealed class PlacementContext
         var saved = 0;
         foreach (var id in Working.Where(pred).Select(p => p.Id).ToList())
         {
-            if (!TrySavePiece(id))
+            // Reservations always force out — short inventory must not leak holds into the solver.
+            if (!TrySavePiece(id, force: true))
                 break;
             saved++;
         }
@@ -105,18 +112,59 @@ public sealed class PlacementContext
         return saved;
     }
 
-    public MapPiece TakeBest(Func<MapPiece, bool> pred, Func<MapPiece, double> score) =>
+    /// <summary>
+    /// Mark matching unused charts as reserved without removing them yet.
+    /// Reserved charts are invisible to <see cref="TakeBest"/> unless allowReserved is set.
+    /// </summary>
+    public int ReserveUnused(
+        Func<MapPiece, bool> pred,
+        Func<MapPiece, double> score = null,
+        int? maxReserve = null)
+    {
+        IEnumerable<MapPiece> candidates = Working
+            .Where(p => !UsedPieceIds.Contains(p.Id) && !ReservedPieceIds.Contains(p.Id) && pred(p));
+        if (score != null)
+        {
+            candidates = candidates
+                .OrderByDescending(score)
+                .ThenByDescending(p => p.LocalModifier + p.GlobalModifier);
+        }
+
+        var ids = candidates.Select(p => p.Id).ToList();
+        if (maxReserve is int cap && ids.Count > cap)
+            ids = ids.Take(cap).ToList();
+
+        foreach (var id in ids)
+            ReservedPieceIds.Add(id);
+        return ids.Count;
+    }
+
+    /// <param name="allowReserved">
+    /// When false (default), reserved charts are never selected. Strategies that are
+    /// explicitly allowed to spend a reservation (e.g. Divine strongbox supports) pass true.
+    /// </param>
+    public MapPiece TakeBest(
+        Func<MapPiece, bool> pred,
+        Func<MapPiece, double> score,
+        bool allowReserved = false) =>
         Working
-            .Where(p => !UsedPieceIds.Contains(p.Id) && pred(p))
+            .Where(p => !UsedPieceIds.Contains(p.Id)
+                        && (allowReserved || !ReservedPieceIds.Contains(p.Id))
+                        && pred(p))
             .OrderByDescending(score)
             .ThenByDescending(p => p.LocalModifier + p.GlobalModifier)
             .FirstOrDefault();
 
     public bool TrySavePiece(int pieceId, bool force = false)
     {
-        if (!force && Working.Count <= 9)
+        // Reserved charts always leave the working pool, even when that drops below 9 pieces.
+        // Better to fail the solve on a short inventory page than burn holds for filler.
+        if (!force && !ReservedPieceIds.Contains(pieceId) && Working.Count <= 9)
             return false;
-        return Working.RemoveAll(p => p.Id == pieceId) > 0;
+        if (Working.RemoveAll(p => p.Id == pieceId) <= 0)
+            return false;
+        ReservedPieceIds.Remove(pieceId);
+        return true;
     }
 
     public int RemoveUnused(
@@ -140,7 +188,9 @@ public sealed class PlacementContext
         var removed = 0;
         foreach (var id in drop)
         {
-            if (!TrySavePiece(id, force))
+            // Force when caller asked, or when the piece is already reserved — reservations
+            // must never stay in the solver pool because of the floor-of-9 guard.
+            if (!TrySavePiece(id, force: force || ReservedPieceIds.Contains(id)))
                 break;
             removed++;
         }

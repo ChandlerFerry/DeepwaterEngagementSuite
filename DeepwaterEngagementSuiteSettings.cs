@@ -248,7 +248,7 @@ public class IconSettings
     [Menu("Show Altar (Fish) icons")]
     public ToggleNode ShowAltarFishIcons { get; set; } = new ToggleNode(true);
 
-    [Menu("Show unknown Altar icons", "Any DeepwaterAltar* path not listed by name above.")]
+    [Menu("Show unknown Altar icons", "Any DeepwaterAltar* / DeepwaterSacrificeAltarUpgrade path not listed by name above.")]
     public ToggleNode ShowAltarUnknownIcons { get; set; } = new ToggleNode(true);
 
     [Menu("Show Lantern Replenish icons")]

@@ -40,6 +40,6 @@ public sealed class NoConsumeFarmSaveStrategy : IVoyageStrategy
     public void Apply(PlacementContext ctx)
     {
         ctx.AddSaved(SaveCountKeys.Farm,
-            ctx.RemoveUnused(ChartPredicates.IsAnchorfieldChart, ChartPredicates.FarmPriority));
+            ctx.RemoveUnused(ChartPredicates.IsAnchorfieldChart, ChartPredicates.FarmPriority, force: true));
     }
 }

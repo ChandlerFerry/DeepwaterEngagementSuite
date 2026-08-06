@@ -1691,31 +1691,31 @@
       {
         "Row": 1,
         "Col": 1,
-        "PieceId": 11,
+        "PieceId": 31,
         "Rotation": null,
-        "PieceRoomName": "Undersea Groves",
+        "PieceRoomName": "Abyssal Plain",
         "PieceMods": [
-          "MapDeepwaterChartAdjacentArcanistBox1"
+          "MapDeepwaterChartAdjacentStarfish2"
         ]
       },
       {
         "Row": 0,
         "Col": 0,
-        "PieceId": 13,
+        "PieceId": 51,
         "Rotation": null,
-        "PieceRoomName": "Seafloor Ridges",
+        "PieceRoomName": "Abyssal Plain",
         "PieceMods": [
-          "MapDeepwaterChartAdjacentStrongboxes2"
+          "MapDeepwaterChartAdjacentStarfish2"
         ]
       },
       {
         "Row": 2,
         "Col": 0,
-        "PieceId": 17,
+        "PieceId": 4,
         "Rotation": null,
-        "PieceRoomName": "Seafloor Ridges",
+        "PieceRoomName": "Abyssal Plain",
         "PieceMods": [
-          "MapDeepwaterChartAdjacentArcanistBox1"
+          "MapDeepwaterChartAdjacentStarfish1"
         ]
       }
     ],
@@ -1769,7 +1769,7 @@
       "Unique Amulet2": 1,
       "Unique Ring": 1,
       "boxes": 6,
-      "adj. rare T2": 3,
+      "adj. rare T2": 0,
       "voyage rares": 5
     },
     "NoConsumeActive": false

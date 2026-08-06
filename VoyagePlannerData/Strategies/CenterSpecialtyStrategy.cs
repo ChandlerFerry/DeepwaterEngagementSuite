@@ -33,8 +33,8 @@ public sealed class CenterSpecialtySaveStrategy : IVoyageStrategy
     public void Apply(PlacementContext ctx)
     {
         ctx.AddSaved(SaveCountKeys.OperativeBox,
-            ctx.RemoveUnused(ChartPredicates.IsOperativeBoxChart));
+            ctx.RemoveUnused(ChartPredicates.IsOperativeBoxChart, force: true));
         ctx.AddSaved(SaveCountKeys.LostMessage,
-            ctx.RemoveUnused(ChartPredicates.IsLostMessageChart));
+            ctx.RemoveUnused(ChartPredicates.IsLostMessageChart, force: true));
     }
 }

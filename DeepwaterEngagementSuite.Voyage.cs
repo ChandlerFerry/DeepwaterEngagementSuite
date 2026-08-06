@@ -183,7 +183,7 @@ public partial class DeepwaterEngagementSuite
                 return true;
 
             var beforeFingerprint = GetVoyageChartInventoryTabFingerprint(tree);
-            const int maxAttempts = 8;
+            const int maxAttempts = 12;
             var switched = false;
             for (var attempt = 0; attempt < maxAttempts; attempt++)
             {
@@ -191,7 +191,7 @@ public partial class DeepwaterEngagementSuite
                 if (await WaitForVoyageChartInventoryTabChange(
                         tree,
                         beforeFingerprint,
-                        TimeSpan.FromSeconds(1.5)))
+                        TimeSpan.FromMilliseconds(300)))
                 {
                     switched = true;
                     break;
@@ -205,7 +205,6 @@ public partial class DeepwaterEngagementSuite
                     "other-page chart data may still be unloaded.");
             }
 
-            await TaskUtils.NextFrame();
             return switched;
         }
         catch (Exception ex)

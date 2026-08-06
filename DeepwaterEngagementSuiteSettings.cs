@@ -38,7 +38,7 @@ public class DeepwaterEngagementSuiteSettings : ISettings
     public const MapIconsIndex DefaultAllflameEmbersChestIcon = MapIconsIndex.SanctumGoldConvert;
     public const MapIconsIndex DefaultCursedDucatDropIcon = MapIconsIndex.RewardPerandus;
     public const MapIconsIndex DefaultIzaroObjectIcon = MapIconsIndex.RewardLabyrinth;
-    public const MapIconsIndex DefaultAltarCrabIcon = MapIconsIndex.RewardBestiary;
+    public const MapIconsIndex DefaultAltarCrabIcon = MapIconsIndex.LootFilterLargeYellowStar;
     public const MapIconsIndex DefaultAltarOctopusIcon = MapIconsIndex.RewardBreach;
     public const MapIconsIndex DefaultTormentedSpiritEncounterIcon = MapIconsIndex.LootFilterSmallGreenCircle;
     public const MapIconsIndex DefaultLanternReplenishEncounterIcon = MapIconsIndex.BlightPortalFire;

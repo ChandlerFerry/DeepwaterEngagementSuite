@@ -5,13 +5,6 @@ using Xunit;
 
 namespace DeepwaterEngagementSuite.Tests;
 
-/// <summary>
-/// Regression: reserved strongboxes (value1=5 "additional strongboxes") must never leak into
-/// the solver pool just because inventory is short (e.g. only page 2 loaded).
-///
-/// Old bug: TrySavePiece refused to hold charts once Working.Count hit 9, so reserved boxes
-/// stayed available and the solver placed them as filler. Only Divine may spend them.
-/// </summary>
 public class ReservedStrongboxRegressionTests
 {
     private static IReadOnlyList<BorderEffect>[,] EmptyBorders()
@@ -34,7 +27,6 @@ public class ReservedStrongboxRegressionTests
         {
             RareMonstersDrop = true,
             SaveStarfish = 0,
-            // Keep other holds off so this case is only about strongbox reservation.
             SaveKishara = 0,
             SaveNoEquipment = 0,
             SaveFractured = 0,
@@ -47,10 +39,6 @@ public class ReservedStrongboxRegressionTests
             SaveUniqueAmulet1 = 0,
         };
 
-    /// <summary>
-    /// Classic floor-of-9 trap: 6 fillers + 6 reserved value1=5 boxes (12 total).
-    /// Without force-save, only 3 boxes could be held (12→9) and 3 would leak to the solver.
-    /// </summary>
     [Fact]
     public void Floor_of_nine_must_not_leak_reserved_value1_5_strongboxes_into_working_pool()
     {
@@ -74,15 +62,9 @@ public class ReservedStrongboxRegressionTests
         Assert.DoesNotContain(placement.Locks, l => reservedBoxIds.Contains(l.PieceId));
     }
 
-    /// <summary>
-    /// Full solve path: reserved box piece ids must never appear on any solution grid cell
-    /// when no Divine orb is present (nothing is allowed to spend the reservation).
-    /// </summary>
     [Fact]
     public void Solver_must_never_place_reserved_strongboxes_without_divine_opt_in()
     {
-        // Page-2 style inventory: exactly 9 placeable fillers + 6 reserved value1=5 boxes.
-        // Fillers alone can fill the board; boxes must not be used as cheap extras.
         var pieces = new List<MapPiece>();
         for (var i = 0; i < 9; i++)
             pieces.Add(Piece(i, $"Filler{i}"));
@@ -130,14 +112,9 @@ public class ReservedStrongboxRegressionTests
         }
     }
 
-    /// <summary>
-    /// When fillers alone cannot fill the board, still refuse to burn reserved boxes.
-    /// Better: no solution (or solutions without boxes) than silently spending holds.
-    /// </summary>
     [Fact]
     public void Short_fillers_still_refuse_to_spend_reserved_strongboxes_as_filler()
     {
-        // Only 6 fillers — not enough for a 3x3. Six reserved boxes would "help" if leaked.
         var pieces = new List<MapPiece>();
         for (var i = 0; i < 6; i++)
             pieces.Add(Piece(i, $"Filler{i}"));

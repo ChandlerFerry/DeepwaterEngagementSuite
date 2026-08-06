@@ -43,14 +43,11 @@ public sealed class RareMonstersDropLockStrategy : IVoyageStrategy
 
         ctx.AddSaved(SaveCountKeys.Pelagic, savedPelagic);
 
-        // Hold top strongbox charts before any non-Divine placement. Only Divine may spend
-        // these reservations (allowReserved). Annul/Ancient/solver never touch them.
         ctx.ReserveUnused(
             ChartPredicates.IsStrongboxCountChart,
             ChartPredicates.BoxValue1Score,
             maxReserve: ChartIds.MaxSavedBoxes);
 
-        // Divine is explicitly allowed to consume reserved strongboxes (incl. value1=5).
         var divinePools = new[]
         {
             new SupportPool(ChartPredicates.IsStrongboxCountChart, ChartPredicates.BoxValue1Score),
@@ -58,7 +55,6 @@ public sealed class RareMonstersDropLockStrategy : IVoyageStrategy
             new SupportPool(ChartPredicates.IsOrbRareComboChart, ChartPredicates.OrbRareComboScore),
         };
 
-        // Annul/Ancient never burn reserved boxes — starfish / rare combo only.
         var nonDivinePools = new[]
         {
             new SupportPool(ChartPredicates.IsStarfishChart, ChartPredicates.StarfishScore),
@@ -171,8 +167,6 @@ public sealed class RareMonstersDropSaveStrategy : IVoyageStrategy
         if (!RareMonstersDropLockStrategy.ShouldRun(ctx))
             return;
 
-        // Force holds out of the solver pool. Floor-of-9 must not reintroduce reserved boxes
-        // when only a short inventory page is loaded.
         var savedBoxes = ctx.RemoveUnused(
             ChartPredicates.IsStrongboxCountChart,
             ChartPredicates.BoxValue1Score,

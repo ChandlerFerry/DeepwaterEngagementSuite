@@ -322,7 +322,6 @@ public class VoyagePlacementRulesApplyTests
         {
             Piece(0, ChartIds.PelagicRoomName),
         };
-        // Ranks 1–6 strongboxes (value1 19..14) are reserved; Annul must not burn them.
         for (var i = 1; i <= 9; i++)
             pieces.Add(Piece(i, $"Box{i}", Strongbox(2, 20 - i)));
         for (var i = 10; i <= 12; i++)
@@ -357,7 +356,6 @@ public class VoyagePlacementRulesApplyTests
             pieces.Add(Piece(i, $"Filler{i}"));
 
         var borders = EmptyBorders();
-        // Corner divine: 2 free neighbors for supports after pelagic takes the orb cell.
         borders[0, 0] = [new BorderEffect(ChartIds.RareDivine, ModifierTag.All, 1, false, false)];
 
         var result = VoyagePlacementRules.Apply(pieces, borders, VoyageStrategyOptions.AllEnabled);
@@ -367,7 +365,6 @@ public class VoyagePlacementRulesApplyTests
             .ToList();
         Assert.NotEmpty(divineSupports);
         Assert.All(divineSupports, l => Assert.InRange(l.PieceId, 1, 6));
-        // Unused reserved boxes remain held out of the working pool.
         Assert.True(result.SavedStrongboxCount + divineSupports.Count <= 6);
         Assert.Equal(6 - divineSupports.Count, result.SavedStrongboxCount);
     }

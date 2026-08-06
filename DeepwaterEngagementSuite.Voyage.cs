@@ -517,11 +517,10 @@ public partial class DeepwaterEngagementSuite
                     continue;
 
                 var matchingSetting = FindBorderSetting(borderMod.Id, borderMod.DisplayText);
-                var text = matchingSetting?.Abbreviation.Value is { Length: > 0 } abbv
-                    ? abbv
-                    : borderMod.Id.StartsWith("DeepwaterBorder", StringComparison.Ordinal)
-                        ? borderMod.Id["DeepwaterBorder".Length..]
-                        : borderMod.Label;
+                var text = FormatBorderOverlayLabel(
+                    borderMod,
+                    matchingSetting,
+                    preferUiDisplayText: Settings.VoyageSettings.ShowAllBorderModifiers);
                 var color = ChartPredicates.BorderIdOrDisplayMatches(
                         borderMod.Id, ChartIds.RareDivine, ChartIds.RareDivineDisplayHint)
                     ? Color.HotPink
@@ -677,6 +676,39 @@ public partial class DeepwaterEngagementSuite
         rawNames.Count >= 12 &&
         rawNames.Count(n => !string.IsNullOrWhiteSpace(n)) >= 1;
 
+    private static bool IsUiBorderSource(BorderModRef border) =>
+        border?.Source != null &&
+        border.Source.StartsWith("UI", StringComparison.OrdinalIgnoreCase);
+
+    
+    private static string FormatBorderOverlayLabel(
+        BorderModRef border,
+        VoyageBorderModifier matchingSetting,
+        bool preferUiDisplayText = false)
+    {
+        string text;
+        if (preferUiDisplayText &&
+            IsUiBorderSource(border) &&
+            !string.IsNullOrWhiteSpace(border.DisplayText))
+        {
+            text = border.DisplayText;
+        }
+        else if (matchingSetting?.Abbreviation.Value is { Length: > 0 } abbv)
+            text = abbv;
+        else if (!string.IsNullOrEmpty(border.Id) &&
+                 border.Id.StartsWith("DeepwaterBorder", StringComparison.Ordinal))
+            text = border.Id["DeepwaterBorder".Length..];
+        else if (!string.IsNullOrWhiteSpace(border.DisplayText))
+            text = border.DisplayText;
+        else
+            text = border.Label;
+
+        if (IsUiBorderSource(border))
+            text = $"T!{text}!!";
+
+        return text;
+    }
+
     
     private string ResolveBorderId(string rawName, string displayText)
     {
@@ -688,27 +720,9 @@ public partial class DeepwaterEngagementSuite
         if (string.IsNullOrWhiteSpace(text))
             return rawName ?? "";
 
-        if (ChartPredicates.IsInfiniteLanternsBorder(text))
-            return ChartIds.InfiniteLanterns;
-        if (ChartPredicates.BorderIdOrDisplayMatches(text, ChartIds.NotConsume2, ChartIds.NotConsumeDisplayHint) &&
-            text.Contains('2'))
-            return ChartIds.NotConsume2;
-        if (ChartPredicates.BorderIdOrDisplayMatches(text, ChartIds.NotConsume1, ChartIds.NotConsumeDisplayHint))
-            return ChartIds.NotConsume1;
-        if (ChartPredicates.BorderIdOrDisplayMatches(text, ChartIds.RareDivine, ChartIds.RareDivineDisplayHint) &&
-            text.Contains("Divine", StringComparison.OrdinalIgnoreCase))
-            return ChartIds.RareDivine;
-        if (ChartPredicates.BorderIdOrDisplayMatches(text, ChartIds.RareAnnul, ChartIds.RareAnnulDisplayHint))
-            return ChartIds.RareAnnul;
-        if (ChartPredicates.BorderIdOrDisplayMatches(text, ChartIds.RareAncient, ChartIds.RareAncientDisplayHint) &&
-            text.Contains("Ancient", StringComparison.OrdinalIgnoreCase))
-            return ChartIds.RareAncient;
-        if (ChartPredicates.IsTreasureAnchorsBorder(text))
-        {
-            if (text.Contains('2') || text.Contains("II", StringComparison.OrdinalIgnoreCase))
-                return ChartIds.TreasureAnchors2;
-            return ChartIds.TreasureAnchors1;
-        }
+        var fromMap = BorderDisplayMap.TryResolveId(text);
+        if (!string.IsNullOrEmpty(fromMap))
+            return fromMap;
 
         var setting = FindBorderSetting(text, text);
         if (setting != null && !string.IsNullOrWhiteSpace(setting.Id.Value))

@@ -580,6 +580,10 @@ public class VoyageSettings
         "locks and saves, and the current solution) to ConfigDirectory/voyage-dumps.")]
     public HotkeyNodeV2 DumpVoyageStateHotkey { get; set; } = new HotkeyNodeV2(Keys.None);
 
+    [Menu("Show All Border Modifiers",
+        "Draw every border mod on voyage tiles (not only strategy/combo borders). " +
+        "Uses Data.BorderMods when available; falls back to UI text at VoyageWindow 3->10->i->1. " +
+        "Text-sourced labels are marked T!…!!.")]
     public ToggleNode ShowAllBorderModifiers { get; set; } = new ToggleNode(false);
     public ToggleNode ShowAllChartModifiers { get; set; } = new ToggleNode(false);
     public ToggleNode ShowChartInventoryInformation { get; set; } = new ToggleNode(false);

@@ -38,7 +38,6 @@ public class DeepwaterEngagementSuiteSettings : ISettings
     public const MapIconsIndex DefaultAllflameEmbersChestIcon = MapIconsIndex.SanctumGoldConvert;
     public const MapIconsIndex DefaultCursedDucatDropIcon = MapIconsIndex.RewardPerandus;
     public const MapIconsIndex DefaultIzaroObjectIcon = MapIconsIndex.RewardLabyrinth;
-    // White loot-filter bases recolor cleanly; colored map icons (e.g. UltimatumAltar) only multiply.
     public const MapIconsIndex DefaultAltarIcon = MapIconsIndex.LootFilterLargeWhiteHexagon;
     public const MapIconsIndex DefaultAltarCrabIcon = DefaultAltarIcon;
     public const MapIconsIndex DefaultAltarOctopusIcon = DefaultAltarIcon;
@@ -61,17 +60,27 @@ public class DeepwaterEngagementSuiteSettings : ISettings
 
     public ToggleNode Enable { get; set; } = new ToggleNode(false);
 
-    [Menu("Icon Settings")]
+    [Menu("Icons")]
     public IconSettings IconSettings { get; set; } = new IconSettings();
 
-    [Menu("Loot Window Settings")]
+    [Menu("Loot Window")]
     public LootWindowSettings LootWindowSettings { get; set; } = new LootWindowSettings();
 
-    public CurrencyReminderSettings CurrencyReminderSettings { get; set; } = new CurrencyReminderSettings();
-    public BubbleSettings BubbleSettings { get; set; } = new BubbleSettings();
+    [Menu("Trails")]
     public TrailSettings TrailSettings { get; set; } = new TrailSettings();
 
-    // Legacy path from when this lived in its own submenu. Migrated in OnDeserialized.
+    [Menu("Bubbles")]
+    public BubbleSettings BubbleSettings { get; set; } = new BubbleSettings();
+
+    [Menu("Bubble Planner")]
+    public PlannerSettings PlannerSettings { get; set; } = new PlannerSettings();
+
+    [Menu("Currency Reminder")]
+    public CurrencyReminderSettings CurrencyReminderSettings { get; set; } = new CurrencyReminderSettings();
+
+    [Menu("Voyage")]
+    public VoyageSettings VoyageSettings { get; set; } = new VoyageSettings();
+
     [IgnoreMenu]
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
     public SleepingEntitySettings SleepingEntitySettings
@@ -92,10 +101,6 @@ public class DeepwaterEngagementSuiteSettings : ISettings
         IconSettings ??= new IconSettings();
         IconSettings.ParseSleepingEntities.Value = true;
     }
-
-    [Menu("Bubble planner settings")]
-    public PlannerSettings PlannerSettings { get; set; } = new PlannerSettings();
-    public VoyageSettings VoyageSettings { get; set; } = new VoyageSettings();
 
     public static MapIconsIndex GetDefaultIcon(IconPickerIndex index) => index switch
     {
@@ -158,7 +163,6 @@ public class DeepwaterEngagementSuiteSettings : ISettings
         IconPickerIndex.DeadMansSulphurSmall => 0.5f,
         _ => 1f,
     };
-
 }
 
 [Submenu(CollapsedByDefault = true)]
@@ -173,116 +177,153 @@ public class IconSettings
 {
     public Dictionary<IconPickerIndex, IconDisplaySettings> IconMapping = new();
 
+    [Menu("General", 100, CollapsedByDefault = true)]
+    [JsonIgnore]
+    public EmptyNode GeneralHeader { get; set; }
+
     [Menu("Parse sleeping entities",
-        "Include entities outside the network bubble. Also enable Core → Debug → CollectSleepingEntities.")]
+        "Include entities outside the network bubble. Also enable Core → Debug → CollectSleepingEntities.",
+        0, 100)]
     public ToggleNode ParseSleepingEntities { get; set; } = new ToggleNode(false);
 
     [JsonIgnore]
+    [Menu(null, 0, 100)]
     public CustomNode CoreSettingWarning { get; set; } = new CustomNode();
 
+    [Menu("World icon size", 0, 100)]
     public RangeNode<int> WorldIconSize { get; set; } = new RangeNode<int>(50, 25, 200);
+
+    [Menu("Map icon size", 0, 100)]
     public RangeNode<int> MapIconSize { get; set; } = new RangeNode<int>(30, 15, 200);
 
-    [Menu("Show Bottled Item icons")]
+    [Menu("Treasure", 110, CollapsedByDefault = true)]
+    [JsonIgnore]
+    public EmptyNode TreasureHeader { get; set; }
+
+    [Menu("Bottled Item", 0, 110)]
     public ToggleNode ShowBottledItemIcons { get; set; } = new ToggleNode(true);
 
     [ConditionalDisplay(nameof(ShowBottledItemIcons))]
-    [Menu("Sound alert for Message in a Bottle", "Play once when first seen in the zone.")]
+    [Menu("Sound alert: Message in a Bottle", "Play once when first seen in the zone.", 0, 110)]
     public ToggleNode SoundAlertBottledItem { get; set; } = new ToggleNode(false);
 
-    [Menu("Show Gold Treasure icons")]
+    [Menu("Gold Treasure", 0, 110)]
     public ToggleNode ShowGoldTreasureIcons { get; set; } = new ToggleNode(true);
 
-    [Menu("Show Clam Treasure icons")]
+    [Menu("Clam Treasure", 0, 110)]
     public ToggleNode ShowClamTreasureIcons { get; set; } = new ToggleNode(true);
 
-    [Menu("Show Currency chest icons")]
+    [Menu("Currency chest", 0, 110)]
     public ToggleNode ShowCurrencyChestIcons { get; set; } = new ToggleNode(true);
 
-    [Menu("Show Opulent Currency icons")]
+    [Menu("Opulent Currency", 0, 110)]
     public ToggleNode ShowOpulentCurrencyIcons { get; set; } = new ToggleNode(true);
 
     [ConditionalDisplay(nameof(ShowOpulentCurrencyIcons))]
-    [Menu("Sound alert for Opulent chests", "Play once when first seen in the zone.")]
+    [Menu("Sound alert: Opulent chests", "Play once when first seen in the zone.", 0, 110)]
     public ToggleNode SoundAlertOpulentCurrency { get; set; } = new ToggleNode(false);
 
-    [Menu("Show Gemcutter chest icons")]
+    [Menu("Gemcutter chest", 0, 110)]
     public ToggleNode ShowGemcutterChestIcons { get; set; } = new ToggleNode(true);
 
-    [Menu("Show Unique Weapon icons")]
-    public ToggleNode ShowUniqueWeaponIcons { get; set; } = new ToggleNode(true);
-
-    [Menu("Show Unique Armour icons")]
-    public ToggleNode ShowUniqueArmourIcons { get; set; } = new ToggleNode(true);
-
-    [Menu("Show Unique Jewellery icons")]
-    public ToggleNode ShowUniqueJewelleryIcons { get; set; } = new ToggleNode(true);
-
-    [Menu("Show Scarab chest icons")]
+    [Menu("Scarab chest", 0, 110)]
     public ToggleNode ShowScarabChestIcons { get; set; } = new ToggleNode(true);
 
-    [Menu("Show Stacked Deck icons")]
+    [Menu("Stacked Decks", 0, 110)]
     public ToggleNode ShowStackedDeckIcons { get; set; } = new ToggleNode(true);
 
-    [Menu("Show Maps chest icons", "Off by default.")]
+    [Menu("Maps chest", "Off by default.", 0, 110)]
     public ToggleNode ShowMapsChestIcons { get; set; } = new ToggleNode(false);
 
-    [Menu("Show Allflame Embers icons")]
+    [Menu("Allflame Embers", 0, 110)]
     public ToggleNode ShowAllflameEmbersIcons { get; set; } = new ToggleNode(true);
 
-    [Menu("Show Izaro icons")]
+    [Menu("Izaro", 0, 110)]
     public ToggleNode ShowIzaroIcons { get; set; } = new ToggleNode(true);
 
-    [Menu("Show Altar (Crab) icons")]
+    [Menu("Uniques", 120, CollapsedByDefault = true)]
+    [JsonIgnore]
+    public EmptyNode UniquesHeader { get; set; }
+
+    [Menu("Unique Weapon", 0, 120)]
+    public ToggleNode ShowUniqueWeaponIcons { get; set; } = new ToggleNode(true);
+
+    [Menu("Unique Armour", 0, 120)]
+    public ToggleNode ShowUniqueArmourIcons { get; set; } = new ToggleNode(true);
+
+    [Menu("Unique Jewellery", 0, 120)]
+    public ToggleNode ShowUniqueJewelleryIcons { get; set; } = new ToggleNode(true);
+
+    [Menu("Altars", 130, CollapsedByDefault = true)]
+    [JsonIgnore]
+    public EmptyNode AltarsHeader { get; set; }
+
+    [Menu("Crab", 0, 130)]
     public ToggleNode ShowAltarCrabIcons { get; set; } = new ToggleNode(true);
 
-    [Menu("Show Altar (Octopus) icons")]
+    [Menu("Octopus", 0, 130)]
     public ToggleNode ShowAltarOctopusIcons { get; set; } = new ToggleNode(true);
 
-    [Menu("Show Altar (Puffer Fish) icons")]
+    [Menu("Puffer Fish", 0, 130)]
     public ToggleNode ShowAltarPufferFishIcons { get; set; } = new ToggleNode(true);
 
-    [Menu("Show Altar (Coral) icons")]
+    [Menu("Coral", 0, 130)]
     public ToggleNode ShowAltarCoralIcons { get; set; } = new ToggleNode(true);
 
-    [Menu("Show Altar (Fish) icons")]
+    [Menu("Fish", 0, 130)]
     public ToggleNode ShowAltarFishIcons { get; set; } = new ToggleNode(true);
 
-    [Menu("Show unknown Altar icons", "Any DeepwaterAltar* / DeepwaterSacrificeAltarUpgrade path not listed by name above.")]
+    [Menu("Unknown altars", "Any DeepwaterAltar* / DeepwaterSacrificeAltarUpgrade path not listed above.", 0, 130)]
     public ToggleNode ShowAltarUnknownIcons { get; set; } = new ToggleNode(true);
 
-    [Menu("Show Lantern Replenish icons")]
+    [Menu("Encounters", 140, CollapsedByDefault = true)]
+    [JsonIgnore]
+    public EmptyNode EncountersHeader { get; set; }
+
+    [Menu("Lantern Replenish", 0, 140)]
     public ToggleNode ShowLanternReplenishIcons { get; set; } = new ToggleNode(true);
 
-    [Menu("Show Infused Coral icons")]
+    [Menu("Infused Coral", 0, 140)]
     public ToggleNode ShowInfusedCoralIcons { get; set; } = new ToggleNode(true);
 
-    [Menu("Show other chest icons")]
-    public ToggleNode ShowOtherChestIcons { get; set; } = new ToggleNode(true);
-
-    [Menu("Show Ducat icons", "Ducat drops/chests/hazard boats. Off by default.")]
-    public ToggleNode ShowDucatIcons { get; set; } = new ToggleNode(false);
-
-    [Menu("Show Golden Lantern icons", "Off by default.")]
+    [Menu("Golden Lantern", "Off by default.", 0, 140)]
     public ToggleNode ShowGoldenLanternIcons { get; set; } = new ToggleNode(false);
 
-    [Menu("Show Tormented Spirit icons", "Off by default.")]
+    [Menu("Tormented Spirit", "Off by default.", 0, 140)]
     public ToggleNode ShowTormentedSpiritIcons { get; set; } = new ToggleNode(false);
 
-    [Menu("Show Arcanist strongbox icons", "Off by default.")]
+    [Menu("Strongboxes", 150, CollapsedByDefault = true)]
+    [JsonIgnore]
+    public EmptyNode StrongboxesHeader { get; set; }
+
+    [Menu("Arcanist", "Off by default.", 0, 150)]
     public ToggleNode ShowArcanistStrongboxIcons { get; set; } = new ToggleNode(false);
 
-    [Menu("Show Diviner strongbox icons", "Off by default.")]
+    [Menu("Diviner", "Off by default.", 0, 150)]
     public ToggleNode ShowDivinerStrongboxIcons { get; set; } = new ToggleNode(false);
 
-    [Menu("Show Scarab strongbox icons", "Off by default.")]
+    [Menu("Scarab", "Off by default.", 0, 150)]
     public ToggleNode ShowScarabStrongboxIcons { get; set; } = new ToggleNode(false);
 
-    [Menu("Show Sulphur icons", "Base/large/huge Dead Man's Sulphur chests.")]
+    [Menu("Sulphur", 160, CollapsedByDefault = true)]
+    [JsonIgnore]
+    public EmptyNode SulphurHeader { get; set; }
+
+    [Menu("Base / Large / Huge", "Dead Man's Sulphur chests.", 0, 160)]
     public ToggleNode ShowDeadmansSulphurIcons { get; set; } = new ToggleNode(true);
 
-    [Menu("Show small Sulphur icons", "Off by default.")]
+    [Menu("Small", "Off by default.", 0, 160)]
     public ToggleNode ShowDeadmansSulphurSmallIcons { get; set; } = new ToggleNode(false);
+
+    [Menu("Other", 170, CollapsedByDefault = true)]
+    [JsonIgnore]
+    public EmptyNode OtherIconsHeader { get; set; }
+
+    [Menu("Other chests", 0, 170)]
+    public ToggleNode ShowOtherChestIcons { get; set; } = new ToggleNode(true);
+
+    [Menu("Ducats", "Ducat drops/chests/hazard boats. Off by default.", 0, 170)]
+    public ToggleNode ShowDucatIcons { get; set; } = new ToggleNode(false);
 
     public bool IsIconEnabled(IconPickerIndex index) => index switch
     {
@@ -316,7 +357,6 @@ public class IconSettings
         IconPickerIndex.StrongboxDivination => ShowDivinerStrongboxIcons.Value,
         IconPickerIndex.StrongboxScarab => ShowScarabStrongboxIcons.Value,
         IconPickerIndex.StrongboxArcanist => ShowArcanistStrongboxIcons.Value,
-        // Pointers stand in for undiscovered far targets; hide them when sleeping entities are parsed.
         IconPickerIndex.PointerTarget => !ParseSleepingEntities.Value,
         IconPickerIndex.DeadMansSulphurSmall => ShowDeadmansSulphurSmallIcons.Value,
         IconPickerIndex.DeadMansSulphurBase => ShowDeadmansSulphurIcons.Value,
@@ -330,22 +370,54 @@ public class IconSettings
 [Submenu(CollapsedByDefault = true)]
 public class TrailSettings
 {
+    [Menu("Enable trails")]
     public ToggleNode Enabled { get; set; } = new ToggleNode(false);
+
+    [Menu("Display", 200, CollapsedByDefault = true)]
+    [JsonIgnore]
+    public EmptyNode DisplayHeader { get; set; }
+
+    [Menu("Draw on large map", 0, 200)]
     public ToggleNode DrawOnLargeMap { get; set; } = new ToggleNode(true);
+
+    [Menu("Draw in world", 0, 200)]
     public ToggleNode DrawInWorld { get; set; } = new ToggleNode(false);
+
+    [Menu("Only unreachable targets", 0, 200)]
     public ToggleNode OnlyUnreachable { get; set; } = new ToggleNode(false);
+
+    [Menu("Show labels", 0, 200)]
     public ToggleNode ShowLabels { get; set; } = new ToggleNode(true);
-    public RangeNode<int> MaxDistance { get; set; } = new RangeNode<int>(500, 10, 1000);
-    public RangeNode<int> MapLineWidth { get; set; } = new RangeNode<int>(3, 1, 20);
-    public RangeNode<int> WorldLineWidth { get; set; } = new RangeNode<int>(5, 1, 20);
-    public ColorNode DefaultMapColor { get; set; } = new Color(255, 140, 0, 200);
-    public ColorNode DefaultWorldColor { get; set; } = new Color(255, 140, 0, 200);
+
+    [Menu("Show undiscovered targets", 0, 200)]
     public ToggleNode ShowUndiscoveredTargets { get; set; } = new ToggleNode(true);
+
+    [Menu("Style", 210, CollapsedByDefault = true)]
+    [JsonIgnore]
+    public EmptyNode StyleHeader { get; set; }
+
+    [Menu("Max distance", 0, 210)]
+    public RangeNode<int> MaxDistance { get; set; } = new RangeNode<int>(500, 10, 1000);
+
+    [Menu("Map line width", 0, 210)]
+    public RangeNode<int> MapLineWidth { get; set; } = new RangeNode<int>(3, 1, 20);
+
+    [Menu("World line width", 0, 210)]
+    public RangeNode<int> WorldLineWidth { get; set; } = new RangeNode<int>(5, 1, 20);
+
+    [Menu("Default map color", 0, 210)]
+    public ColorNode DefaultMapColor { get; set; } = new Color(255, 140, 0, 200);
+
+    [Menu("Default world color", 0, 210)]
+    public ColorNode DefaultWorldColor { get; set; } = new Color(255, 140, 0, 200);
+
+    [Menu("Undiscovered color", 0, 210)]
     public ColorNode UndiscoveredColor { get; set; } = new Color(255, 255, 255, 220);
+
+    [Menu("Per-target colors")]
     public TrailColorSettings Colors { get; set; } = new TrailColorSettings();
 }
 
-// Deserialization-only shell for migrating the old top-level Sleeping Entity Settings toggle.
 public class SleepingEntitySettings
 {
     public ToggleNode Enabled { get; set; } = new ToggleNode(false);
@@ -477,11 +549,22 @@ public class TrailColorSettings
 [Submenu(CollapsedByDefault = true)]
 public class CurrencyReminderSettings
 {
+    [Menu("Enable")]
     public ToggleNode Enabled { get; set; } = new ToggleNode(false);
+
+    [Menu("Required Exalted Orbs")]
     public RangeNode<int> RequiredExaltedOrbs { get; set; } = new RangeNode<int>(20, 0, 20);
+
+    [Menu("Required Alchemy Orbs")]
     public RangeNode<int> RequiredAlchemyOrbs { get; set; } = new RangeNode<int>(20, 0, 20);
+
+    [Menu("Required Chaos Orbs")]
     public RangeNode<int> RequiredChaosOrbs { get; set; } = new RangeNode<int>(20, 0, 20);
+
+    [Menu("Required Scouring Orbs")]
     public RangeNode<int> RequiredScouringOrbs { get; set; } = new RangeNode<int>(20, 0, 20);
+
+    [Menu("Max inventory items")]
     public RangeNode<int> MaxInventoryItems { get; set; } = new RangeNode<int>(30, 0, 60);
 }
 
@@ -496,52 +579,105 @@ public class PlannerSettings
         [IconPickerIndex.CurrencyTreasureChestOpulent] = new ChestSettings { Weight = 50 },
     };
 
+    [Menu("Controls", 300, CollapsedByDefault = true)]
+    [JsonIgnore]
+    public EmptyNode ControlsHeader { get; set; }
+
+    [Menu("Start search hotkey", 0, 300)]
     public HotkeyNodeV2 StartSearchHotkey { get; set; } = new HotkeyNodeV2(Keys.None);
+
+    [Menu("Stop search hotkey", 0, 300)]
     public HotkeyNodeV2 StopSearchHotkey { get; set; } = new HotkeyNodeV2(Keys.None);
+
+    [Menu("Clear search hotkey", 0, 300)]
     public HotkeyNodeV2 ClearSearchHotkey { get; set; } = new HotkeyNodeV2(Keys.None);
+
+    [Menu("Confirm editor placement hotkey", 0, 300)]
     public HotkeyNodeV2 ConfirmEditorPlacementHotkey { get; set; } = new HotkeyNodeV2(Keys.None);
 
     [JsonIgnore]
     [ConditionalDisplay(nameof(IsSearchRunning), false)]
+    [Menu(null, 0, 300)]
     public ButtonNode StartSearch { get; set; } = new ButtonNode();
 
     [JsonIgnore]
     [ConditionalDisplay(nameof(IsSearchRunning))]
+    [Menu(null, 0, 300)]
     public ButtonNode StopSearch { get; set; } = new ButtonNode();
 
     [JsonIgnore]
     [ConditionalDisplay(nameof(HasSearchResult))]
+    [Menu(null, 0, 300)]
     public ButtonNode ClearSearch { get; set; } = new ButtonNode();
+
+    [Menu("Play sound on finish", 0, 300)]
     public ToggleNode PlaySoundOnFinish { get; set; } = new ToggleNode(false);
+
+    [Menu("Display", 310, CollapsedByDefault = true)]
+    [JsonIgnore]
+    public EmptyNode DisplayHeader { get; set; }
+
+    [Menu("Draw planned bubbles on map", 0, 310)]
     public ToggleNode DrawPlannedBubblesOnMap { get; set; } = new ToggleNode(true);
+
+    [Menu("Draw lines to lanterns in world", 0, 310)]
     public ToggleNode DrawLinesToLanternsInWorld { get; set; } = new ToggleNode(true);
+
+    [Menu("Closest N lanterns", 0, 310)]
     public RangeNode<int> ClosestNLanterns { get; set; } = new RangeNode<int>(2, 0, 10);
+
+    [Menu("Merge planned bubbles", 0, 310)]
     public ToggleNode MergePlannedBubbles { get; set; } = new ToggleNode(true);
 
-    [Menu("Color for suggested bubble radius")]
-    public ColorNode BubbleColor { get; set; } = new ColorNode(Color.Purple);
-
-    public ColorNode MapLineColor { get; set; } = new ColorNode(Color.Red);
-    public ColorNode WorldLineColor { get; set; } = new ColorNode(Color.Orange);
-
-    [Menu("Color for captured entities in world")]
-    public ColorNode CapturedEntityWorldFrameColor { get; set; } = new ColorNode(Color.Purple);
-
-    [Menu("Color for captured entities on map")]
-    public ColorNode CapturedEntityMapFrameColor { get; set; } = new ColorNode(Color.Purple);
-
-    [Menu(null, "Hide plan graphics once a real bubble is placed on that segment.")]
+    [Menu("Hide plan graphics for placed bubbles",
+        "Hide plan graphics once a real bubble is placed on that segment.", 0, 310)]
     public ToggleNode RemoveGraphicsForPlacedBubbles { get; set; } = new ToggleNode(false);
 
+    [Menu("Suggested bubble color", 0, 310)]
+    public ColorNode BubbleColor { get; set; } = new ColorNode(Color.Purple);
+
+    [Menu("Map line color", 0, 310)]
+    public ColorNode MapLineColor { get; set; } = new ColorNode(Color.Red);
+
+    [Menu("World line color", 0, 310)]
+    public ColorNode WorldLineColor { get; set; } = new ColorNode(Color.Orange);
+
+    [Menu("Captured entity color (world)", 0, 310)]
+    public ColorNode CapturedEntityWorldFrameColor { get; set; } = new ColorNode(Color.Purple);
+
+    [Menu("Captured entity color (map)", 0, 310)]
+    public ColorNode CapturedEntityMapFrameColor { get; set; } = new ColorNode(Color.Purple);
+
+    [Menu("Text marker scale", 0, 310)]
     public RangeNode<float> TextMarkerScale { get; set; } = new RangeNode<float>(2, 0, 5);
 
+    [Menu("Search", 320, CollapsedByDefault = true)]
+    [JsonIgnore]
+    public EmptyNode SearchHeader { get; set; }
+
+    [Menu("Max generation time (seconds)", 0, 320)]
     public RangeNode<float> MaximumGenerationTimeSeconds { get; set; } = new RangeNode<float>(5, 0, 60);
+
+    [Menu("Search threads", 0, 320)]
     public RangeNode<int> SearchThreads { get; set; } = new RangeNode<int>(5, 1, 10);
+
+    [Menu("Random path injection rate", 0, 320)]
     public RangeNode<float> NewRandomPathInjectionRate { get; set; } = new RangeNode<float>(1f, 0, 2);
+
+    [Menu("Path generation size", 0, 320)]
     public RangeNode<int> PathGenerationSize { get; set; } = new RangeNode<int>(100, 1, 1000);
+
+    [Menu("Validated intermediate points", 0, 320)]
     public RangeNode<int> ValidatedIntermediatePoints { get; set; } = new RangeNode<int>(1, 0, 5);
 
+    [Menu("Debug", 330, CollapsedByDefault = true)]
+    [JsonIgnore]
+    public EmptyNode DebugHeader { get; set; }
+
+    [Menu("Show score history", 0, 330)]
     public ToggleNode ShowScoreHistory { get; set; } = new ToggleNode(false);
+
+    [Menu("Keep score history after search ends", 0, 330)]
     public ToggleNode ShowScoreHistoryAfterSearchEnds { get; set; } = new ToggleNode(false);
 
     internal bool HasSearchResult => SearchState != SearchState.Empty;
@@ -553,30 +689,43 @@ public class PlannerSettings
 [Submenu(CollapsedByDefault = true)]
 public class BubbleSettings
 {
+    [Menu("Display", 400, CollapsedByDefault = true)]
+    [JsonIgnore]
+    public EmptyNode DisplayHeader { get; set; }
+
+    [Menu("Show bubbles on map", 0, 400)]
     public ToggleNode ShowBubblesOnMap { get; set; } = new ToggleNode(true);
+
+    [Menu("Show bubbles in world", 0, 400)]
     public ToggleNode ShowBubblesInWorld { get; set; } = new ToggleNode(false);
 
-    [Menu("Color for bubble radius")]
+    [Menu("Mark starting bubble", 0, 400)]
+    public ToggleNode MarkStartingBubble { get; set; } = new ToggleNode(true);
+
+    [Menu("Bubble color", 0, 400)]
     public ColorNode BubbleColor { get; set; } = new ColorNode(Color.Red);
 
+    [Menu("Bubble radius override", "0 = use game radius.", 0, 400)]
     public RangeNode<int> BubbleRadiusOverride { get; set; } = new RangeNode<int>(0, 0, 1000);
 
-    [Menu("Merge bubble circles for planned bubbles")]
+    [Menu("Merge planned bubble circles", 0, 400)]
     public ToggleNode EnableBubbleRadiusMerging { get; set; } = new ToggleNode(true);
 
-    [Menu("Hide icons of entities captured by bubbles in world")]
+    [Menu("Captured entities", 410, CollapsedByDefault = true)]
+    [JsonIgnore]
+    public EmptyNode CapturedHeader { get; set; }
+
+    [Menu("Hide captured icons in world", 0, 410)]
     public ToggleNode HideCapturedEntitiesInWorld { get; set; } = new ToggleNode(false);
 
-    [Menu("Hide icons of entities captured by bubbles on map")]
+    [Menu("Hide captured icons on map", 0, 410)]
     public ToggleNode HideCapturedEntitiesOnMap { get; set; } = new ToggleNode(false);
 
-    [Menu("Rectangle Thickness for captured entities in world")]
+    [Menu("Frame thickness (world)", 0, 410)]
     public RangeNode<int> CapturedEntityWorldFrameThickness { get; set; } = new RangeNode<int>(2, 1, 20);
 
-    [Menu("Rectangle Thickness for captured entities on map")]
+    [Menu("Frame thickness (map)", 0, 410)]
     public RangeNode<int> CapturedEntityMapFrameThickness { get; set; } = new RangeNode<int>(2, 1, 20);
-
-    public ToggleNode MarkStartingBubble { get; set; } = new ToggleNode(true);
 }
 
 [Submenu(CollapsedByDefault = true)]
@@ -590,9 +739,66 @@ public class VoyageSettings
 
     [JsonIgnore] [IgnoreMenu] public List<VoyageProfileEntry> Profiles { get; set; } = new();
 
+    [Menu("Enable voyage handling")]
     public ToggleNode EnableVoyageHandling { get; set; } = new ToggleNode(true);
 
-    [Menu(null, CollapsedByDefault = true)]
+    [Menu("Profiles", 500, CollapsedByDefault = true)]
+    [JsonIgnore]
+    public EmptyNode ProfilesHeader { get; set; }
+
+    [Menu("Active profile", 0, 500)]
+    public ListNode ProfileSelector { get; set; } = new ListNode();
+
+    [JsonIgnore]
+    [Menu(null, 0, 500)]
+    public ButtonNode AddProfile { get; set; } = new ButtonNode();
+
+    [JsonIgnore]
+    [Menu(null, 0, 500)]
+    public ButtonNode ReloadProfiles { get; set; } = new ButtonNode();
+
+    [JsonIgnore]
+    [Menu("Delete current profile (hold shift)", 0, 500)]
+    public ButtonNode DeleteCurrentProfile { get; set; } = new ButtonNode();
+
+    [JsonIgnore]
+    [Menu(null, 0, 500)]
+    public CustomNode ProfileRenameNode { get; set; } = new CustomNode();
+
+    [Menu("Solver & placement", 510, CollapsedByDefault = true)]
+    [JsonIgnore]
+    public EmptyNode SolverHeader { get; set; }
+
+    [Menu("Solver time limit (seconds)", "Stop after this many seconds and keep the best result. 0 = no limit.", 0, 510)]
+    public RangeNode<int> SolverTimeLimitSeconds { get; set; } = new RangeNode<int>(5, 1, 120);
+
+    [Menu("Chart placement delay (ms)",
+        "Extra wait after each placement click (pick, place, rotate, clear). 0 = current speed.", 0, 510)]
+    public RangeNode<int> ChartPlacementDelayMs { get; set; } = new RangeNode<int>(0, 0, 500);
+
+    [Menu("Dump voyage state hotkey", "Write a board JSON snapshot to ConfigDirectory/voyage-dumps.", 0, 510)]
+    public HotkeyNodeV2 DumpVoyageStateHotkey { get; set; } = new HotkeyNodeV2(Keys.None);
+
+    [Menu("Overlay", 520, CollapsedByDefault = true)]
+    [JsonIgnore]
+    public EmptyNode OverlayHeader { get; set; }
+
+    [Menu("Show optimizer window", 0, 520)]
+    public ToggleNode ShowOptimizerWindow { get; set; } = new ToggleNode(true);
+
+    [Menu("Show score debug details", "Per-tile score breakdown and board coordinates. Off by default.", 0, 520)]
+    public ToggleNode ShowScoreDebugDetails { get; set; } = new ToggleNode(false);
+
+    [Menu("Show all border modifiers", "Show every border id on tiles. UI fallback is marked T!…!!.", 0, 520)]
+    public ToggleNode ShowAllBorderModifiers { get; set; } = new ToggleNode(false);
+
+    [Menu("Show all chart modifiers", 0, 520)]
+    public ToggleNode ShowAllChartModifiers { get; set; } = new ToggleNode(false);
+
+    [Menu("Show chart inventory information", 0, 520)]
+    public ToggleNode ShowChartInventoryInformation { get; set; } = new ToggleNode(false);
+
+    [Menu("Ignored charts", "Filter charts out of the voyage inventory.", 530, CollapsedByDefault = true)]
     public ContentNode<VoyageExcludedChartSettings> IgnoredCharts { get; set; } = new ContentNode<VoyageExcludedChartSettings>
     {
         EnableControls = true,
@@ -601,38 +807,15 @@ public class VoyageSettings
         ItemFilter = (o, s) => o.IFL.Value.Contains(s, StringComparison.OrdinalIgnoreCase),
     };
 
-    [Menu("Show optimizer window")]
-    public ToggleNode ShowOptimizerWindow { get; set; } = new ToggleNode(true);
-
-    [Menu("Show score debug details", "Per-tile score breakdown and board coordinates. Off by default.")]
-    public ToggleNode ShowScoreDebugDetails { get; set; } = new ToggleNode(false);
-
-    [Menu("Solver time limit (seconds)", "Stop after this many seconds and keep the best result. 0 = no limit.")]
-    public RangeNode<int> SolverTimeLimitSeconds { get; set; } = new RangeNode<int>(5, 1, 120);
-
-    [Menu("Chart placement delay (ms)",
-        "Extra wait after each placement click (pick, place, rotate, clear). 0 = current speed.")]
-    public RangeNode<int> ChartPlacementDelayMs { get; set; } = new RangeNode<int>(0, 0, 500);
-
-    [Menu("Dump voyage state hotkey", "Write a board JSON snapshot to ConfigDirectory/voyage-dumps.")]
-    public HotkeyNodeV2 DumpVoyageStateHotkey { get; set; } = new HotkeyNodeV2(Keys.None);
-
-    [Menu("Show All Border Modifiers",
-        "Show every border id on tiles. UI fallback is marked T!…!!.")]
-    public ToggleNode ShowAllBorderModifiers { get; set; } = new ToggleNode(false);
-    public ToggleNode ShowAllChartModifiers { get; set; } = new ToggleNode(false);
-    public ToggleNode ShowChartInventoryInformation { get; set; } = new ToggleNode(false);
-
-    public ListNode ProfileSelector { get; set; } = new ListNode();
-    [JsonIgnore] public ButtonNode AddProfile { get; set; } = new ButtonNode();
-    [JsonIgnore] public ButtonNode ReloadProfiles { get; set; } = new ButtonNode();
-    [JsonIgnore][Menu("Delete current profile (hold shift)")] public ButtonNode DeleteCurrentProfile { get; set; } = new ButtonNode();
-    [JsonIgnore] public CustomNode ProfileRenameNode { get; set; } = new CustomNode();
+    [Menu("Scoring", 540, CollapsedByDefault = true)]
+    [JsonIgnore]
+    public EmptyNode ScoringHeader { get; set; }
 
     [JsonIgnore]
+    [Menu("Clear border modifiers", 0, 540)]
     public ButtonNode ClearBorderModifiers { get; set; }
 
-    [Menu(null, CollapsedByDefault = true)]
+    [Menu("Border modifiers", 0, 540)]
     [JsonIgnore]
     public ContentNode<VoyageBorderModifier> BorderModifiers { get; set; } = new ContentNode<VoyageBorderModifier>
     {
@@ -644,9 +827,10 @@ public class VoyageSettings
     };
 
     [JsonIgnore]
+    [Menu("Clear chart modifiers", 0, 540)]
     public ButtonNode ClearChartModifiers { get; set; }
 
-    [Menu(null, CollapsedByDefault = true)]
+    [Menu("Chart modifiers", 0, 540)]
     [JsonIgnore]
     public ContentNode<VoyageChartModifier> ChartModifiers { get; set; } = new ContentNode<VoyageChartModifier>
     {
@@ -663,65 +847,73 @@ public class VoyageSettings
 [Submenu(CollapsedByDefault = true)]
 public class VoyageStrategySettings
 {
+    [Menu("Strategies", 600, CollapsedByDefault = true)]
+    [JsonIgnore]
+    public EmptyNode StrategiesHeader { get; set; }
+
     [Menu("Rare Monsters Drop X",
-        "Pelagic on orb tiles; boxes/starfish/rares nearby. Divine border forces this on.")]
+        "Pelagic on orb tiles; boxes/starfish/rares nearby. Divine border forces this on.", 0, 600)]
     public ToggleNode RareMonstersDrop { get; set; } = new ToggleNode(true);
 
     [Menu("No-consume farm",
-        "Soul Eater → Anchorfield → Clam on strong no-consume tiles. Saves leftover Anchorfield.")]
+        "Soul Eater → Anchorfield → Clam on strong no-consume tiles. Saves leftover Anchorfield.", 0, 600)]
     public ToggleNode NoConsumeAnchorfield { get; set; } = new ToggleNode(true);
 
     [Menu("Center specialty",
-        "Prefer Operative/Lost Message/Amulet1/Belt/Ring on free center. Amulet2/Belt/Ring stay center-only.")]
+        "Prefer Operative/Lost Message/Amulet1/Belt/Ring on free center. Amulet2/Belt/Ring stay center-only.", 0, 600)]
     public ToggleNode CenterSpecialty { get; set; } = new ToggleNode(true);
 
-    [Menu("Treasure Anchors", "Highlight strong Treasure Anchor borders only. Default on.")]
+    [Menu("Treasure Anchors", "Highlight strong Treasure Anchor borders only. Default on.", 0, 600)]
     public ToggleNode TreasureAnchors { get; set; } = new ToggleNode(true);
 
-    [Menu("Infinite Lanterns", "Highlight boards with 2+ Infinite Lantern borders. Default off.")]
+    [Menu("Infinite Lanterns", "Highlight boards with 2+ Infinite Lantern borders. Default off.", 0, 600)]
     public ToggleNode InfiniteLanterns { get; set; } = new ToggleNode(false);
 
-    [Menu("Save Kishara", "Hold count (0 = place at most one).")]
+    [Menu("Save holds", 610, CollapsedByDefault = true)]
+    [JsonIgnore]
+    public EmptyNode SaveHoldsHeader { get; set; }
+
+    [Menu("Save Kishara", "Hold count (0 = place at most one).", 0, 610)]
     public RangeNode<int> SaveKishara { get; set; } =
         new RangeNode<int>(ChartIds.MaxSavedKishara, 0, ChartIds.MaxSaveCap);
 
-    [Menu("Save No Equipment", "Hold count (0 = off).")]
+    [Menu("Save No Equipment", "Hold count (0 = off).", 0, 610)]
     public RangeNode<int> SaveNoEquipment { get; set; } =
         new RangeNode<int>(ChartIds.MaxSavedNoEquipment, 0, ChartIds.MaxSaveCap);
 
-    [Menu("Save Fractured", "Hold count (0 = off).")]
+    [Menu("Save Fractured", "Hold count (0 = off).", 0, 610)]
     public RangeNode<int> SaveFractured { get; set; } =
         new RangeNode<int>(ChartIds.MaxSavedFractured, 0, ChartIds.MaxSaveCap);
 
-    [Menu("Save Golden Lanterns", "Hold count (0 = off). Prefers Tee shapes.")]
+    [Menu("Save Golden Lanterns", "Hold count (0 = off). Prefers Tee shapes.", 0, 610)]
     public RangeNode<int> SaveGoldenLanterns { get; set; } =
         new RangeNode<int>(ChartIds.MaxSavedGoldenLanterns, 0, ChartIds.MaxSaveCap);
 
-    [Menu("Save Pantheon", "Hold count (0 = off).")]
+    [Menu("Save Pantheon", "Hold count (0 = off).", 0, 610)]
     public RangeNode<int> SavePantheon { get; set; } =
         new RangeNode<int>(ChartIds.MaxSavedPantheon, 0, ChartIds.MaxSaveCap);
 
-    [Menu("Save Soul Eater", "Hold count (0 = off).")]
+    [Menu("Save Soul Eater", "Hold count (0 = off).", 0, 610)]
     public RangeNode<int> SaveSoulEater { get; set; } =
         new RangeNode<int>(ChartIds.MaxSavedSoulEater, 0, ChartIds.MaxSaveCap);
 
-    [Menu("Save Rare Fracture", "Hold count (0 = off).")]
+    [Menu("Save Rare Fracture", "Hold count (0 = off).", 0, 610)]
     public RangeNode<int> SaveRareFracture { get; set; } =
         new RangeNode<int>(ChartIds.MaxSavedRareFracture, 0, ChartIds.MaxSaveCap);
 
-    [Menu("Save Rare Possessed", "Hold count (0 = off).")]
+    [Menu("Save Rare Possessed", "Hold count (0 = off).", 0, 610)]
     public RangeNode<int> SaveRarePossessed { get; set; } =
         new RangeNode<int>(ChartIds.MaxSavedRarePossessed, 0, ChartIds.MaxSaveCap);
 
-    [Menu("Save Starfish", "Hold count (0 = off). Lowest priority; default 2.")]
+    [Menu("Save Starfish", "Hold count (0 = off). Lowest priority; default 2.", 0, 610)]
     public RangeNode<int> SaveStarfish { get; set; } =
         new RangeNode<int>(ChartIds.MaxSavedStarfish, 0, ChartIds.MaxSaveCap);
 
-    [Menu("Save Unique Amulet 2", "Hold count (0 = off). Default 0.")]
+    [Menu("Save Unique Amulet 2", "Hold count (0 = off). Default 0.", 0, 610)]
     public RangeNode<int> SaveUniqueAmulet2 { get; set; } =
         new RangeNode<int>(ChartIds.MaxSavedUniqueAmulet2, 0, ChartIds.MaxSaveCap);
 
-    [Menu("Save Unique Amulet 1", "Hold count (0 = off). Default 0.")]
+    [Menu("Save Unique Amulet 1", "Hold count (0 = off). Default 0.", 0, 610)]
     public RangeNode<int> SaveUniqueAmulet1 { get; set; } =
         new RangeNode<int>(ChartIds.MaxSavedUniqueAmulet1, 0, ChartIds.MaxSaveCap);
 
@@ -781,13 +973,13 @@ public class ChartData : ItemData
 {
     public Vector2i Pos { get; }
 
-    public ChartData(Entity queriedItem, GameController gc, Vector2i pos) 
+    public ChartData(Entity queriedItem, GameController gc, Vector2i pos)
         : base(queriedItem, gc)
     {
         Pos = pos;
     }
 
-    public ChartData(Entity queriedItem, Entity groundItem, GameController gameController, Vector2i pos) 
+    public ChartData(Entity queriedItem, Entity groundItem, GameController gameController, Vector2i pos)
         : base(queriedItem, groundItem, gameController)
     {
         Pos = pos;
@@ -803,7 +995,7 @@ public class VoyageProfileEntry
 [Submenu(CollapsedByDefault = true)]
 public class VoyageBorderModifier
 {
-    public TextNode Id { get; set; } = new TextNode("");    
+    public TextNode Id { get; set; } = new TextNode("");
     public TextNode Abbreviation { get; set; } = new TextNode("");
 
     [Menu(null, "Per-connection: effective = 1 + (mult - 1) × connections.")]

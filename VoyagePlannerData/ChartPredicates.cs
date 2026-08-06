@@ -135,46 +135,41 @@ public static class ChartPredicates
                TierFromFamily(rawName, ChartIds.AdjacentIncreasedRarePrefix) >= 2;
     }
 
+    public static bool BorderIdOrDisplayMatches(string name, string rawId, string displayHint = null)
+    {
+        if (string.IsNullOrEmpty(name))
+            return false;
+        if (name.Equals(rawId, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (string.IsNullOrEmpty(displayHint))
+            return false;
+        return name.Contains(displayHint, StringComparison.OrdinalIgnoreCase);
+    }
+
     public static bool HasStrategyOrb(IEnumerable<string> borderNames)
     {
         if (borderNames == null)
             return false;
         foreach (var name in borderNames)
         {
-            if (string.IsNullOrEmpty(name))
-                continue;
-            if (name.Equals(ChartIds.RareDivine, StringComparison.OrdinalIgnoreCase) ||
-                name.Equals(ChartIds.RareAnnul, StringComparison.OrdinalIgnoreCase) ||
-                name.Equals(ChartIds.RareAncient, StringComparison.OrdinalIgnoreCase))
+            if (IsStrategyBorder(name))
                 return true;
         }
 
         return false;
     }
 
-    public static bool IsStrategyBorder(string rawName)
-    {
-        if (string.IsNullOrEmpty(rawName))
-            return false;
-        return rawName.Equals(ChartIds.RareDivine, StringComparison.OrdinalIgnoreCase)
-               || rawName.Equals(ChartIds.RareAnnul, StringComparison.OrdinalIgnoreCase)
-               || rawName.Equals(ChartIds.RareAncient, StringComparison.OrdinalIgnoreCase);
-    }
+    public static bool IsStrategyBorder(string rawName) =>
+        BorderIdOrDisplayMatches(rawName, ChartIds.RareDivine, ChartIds.RareDivineDisplayHint) ||
+        BorderIdOrDisplayMatches(rawName, ChartIds.RareAnnul, ChartIds.RareAnnulDisplayHint) ||
+        BorderIdOrDisplayMatches(rawName, ChartIds.RareAncient, ChartIds.RareAncientDisplayHint);
 
-    public static bool IsTreasureAnchorsBorder(string rawName)
-    {
-        if (string.IsNullOrEmpty(rawName))
-            return false;
-        return rawName.Equals(ChartIds.TreasureAnchors1, StringComparison.OrdinalIgnoreCase)
-               || rawName.Equals(ChartIds.TreasureAnchors2, StringComparison.OrdinalIgnoreCase);
-    }
+    public static bool IsTreasureAnchorsBorder(string rawName) =>
+        BorderIdOrDisplayMatches(rawName, ChartIds.TreasureAnchors1, ChartIds.TreasureAnchorsDisplayHint) ||
+        BorderIdOrDisplayMatches(rawName, ChartIds.TreasureAnchors2, ChartIds.TreasureAnchorsDisplayHint);
 
-    public static bool IsInfiniteLanternsBorder(string rawName)
-    {
-        if (string.IsNullOrEmpty(rawName))
-            return false;
-        return rawName.Equals(ChartIds.InfiniteLanterns, StringComparison.OrdinalIgnoreCase);
-    }
+    public static bool IsInfiniteLanternsBorder(string rawName) =>
+        BorderIdOrDisplayMatches(rawName, ChartIds.InfiniteLanterns, ChartIds.InfiniteLanternsDisplayHint);
 
     public static bool IsStrongNoConsume(IReadOnlyList<BorderEffect> borders)
     {
@@ -184,10 +179,16 @@ public static class ChartPredicates
             return false;
         foreach (var b in borders)
         {
-            if (b.Name.Equals(ChartIds.NotConsume1, StringComparison.OrdinalIgnoreCase))
-                t1++;
-            else if (b.Name.Equals(ChartIds.NotConsume2, StringComparison.OrdinalIgnoreCase))
-                t2++;
+            if (BorderIdOrDisplayMatches(b.Name, ChartIds.NotConsume1, ChartIds.NotConsumeDisplayHint) ||
+                BorderIdOrDisplayMatches(b.Name, ChartIds.NotConsume2, ChartIds.NotConsumeDisplayHint))
+            {
+                
+                if (b.Name.Equals(ChartIds.NotConsume2, StringComparison.OrdinalIgnoreCase) ||
+                    b.Name.Contains("2", StringComparison.Ordinal))
+                    t2++;
+                else
+                    t1++;
+            }
         }
 
         return t2 >= 1 || t1 >= 2;
@@ -205,12 +206,13 @@ public static class ChartPredicates
 
         foreach (var name in borderNames)
         {
-            if (string.IsNullOrEmpty(name))
+            if (!IsTreasureAnchorsBorder(name))
                 continue;
-            if (name.Equals(ChartIds.TreasureAnchors1, StringComparison.OrdinalIgnoreCase))
-                t1++;
-            else if (name.Equals(ChartIds.TreasureAnchors2, StringComparison.OrdinalIgnoreCase))
+            if (name.Equals(ChartIds.TreasureAnchors2, StringComparison.OrdinalIgnoreCase) ||
+                name.Contains("2", StringComparison.Ordinal))
                 t2++;
+            else
+                t1++;
         }
 
         return IsStrongTreasureAnchorsCounts(t1, t2);
@@ -221,20 +223,14 @@ public static class ChartPredicates
 
     public static bool BoardHasStrongTreasureAnchors(IReadOnlyList<BorderEffect>[,] tileBorders)
     {
-        var treasureT1 = 0;
-        var treasureT2 = 0;
+        var names = new List<string>();
         foreach (var (row, col) in EnumerateCells())
         {
             foreach (var b in BordersAt(tileBorders, row, col))
-            {
-                if (b.Name.Equals(ChartIds.TreasureAnchors1, StringComparison.OrdinalIgnoreCase))
-                    treasureT1++;
-                else if (b.Name.Equals(ChartIds.TreasureAnchors2, StringComparison.OrdinalIgnoreCase))
-                    treasureT2++;
-            }
+                names.Add(b.Name);
         }
 
-        return IsStrongTreasureAnchorsCounts(treasureT1, treasureT2);
+        return IsStrongTreasureAnchors(names);
     }
 
     
@@ -248,9 +244,7 @@ public static class ChartPredicates
         var count = 0;
         foreach (var name in borderNames)
         {
-            if (string.IsNullOrEmpty(name))
-                continue;
-            if (name.Equals(ChartIds.InfiniteLanterns, StringComparison.OrdinalIgnoreCase))
+            if (IsInfiniteLanternsBorder(name))
                 count++;
         }
 
@@ -267,7 +261,7 @@ public static class ChartPredicates
         {
             foreach (var b in BordersAt(tileBorders, row, col))
             {
-                if (b.Name.Equals(ChartIds.InfiniteLanterns, StringComparison.OrdinalIgnoreCase))
+                if (IsInfiniteLanternsBorder(b.Name))
                     count++;
             }
         }
@@ -293,13 +287,15 @@ public static class ChartPredicates
     public static int OrbPriority(IReadOnlyList<BorderEffect> borders)
     {
         var best = 0;
+        if (borders == null)
+            return 0;
         foreach (var b in borders)
         {
-            if (b.Name.Equals(ChartIds.RareDivine, StringComparison.OrdinalIgnoreCase))
+            if (BorderIdOrDisplayMatches(b.Name, ChartIds.RareDivine, ChartIds.RareDivineDisplayHint))
                 best = Math.Max(best, 3);
-            else if (b.Name.Equals(ChartIds.RareAnnul, StringComparison.OrdinalIgnoreCase))
+            else if (BorderIdOrDisplayMatches(b.Name, ChartIds.RareAnnul, ChartIds.RareAnnulDisplayHint))
                 best = Math.Max(best, 2);
-            else if (b.Name.Equals(ChartIds.RareAncient, StringComparison.OrdinalIgnoreCase))
+            else if (BorderIdOrDisplayMatches(b.Name, ChartIds.RareAncient, ChartIds.RareAncientDisplayHint))
                 best = Math.Max(best, 1);
         }
 

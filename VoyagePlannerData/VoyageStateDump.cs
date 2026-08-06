@@ -18,6 +18,12 @@ public sealed class VoyageStateDump
     public List<string> RawBorderMods { get; set; } = [];
 
     
+    public List<string> RawBorderModsUi { get; set; } = [];
+
+    
+    public string BorderModsSource { get; set; }
+
+    
     public List<TileDump> Tiles { get; set; } = [];
 
     
@@ -290,6 +296,9 @@ public sealed class VoyageStateDump
         var lines = new List<string>
         {
             $"Voyage dump v{Version} captured {CapturedAtUtc}" + (string.IsNullOrEmpty(Note) ? "" : $" — {Note}"),
+            $"Border source: {BorderModsSource ?? "?"}  " +
+            $"Data slots: {RawBorderMods.Count(s => !string.IsNullOrWhiteSpace(s))}/12  " +
+            $"UI texts: {RawBorderModsUi.Count(s => !string.IsNullOrWhiteSpace(s))}/12",
             $"Charts: {Charts.Count(c => c.IncludedInSolve)} in solve / {Charts.Count} total",
             $"Divine: [{string.Join(" ", Derived.DivineCenters)}]  " +
             $"Annul: [{string.Join(" ", Derived.AnnulCenters)}]  " +

@@ -438,9 +438,9 @@ public partial class DeepwaterEngagementSuite
 
         var tiles = tree.Tiles;
         var boardHasStrategyOrb = modsPerTileIndex.Values
-            .Any(tileMods => VoyagePlacementRules.HasStrategyOrb(tileMods.Select(m => m.RawName)));
+            .Any(tileMods => VoyagePlacementRules.HasStrategyOrb(tileMods.Select(m => m.Id)));
         var allBorderNames = modsPerTileIndex.Values
-            .SelectMany(tileMods => tileMods.Select(m => m.RawName))
+            .SelectMany(tileMods => tileMods.Select(m => m.Id))
             .ToList();
         var boardStrongTreasureAnchors = Settings.VoyageSettings.Strategies.TreasureAnchors.Value
             && VoyagePlacementRules.IsStrongTreasureAnchors(allBorderNames);
@@ -505,25 +505,25 @@ public partial class DeepwaterEngagementSuite
             }
 
             tileCenter = tileCenter + new Vector2(0, 10);
-            foreach (var itemMod in mods)
+            foreach (var borderMod in mods)
             {
-                var isStrategy = VoyagePlacementRules.IsStrategyBorder(itemMod.RawName);
+                var isStrategy = VoyagePlacementRules.IsStrategyBorder(borderMod.Id);
                 var isTreasure = boardStrongTreasureAnchors &&
-                                 VoyagePlacementRules.IsTreasureAnchorsBorder(itemMod.RawName);
+                                 VoyagePlacementRules.IsTreasureAnchorsBorder(borderMod.Id);
                 var isInfiniteLanterns = boardStrongInfiniteLanterns &&
-                                        VoyagePlacementRules.IsInfiniteLanternsBorder(itemMod.RawName);
+                                        VoyagePlacementRules.IsInfiniteLanternsBorder(borderMod.Id);
                 var isCombo = isStrategy || isTreasure || isInfiniteLanterns;
                 if (!Settings.VoyageSettings.ShowAllBorderModifiers && !isCombo)
                     continue;
 
-                var matchingSetting = Settings.VoyageSettings.BorderModifiers.Content
-                    .FirstOrDefault(c => c.Id.Value.Equals(itemMod.RawName, StringComparison.OrdinalIgnoreCase));
+                var matchingSetting = FindBorderSetting(borderMod.Id, borderMod.DisplayText);
                 var text = matchingSetting?.Abbreviation.Value is { Length: > 0 } abbv
                     ? abbv
-                    : itemMod.RawName.StartsWith("DeepwaterBorder", StringComparison.Ordinal)
-                        ? itemMod.RawName["DeepwaterBorder".Length..]
-                        : itemMod.RawName;
-                var color = itemMod.RawName.Equals(ChartIds.RareDivine, StringComparison.OrdinalIgnoreCase)
+                    : borderMod.Id.StartsWith("DeepwaterBorder", StringComparison.Ordinal)
+                        ? borderMod.Id["DeepwaterBorder".Length..]
+                        : borderMod.Label;
+                var color = ChartPredicates.BorderIdOrDisplayMatches(
+                        borderMod.Id, ChartIds.RareDivine, ChartIds.RareDivineDisplayHint)
                     ? Color.HotPink
                     : isCombo
                         ? Color.Orange
@@ -610,30 +610,192 @@ public partial class DeepwaterEngagementSuite
         }
     }
 
-    private static Dictionary<int, List<ItemMod>> GetTileMods(VoyageWindow tree)
-    {
-        var borderMods = tree.Data.BorderMods;
-        Dictionary<int, List<ItemMod>> modsPerTileIndex = [];
-        if (borderMods.Count >= 12)
+    
+    private static readonly Dictionary<int, int[]> BorderSlotToTile =
+        new()
         {
-            modsPerTileIndex = new Dictionary<int, List<int>>
-            {
-                [0] = [0, 11],
-                [1] = [1],
-                [2] = [2, 3],
-                [3] = [10],
-                [4] = [],
-                [5] = [4],
-                [6] = [8, 9],
-                [7] = [7],
-                [8] = [5, 6],
-            }.ToDictionary(
-                x => x.Key,
-                x => x.Value.Select(v => borderMods[v])
-                    .ToList());
+            [0] = [0, 11],
+            [1] = [1],
+            [2] = [2, 3],
+            [3] = [10],
+            [4] = [],
+            [5] = [4],
+            [6] = [8, 9],
+            [7] = [7],
+            [8] = [5, 6],
+        };
+
+    
+    private static IReadOnlyList<string> ReadBorderModRawNames(VoyageWindow tree) =>
+        (tree?.Data?.BorderMods ?? [])
+        .Select(m => m?.RawName ?? "")
+        .ToList();
+
+    
+    private static IReadOnlyList<string> ReadBorderModUiTexts(VoyageWindow tree)
+    {
+        var root = tree?.GetChildFromIndices(3, 10);
+        if (root is not { IsValid: true })
+            return [];
+
+        var texts = new List<string>(12);
+        for (var i = 0; i < 12; i++)
+        {
+            var slot = root.GetChildAtIndex(i);
+            var textEl = slot?.GetChildAtIndex(1) ?? slot;
+            var raw = textEl?.TextNoTags ?? textEl?.Text ?? "";
+            texts.Add(NormalizeBorderUiText(raw));
         }
 
-        return modsPerTileIndex;
+        return texts;
+    }
+
+    private static string NormalizeBorderUiText(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return "";
+
+        text = text.Trim();
+        
+        var braceStart = text.IndexOf('{');
+        var braceEnd = text.LastIndexOf('}');
+        if (braceStart >= 0 && braceEnd > braceStart)
+            text = text.Substring(braceStart + 1, braceEnd - braceStart - 1);
+
+        text = text.Replace("<augmented>", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("</augmented>", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("<default>", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("</default>", "", StringComparison.OrdinalIgnoreCase)
+            .Trim();
+
+        return text;
+    }
+
+    
+    private static bool BorderModsFromDataUsable(IReadOnlyList<string> rawNames) =>
+        rawNames != null &&
+        rawNames.Count >= 12 &&
+        rawNames.Count(n => !string.IsNullOrWhiteSpace(n)) >= 1;
+
+    
+    private string ResolveBorderId(string rawName, string displayText)
+    {
+        if (!string.IsNullOrWhiteSpace(rawName) &&
+            rawName.StartsWith("DeepwaterBorder", StringComparison.OrdinalIgnoreCase))
+            return rawName;
+
+        var text = !string.IsNullOrWhiteSpace(displayText) ? displayText : rawName ?? "";
+        if (string.IsNullOrWhiteSpace(text))
+            return rawName ?? "";
+
+        if (ChartPredicates.IsInfiniteLanternsBorder(text))
+            return ChartIds.InfiniteLanterns;
+        if (ChartPredicates.BorderIdOrDisplayMatches(text, ChartIds.NotConsume2, ChartIds.NotConsumeDisplayHint) &&
+            text.Contains('2'))
+            return ChartIds.NotConsume2;
+        if (ChartPredicates.BorderIdOrDisplayMatches(text, ChartIds.NotConsume1, ChartIds.NotConsumeDisplayHint))
+            return ChartIds.NotConsume1;
+        if (ChartPredicates.BorderIdOrDisplayMatches(text, ChartIds.RareDivine, ChartIds.RareDivineDisplayHint) &&
+            text.Contains("Divine", StringComparison.OrdinalIgnoreCase))
+            return ChartIds.RareDivine;
+        if (ChartPredicates.BorderIdOrDisplayMatches(text, ChartIds.RareAnnul, ChartIds.RareAnnulDisplayHint))
+            return ChartIds.RareAnnul;
+        if (ChartPredicates.BorderIdOrDisplayMatches(text, ChartIds.RareAncient, ChartIds.RareAncientDisplayHint) &&
+            text.Contains("Ancient", StringComparison.OrdinalIgnoreCase))
+            return ChartIds.RareAncient;
+        if (ChartPredicates.IsTreasureAnchorsBorder(text))
+        {
+            if (text.Contains('2') || text.Contains("II", StringComparison.OrdinalIgnoreCase))
+                return ChartIds.TreasureAnchors2;
+            return ChartIds.TreasureAnchors1;
+        }
+
+        var setting = FindBorderSetting(text, text);
+        if (setting != null && !string.IsNullOrWhiteSpace(setting.Id.Value))
+            return setting.Id.Value;
+
+        return text;
+    }
+
+    private VoyageBorderModifier FindBorderSetting(string id, string displayText)
+    {
+        var content = Settings.VoyageSettings.BorderModifiers.Content;
+        if (!string.IsNullOrWhiteSpace(id))
+        {
+            var byId = content.FirstOrDefault(c =>
+                c.Id.Value.Equals(id, StringComparison.OrdinalIgnoreCase));
+            if (byId != null)
+                return byId;
+        }
+
+        if (string.IsNullOrWhiteSpace(displayText))
+            return null;
+
+        
+        VoyageBorderModifier best = null;
+        var bestScore = 0;
+        foreach (var setting in content)
+        {
+            var abbv = setting.Abbreviation?.Value;
+            if (string.IsNullOrWhiteSpace(abbv) || abbv.Length < 4)
+                continue;
+
+            var words = System.Text.RegularExpressions.Regex
+                .Split(abbv, "(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|([0-9]+)")
+                .Where(w => !string.IsNullOrWhiteSpace(w) && w.Length > 1)
+                .ToList();
+            if (words.Count == 0)
+                continue;
+
+            var hits = words.Count(w => displayText.Contains(w, StringComparison.OrdinalIgnoreCase));
+            if (hits == words.Count && hits > bestScore)
+            {
+                best = setting;
+                bestScore = hits;
+            }
+        }
+
+        return best;
+    }
+
+    private Dictionary<int, List<BorderModRef>> GetTileMods(VoyageWindow tree)
+    {
+        var fromData = ReadBorderModRawNames(tree);
+        var fromUi = ReadBorderModUiTexts(tree);
+
+        var slots = new BorderModRef[12];
+        var any = false;
+        for (var i = 0; i < 12; i++)
+        {
+            var raw = i < fromData.Count ? fromData[i] : "";
+            var display = i < fromUi.Count ? fromUi[i] : "";
+            if (string.IsNullOrWhiteSpace(raw) && string.IsNullOrWhiteSpace(display))
+            {
+                slots[i] = null;
+                continue;
+            }
+
+            any = true;
+            var fromApi = !string.IsNullOrWhiteSpace(raw) &&
+                          raw.StartsWith("DeepwaterBorder", StringComparison.OrdinalIgnoreCase);
+            var id = ResolveBorderId(raw, display);
+            slots[i] = new BorderModRef
+            {
+                Id = id,
+                DisplayText = display,
+                Source = fromApi ? "Data.BorderMods" : "UI 3->10->i->1",
+            };
+        }
+
+        if (!any)
+            return new Dictionary<int, List<BorderModRef>>();
+
+        return BorderSlotToTile.ToDictionary(
+            kv => kv.Key,
+            kv => kv.Value
+                .Select(slot => slot >= 0 && slot < slots.Length ? slots[slot] : null)
+                .Where(m => m != null && !string.IsNullOrWhiteSpace(m.Id))
+                .ToList());
     }
 
     private static int CountReadyCharts(VoyageWindow tree)
@@ -772,11 +934,17 @@ public partial class DeepwaterEngagementSuite
     private static string BuildVoyageBoardFingerprint(VoyageWindow tree)
     {
         var parts = new List<string>();
-        var borders = tree?.Data?.BorderMods;
-        if (borders != null)
+        var fromData = ReadBorderModRawNames(tree);
+        var fromUi = ReadBorderModUiTexts(tree);
+        if (BorderModsFromDataUsable(fromData))
         {
-            foreach (var mod in borders)
-                parts.Add(mod?.RawName ?? "");
+            foreach (var name in fromData)
+                parts.Add(name ?? "");
+        }
+        else
+        {
+            foreach (var text in fromUi)
+                parts.Add(text ?? "");
         }
 
         var charts = tree?.AvailableCharts;
@@ -1269,10 +1437,9 @@ public partial class DeepwaterEngagementSuite
             var borderMods = modsPerTileIndex.GetValueOrDefault(tileIndex) ?? [];
             tileBorders[tileIndex / 3, tileIndex % 3] = borderMods.Select(m =>
             {
-                var setting = Settings.VoyageSettings.BorderModifiers.Content
-                    .FirstOrDefault(c => c.Id.Value.Equals(m.RawName, StringComparison.OrdinalIgnoreCase));
+                var setting = FindBorderSetting(m.Id, m.DisplayText);
                 return new BorderEffect(
-                    m.RawName,
+                    m.Id,
                     ModifierTagParser.Parse(setting?.Tags.Value, ModifierTag.All),
                     setting?.ValueMultiplier.Value ?? 1,
                     setting?.PerConnection.Value ?? false,

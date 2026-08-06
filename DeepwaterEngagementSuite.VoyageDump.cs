@@ -38,8 +38,15 @@ public partial class DeepwaterEngagementSuite
             StrategyOptions = VoyageStateDump.StrategyOptionsDump.From(Settings.VoyageSettings.Strategies.ToOptions()),
         };
 
-        foreach (var mod in tree?.Data?.BorderMods ?? [])
-            dump.RawBorderMods.Add(mod?.RawName ?? "");
+        foreach (var name in ReadBorderModRawNames(tree))
+            dump.RawBorderMods.Add(name);
+        foreach (var text in ReadBorderModUiTexts(tree))
+            dump.RawBorderModsUi.Add(text);
+        dump.BorderModsSource = BorderModsFromDataUsable(dump.RawBorderMods)
+            ? "Data.BorderMods"
+            : dump.RawBorderModsUi.Any(t => !string.IsNullOrWhiteSpace(t))
+                ? "UI 3->10->i->1"
+                : "none";
 
         CaptureTiles(tree, dump);
         CaptureCharts(tree, dump);
@@ -81,11 +88,10 @@ public partial class DeepwaterEngagementSuite
 
             foreach (var borderMod in modsPerTileIndex.GetValueOrDefault(index) ?? [])
             {
-                var setting = Settings.VoyageSettings.BorderModifiers.Content
-                    .FirstOrDefault(c => c.Id.Value.Equals(borderMod.RawName, StringComparison.OrdinalIgnoreCase));
+                var setting = FindBorderSetting(borderMod.Id, borderMod.DisplayText);
                 tileDump.Borders.Add(new VoyageStateDump.BorderDump
                 {
-                    RawName = borderMod.RawName,
+                    RawName = borderMod.Id,
                     HasSettingsEntry = setting != null,
                     Tags = setting?.Tags.Value,
                     Multiplier = setting?.ValueMultiplier.Value ?? 1,

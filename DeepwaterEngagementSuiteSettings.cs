@@ -582,7 +582,7 @@ public class VoyageSettings
 
     [Menu("Show All Border Modifiers",
         "Draw every border mod on voyage tiles (not only strategy/combo borders). " +
-        "Uses Data.BorderMods when available; falls back to UI text at VoyageWindow 3->10->i->1. " +
+        "Uses Data.BorderMods when available; falls back to UI text at VoyageWindow 3->10->i.Tooltip.TextNoTags. " +
         "Text-sourced labels are marked T!…!!.")]
     public ToggleNode ShowAllBorderModifiers { get; set; } = new ToggleNode(false);
     public ToggleNode ShowAllChartModifiers { get; set; } = new ToggleNode(false);

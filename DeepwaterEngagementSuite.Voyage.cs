@@ -447,6 +447,9 @@ public partial class DeepwaterEngagementSuite
         var boardStrongInfiniteLanterns = Settings.VoyageSettings.Strategies.InfiniteLanterns.Value
             && VoyagePlacementRules.IsStrongInfiniteLanterns(allBorderNames);
 
+        if (Settings.VoyageSettings.ShowAllBorderModifiers)
+            DrawBorderModDiagnostics(tree, modsPerTileIndex);
+
         for (var index = 0; index < tiles.Count; index++)
         {
             var tile = tiles[index];
@@ -631,22 +634,75 @@ public partial class DeepwaterEngagementSuite
         .ToList();
 
     
+    private static Element GetBorderModsUiRoot(VoyageWindow tree) =>
+        tree?.GetChildFromIndices(3, 10);
+
     private static IReadOnlyList<string> ReadBorderModUiTexts(VoyageWindow tree)
     {
-        var root = tree?.GetChildFromIndices(3, 10);
+        var root = GetBorderModsUiRoot(tree);
         if (root is not { IsValid: true })
             return [];
 
         var texts = new List<string>(12);
-        for (var i = 0; i < 12; i++)
+        var childCount = (int)root.ChildCount;
+        var limit = Math.Max(12, childCount);
+        for (var i = 0; i < limit; i++)
         {
             var slot = root.GetChildAtIndex(i);
-            var textEl = slot?.GetChildAtIndex(1) ?? slot;
-            var raw = textEl?.TextNoTags ?? textEl?.Text ?? "";
+            if (slot is not { IsValid: true })
+            {
+                if (i < 12)
+                    texts.Add("");
+                continue;
+            }
+
+            
+            var tooltip = slot.Tooltip;
+            var raw = tooltip?.TextNoTags ?? tooltip?.Text ?? "";
             texts.Add(NormalizeBorderUiText(raw));
         }
 
+        while (texts.Count < 12)
+            texts.Add("");
+
         return texts;
+    }
+
+    private void DrawBorderModDiagnostics(
+        VoyageWindow tree,
+        Dictionary<int, List<BorderModRef>> modsPerTileIndex)
+    {
+        var fromData = ReadBorderModRawNames(tree);
+        var fromUi = ReadBorderModUiTexts(tree);
+        var uiRoot = GetBorderModsUiRoot(tree);
+        var mapped = modsPerTileIndex.Values.Sum(v => v.Count);
+        var dataFilled = fromData.Count(s => !string.IsNullOrWhiteSpace(s));
+        var uiFilled = fromUi.Count(s => !string.IsNullOrWhiteSpace(s));
+
+        var line1 =
+            $"Borders diag: data={dataFilled}/{fromData.Count} ui={uiFilled}/{fromUi.Count} " +
+            $"mapped={mapped} uiRoot={(uiRoot is { IsValid: true } ? $"ok kids={uiRoot.ChildCount}" : "NULL")}";
+        var samples = fromUi
+            .Select((t, i) => (i, t))
+            .Where(x => !string.IsNullOrWhiteSpace(x.t))
+            .Take(3)
+            .Select(x => $"[{x.i}]{TruncateForDiag(x.t, 40)}");
+        var line2 = samples.Any()
+            ? "UI samples: " + string.Join(" | ", samples)
+            : "UI samples: (none — path 3->10->i.Tooltip.TextNoTags empty or wrong)";
+
+        var anchor = tree.Tiles is { Count: > 0 } t0
+            ? t0[0].GetClientRectCache.TopLeft.ToVector2Num()
+            : tree.GetClientRectCache.TopLeft.ToVector2Num();
+        Graphics.DrawTextWithBackground(line1, anchor, Color.Yellow, Color.Black);
+        Graphics.DrawTextWithBackground(line2, anchor + new Vector2(0, 16), Color.Yellow, Color.Black);
+    }
+
+    private static string TruncateForDiag(string text, int max)
+    {
+        if (string.IsNullOrEmpty(text) || text.Length <= max)
+            return text ?? "";
+        return text[..max] + "…";
     }
 
     private static string NormalizeBorderUiText(string text)
@@ -797,7 +853,7 @@ public partial class DeepwaterEngagementSuite
             {
                 Id = id,
                 DisplayText = display,
-                Source = fromApi ? "Data.BorderMods" : "UI 3->10->i->1",
+                Source = fromApi ? "Data.BorderMods" : "UI 3->10->i.Tooltip",
             };
         }
 

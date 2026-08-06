@@ -92,8 +92,43 @@ public partial class DeepwaterEngagementSuite
     private static bool BoardIsClear(VoyageWindow tree) =>
         tree.Tiles.All(t => !TileHasChart(t));
 
+    private static Element GetVoyageChartInventoryTabBar(VoyageWindow tree) =>
+        tree?.GetChildFromIndices(3, 11, 0);
+
     private static Element GetVoyageChartInventoryInactiveTab(VoyageWindow tree) =>
         tree?.GetChildFromIndices(3, 11, 0, 0);
+
+    private static int? GetActiveVoyageChartInventoryTabIndex(VoyageWindow tree)
+    {
+        var bar = GetVoyageChartInventoryTabBar(tree);
+        if (bar is not { IsValid: true })
+            return null;
+
+        foreach (var child in bar.Children)
+        {
+            if (child is { IsValid: true, IsActive: true })
+                return child.IndexInParent;
+        }
+
+        foreach (var child in bar.Children)
+        {
+            if (child is { IsValid: true, isHighlighted: true })
+                return child.IndexInParent;
+        }
+
+        return null;
+    }
+
+    private string GetVoyageChartInventoryTabFingerprint(VoyageWindow tree)
+    {
+        var activeTab = GetActiveVoyageChartInventoryTabIndex(tree);
+        var chartIds = GetAvailableCharts()
+            .Where(IsChartItemInteractable)
+            .Select(GetChartIdentity)
+            .Where(id => id != 0)
+            .OrderBy(id => id);
+        return $"tab:{activeTab?.ToString() ?? "-"}|charts:{string.Join(",", chartIds)}";
+    }
 
     private async SyncTask<bool> ClickVoyageChartInventoryInactiveTab(VoyageWindow tree, bool needsFocusWiggle)
     {
@@ -114,6 +149,27 @@ public partial class DeepwaterEngagementSuite
         return true;
     }
 
+    private async SyncTask<bool> WaitForVoyageChartInventoryTabChange(
+        VoyageWindow tree,
+        string beforeFingerprint,
+        TimeSpan timeout)
+    {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        while (sw.Elapsed < timeout)
+        {
+            await TaskUtils.NextFrame();
+            if (tree is not { IsValid: true, IsVisible: true })
+                return false;
+            if (!string.Equals(
+                    GetVoyageChartInventoryTabFingerprint(tree),
+                    beforeFingerprint,
+                    StringComparison.Ordinal))
+                return true;
+        }
+
+        return false;
+    }
+
     private async SyncTask<bool> PrimeVoyageChartInventory(VoyageWindow tree)
     {
         try
@@ -126,10 +182,31 @@ public partial class DeepwaterEngagementSuite
             if (rect.Width <= 1 || rect.Height <= 1)
                 return true;
 
-            await ClickVoyageChartInventoryInactiveTab(tree, needsFocusWiggle: true);
+            var beforeFingerprint = GetVoyageChartInventoryTabFingerprint(tree);
+            const int maxAttempts = 8;
+            var switched = false;
+            for (var attempt = 0; attempt < maxAttempts; attempt++)
+            {
+                await ClickVoyageChartInventoryInactiveTab(tree, needsFocusWiggle: attempt == 0);
+                if (await WaitForVoyageChartInventoryTabChange(
+                        tree,
+                        beforeFingerprint,
+                        TimeSpan.FromSeconds(1.5)))
+                {
+                    switched = true;
+                    break;
+                }
+            }
+
+            if (!switched)
+            {
+                DebugWindow.LogError(
+                    "Voyage inventory prime: active tab did not change after repeated swaps; " +
+                    "other-page chart data may still be unloaded.");
+            }
+
             await TaskUtils.NextFrame();
-            await TaskUtils.NextFrame();
-            return true;
+            return switched;
         }
         catch (Exception ex)
         {

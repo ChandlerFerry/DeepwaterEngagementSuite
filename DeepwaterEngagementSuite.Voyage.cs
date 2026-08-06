@@ -108,20 +108,28 @@ public partial class DeepwaterEngagementSuite
         return GetAvailableCharts().FirstOrDefault(c => GetChartIdentity(c) == identity);
     }
 
-    private async SyncTask<NormalInventoryItem> EnsureChartItemOnActiveTab(
+    private async SyncTask<(NormalInventoryItem Item, bool NeedsFocusWiggle)> EnsureChartItemOnActiveTab(
         VoyageWindow tree,
         NormalInventoryItem pieceElem,
-        Vector2 winOrigin)
+        Vector2 winOrigin,
+        bool needsFocusWiggle)
     {
         if (IsChartItemInteractable(pieceElem))
-            return pieceElem;
+            return (pieceElem, needsFocusWiggle);
 
         var identity = GetChartIdentity(pieceElem);
         var inactiveTab = GetVoyageChartInventoryInactiveTab(tree)
             ?? throw new InvalidOperationException(
                 "Voyage chart inventory inactive tab not found at (VoyageWindow)3->11->0->0");
 
-        Input.SetCursorPos(winOrigin + inactiveTab.GetClientRectCache.Center.ToVector2Num());
+        var tabPos = winOrigin + inactiveTab.GetClientRectCache.Center.ToVector2Num();
+        Input.SetCursorPos(tabPos);
+        if (needsFocusWiggle)
+        {
+            await WiggleCursorToFocus(tabPos);
+            needsFocusWiggle = false;
+        }
+
         await TaskUtils.NextFrame();
         Input.LeftDown();
         await TaskUtils.NextFrame();
@@ -140,7 +148,7 @@ public partial class DeepwaterEngagementSuite
         if (!IsChartItemInteractable(resolved))
             throw new InvalidOperationException("Chart item not interactable after inventory tab switch");
 
-        return resolved;
+        return (resolved, needsFocusWiggle);
     }
 
     private static DeepwaterChart TryGetTileChart(VoyageTileElement tile) =>
@@ -324,7 +332,10 @@ public partial class DeepwaterEngagementSuite
                     continue;
                 }
 
-                var pieceElem = await EnsureChartItemOnActiveTab(tree, availableCharts[p.Piece.Id], winOrigin);
+                var ensureResult = await EnsureChartItemOnActiveTab(
+                    tree, availableCharts[p.Piece.Id], winOrigin, needsFocusWiggle);
+                var pieceElem = ensureResult.Item;
+                needsFocusWiggle = ensureResult.NeedsFocusWiggle;
                 availableCharts[p.Piece.Id] = pieceElem;
                 var click1Pos = winOrigin + pieceElem.GetClientRectCache.Center.ToVector2Num();
                 var click2Pos = winOrigin + tile.GetClientRectCache.Center.ToVector2Num();

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using DeepwaterEngagementSuite.VoyagePlannerData;
 using ExileCore;
+using ExileCore.PoEMemory;
 using ExileCore.PoEMemory.Components;
 using ExileCore.PoEMemory.Elements;
 using ExileCore.PoEMemory.Elements.InventoryElements;
@@ -89,6 +90,58 @@ public partial class DeepwaterEngagementSuite
 
     private static bool BoardIsClear(VoyageWindow tree) =>
         tree.Tiles.All(t => !TileHasChart(t));
+
+    private static Element GetVoyageChartInventoryInactiveTab(VoyageWindow tree) =>
+        tree?.GetChildFromIndices(3, 11, 0, 0);
+
+    private static bool IsChartItemInteractable(NormalInventoryItem item) =>
+        item is { IsValid: true, IsVisible: true } &&
+        item.GetClientRectCache is { Width: > 1, Height: > 1 };
+
+    private static long GetChartIdentity(NormalInventoryItem item) =>
+        item?.Item?.Address ?? item?.Entity?.Address ?? item?.Address ?? 0;
+
+    private NormalInventoryItem FindChartByIdentity(long identity)
+    {
+        if (identity == 0)
+            return null;
+        return GetAvailableCharts().FirstOrDefault(c => GetChartIdentity(c) == identity);
+    }
+
+    private async SyncTask<NormalInventoryItem> EnsureChartItemOnActiveTab(
+        VoyageWindow tree,
+        NormalInventoryItem pieceElem,
+        Vector2 winOrigin)
+    {
+        if (IsChartItemInteractable(pieceElem))
+            return pieceElem;
+
+        var identity = GetChartIdentity(pieceElem);
+        var inactiveTab = GetVoyageChartInventoryInactiveTab(tree)
+            ?? throw new InvalidOperationException(
+                "Voyage chart inventory inactive tab not found at (VoyageWindow)3->11->0->0");
+
+        Input.SetCursorPos(winOrigin + inactiveTab.GetClientRectCache.Center.ToVector2Num());
+        await TaskUtils.NextFrame();
+        Input.LeftDown();
+        await TaskUtils.NextFrame();
+        Input.LeftUp();
+
+        await TaskUtils.CheckEveryFrameWithThrow(
+            () =>
+            {
+                var current = identity != 0 ? FindChartByIdentity(identity) ?? pieceElem : pieceElem;
+                return IsChartItemInteractable(current);
+            },
+            () => "Chart item still not visible after switching inventory tab",
+            TimeSpan.FromSeconds(2));
+
+        var resolved = identity != 0 ? FindChartByIdentity(identity) ?? pieceElem : pieceElem;
+        if (!IsChartItemInteractable(resolved))
+            throw new InvalidOperationException("Chart item not interactable after inventory tab switch");
+
+        return resolved;
+    }
 
     private static DeepwaterChart TryGetTileChart(VoyageTileElement tile) =>
         tile?.ItemContainer?.Entity?.GetComponent<DeepwaterChart>();
@@ -271,7 +324,8 @@ public partial class DeepwaterEngagementSuite
                     continue;
                 }
 
-                var pieceElem = availableCharts[p.Piece.Id];
+                var pieceElem = await EnsureChartItemOnActiveTab(tree, availableCharts[p.Piece.Id], winOrigin);
+                availableCharts[p.Piece.Id] = pieceElem;
                 var click1Pos = winOrigin + pieceElem.GetClientRectCache.Center.ToVector2Num();
                 var click2Pos = winOrigin + tile.GetClientRectCache.Center.ToVector2Num();
                 Input.SetCursorPos(click1Pos);
@@ -484,6 +538,9 @@ public partial class DeepwaterEngagementSuite
 
         for (int i = 0; i < charts.Count; i++)
         {
+            if (!IsChartItemInteractable(charts[i]))
+                continue;
+
             var pos = charts[i].GetClientRectCache.TopLeft.ToVector2Num();
             if (specialtyIndices.Contains(i))
             {

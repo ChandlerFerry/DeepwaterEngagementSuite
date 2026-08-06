@@ -141,8 +141,7 @@ public class DeepwaterEngagementSuiteSettings : ISettings
 [Submenu(CollapsedByDefault = true)]
 public class LootWindowSettings
 {
-    [Menu("Show loot window",
-        "Summary window of discovered Deepwater targets. Off by default.")]
+    [Menu("Show loot window", "Deepwater target summary. Off by default.")]
     public ToggleNode ShowLootWindow { get; set; } = new ToggleNode(false);
 }
 
@@ -152,8 +151,7 @@ public class IconSettings
     public Dictionary<IconPickerIndex, IconDisplaySettings> IconMapping = new();
 
     [Menu("Parse sleeping entities",
-        "Also read entities from the game's sleeping entity list (entities outside the network bubble).\n" +
-        "Requires ExileCore's Core -> Debug -> CollectSleepingEntities setting to be enabled as well.")]
+        "Include entities outside the network bubble. Also enable Core → Debug → CollectSleepingEntities.")]
     public ToggleNode ParseSleepingEntities { get; set; } = new ToggleNode(false);
 
     [JsonIgnore]
@@ -166,8 +164,7 @@ public class IconSettings
     public ToggleNode ShowBottledItemIcons { get; set; } = new ToggleNode(true);
 
     [ConditionalDisplay(nameof(ShowBottledItemIcons))]
-    [Menu("Sound alert for Message in a Bottle",
-        "Play a sound when a Message in a Bottle chest is first discovered in the zone.")]
+    [Menu("Sound alert for Message in a Bottle", "Play once when first seen in the zone.")]
     public ToggleNode SoundAlertBottledItem { get; set; } = new ToggleNode(false);
 
     [Menu("Show Gold Treasure icons")]
@@ -183,8 +180,7 @@ public class IconSettings
     public ToggleNode ShowOpulentCurrencyIcons { get; set; } = new ToggleNode(true);
 
     [ConditionalDisplay(nameof(ShowOpulentCurrencyIcons))]
-    [Menu("Sound alert for Opulent chests",
-        "Play a sound when an Opulent Currency chest is first discovered in the zone.")]
+    [Menu("Sound alert for Opulent chests", "Play once when first seen in the zone.")]
     public ToggleNode SoundAlertOpulentCurrency { get; set; } = new ToggleNode(false);
 
     [Menu("Show Gemcutter chest icons")]
@@ -205,8 +201,7 @@ public class IconSettings
     [Menu("Show Stacked Deck icons")]
     public ToggleNode ShowStackedDeckIcons { get; set; } = new ToggleNode(true);
 
-    [Menu("Show Maps chest icons",
-        "Cartography / map chests. Off by default.")]
+    [Menu("Show Maps chest icons", "Off by default.")]
     public ToggleNode ShowMapsChestIcons { get; set; } = new ToggleNode(false);
 
     [Menu("Show Allflame Embers icons")]
@@ -230,40 +225,31 @@ public class IconSettings
     [Menu("Show other chest icons")]
     public ToggleNode ShowOtherChestIcons { get; set; } = new ToggleNode(true);
 
-    [Menu("Show pointer stand-in icons",
-        "Undiscovered pointer targets on the large map.")]
+    [Menu("Show pointer stand-in icons", "Undiscovered large-map pointer targets.")]
     public ToggleNode ShowPointerTargetIcons { get; set; } = new ToggleNode(true);
 
-    [Menu("Show Ducat icons",
-        "Cursed ducat drops, random ducat chests, and hazard boats. Off by default.")]
+    [Menu("Show Ducat icons", "Ducat drops/chests/hazard boats. Off by default.")]
     public ToggleNode ShowDucatIcons { get; set; } = new ToggleNode(false);
 
-    [Menu("Show Golden Lantern icons",
-        "Off by default to reduce clutter.")]
+    [Menu("Show Golden Lantern icons", "Off by default.")]
     public ToggleNode ShowGoldenLanternIcons { get; set; } = new ToggleNode(false);
 
-    [Menu("Show Tormented Spirit icons",
-        "Off by default to reduce clutter.")]
+    [Menu("Show Tormented Spirit icons", "Off by default.")]
     public ToggleNode ShowTormentedSpiritIcons { get; set; } = new ToggleNode(false);
 
-    [Menu("Show Arcanist strongbox icons",
-        "Off by default to reduce clutter.")]
+    [Menu("Show Arcanist strongbox icons", "Off by default.")]
     public ToggleNode ShowArcanistStrongboxIcons { get; set; } = new ToggleNode(false);
 
-    [Menu("Show Diviner strongbox icons",
-        "Off by default to reduce clutter.")]
+    [Menu("Show Diviner strongbox icons", "Off by default.")]
     public ToggleNode ShowDivinerStrongboxIcons { get; set; } = new ToggleNode(false);
 
-    [Menu("Show Scarab strongbox icons",
-        "Off by default to reduce clutter.")]
+    [Menu("Show Scarab strongbox icons", "Off by default.")]
     public ToggleNode ShowScarabStrongboxIcons { get; set; } = new ToggleNode(false);
 
-    [Menu("Show Sulphur icons",
-        "Show map icons for base, large, and huge Dead Man's Sulphur resource chests.")]
+    [Menu("Show Sulphur icons", "Base/large/huge Dead Man's Sulphur chests.")]
     public ToggleNode ShowDeadmansSulphurIcons { get; set; } = new ToggleNode(true);
 
-    [Menu("Show small Sulphur icons",
-        "Off by default to reduce clutter.")]
+    [Menu("Show small Sulphur icons", "Off by default.")]
     public ToggleNode ShowDeadmansSulphurSmallIcons { get; set; } = new ToggleNode(false);
 
     public bool IsIconEnabled(IconPickerIndex index) => index switch
@@ -491,7 +477,7 @@ public class PlannerSettings
     [Menu("Color for captured entities on map")]
     public ColorNode CapturedEntityMapFrameColor { get; set; } = new ColorNode(Color.Purple);
 
-    [Menu(null, "Do not show lines/circles for plan segments where a real bubble has already been placed")]
+    [Menu(null, "Hide plan graphics once a real bubble is placed on that segment.")]
     public ToggleNode RemoveGraphicsForPlacedBubbles { get; set; } = new ToggleNode(false);
 
     public RangeNode<float> TextMarkerScale { get; set; } = new RangeNode<float>(2, 0, 5);
@@ -565,26 +551,17 @@ public class VoyageSettings
     [Menu("Show optimizer window")]
     public ToggleNode ShowOptimizerWindow { get; set; } = new ToggleNode(true);
 
-    [Menu("Show score debug details",
-        "Verbose optimizer tables: per-tile (row,col) score breakdown and contribution sources, " +
-        "plus (row, col) labels on each Plan Your Voyage board tile. " +
-        "Off by default — strategy labels stay available without this noise.")]
+    [Menu("Show score debug details", "Per-tile score breakdown and board coordinates. Off by default.")]
     public ToggleNode ShowScoreDebugDetails { get; set; } = new ToggleNode(false);
 
-    [Menu("Solver time limit (seconds)", "Max time the solver runs before returning the best solution found so far. 0 = no limit.")]
+    [Menu("Solver time limit (seconds)", "Stop after this many seconds and keep the best result. 0 = no limit.")]
     public RangeNode<int> SolverTimeLimitSeconds { get; set; } = new RangeNode<int>(5, 1, 120);
 
-    [Menu("Dump voyage state hotkey",
-        "Writes a replayable JSON snapshot of the open voyage board (raw border mods, resolved tile borders, " +
-        "every chart with resolved and raw modifier data, placed charts, strategy/solver settings, placement " +
-        "locks and saves, and the current solution) to ConfigDirectory/voyage-dumps.")]
+    [Menu("Dump voyage state hotkey", "Write a board JSON snapshot to ConfigDirectory/voyage-dumps.")]
     public HotkeyNodeV2 DumpVoyageStateHotkey { get; set; } = new HotkeyNodeV2(Keys.None);
 
     [Menu("Show All Border Modifiers",
-        "Draw every border mod on voyage tiles (not only strategy/combo borders). " +
-        "Uses Data.BorderMods when available; falls back to resolving UI tooltips at " +
-        "VoyageWindow 3->10->i.Tooltip.TextNoTags into DeepwaterBorder ids. " +
-        "Text-sourced labels are marked T!…!!.")]
+        "Show every border id on tiles. UI fallback is marked T!…!!.")]
     public ToggleNode ShowAllBorderModifiers { get; set; } = new ToggleNode(false);
     public ToggleNode ShowAllChartModifiers { get; set; } = new ToggleNode(false);
     public ToggleNode ShowChartInventoryInformation { get; set; } = new ToggleNode(false);
@@ -622,8 +599,7 @@ public class VoyageSettings
         ItemFilter = (o, s) => o.Id.Value.Contains(s, StringComparison.OrdinalIgnoreCase),
     };
 
-    [Menu("Placement strategies",
-        "Enable or disable voyage placement strategies. Disabled strategies neither lock cells nor save charts for later.")]
+    [Menu("Placement strategies", "Toggles and save holds for voyage placement.")]
     public VoyageStrategySettings Strategies { get; set; } = new VoyageStrategySettings();
 }
 
@@ -631,89 +607,64 @@ public class VoyageSettings
 public class VoyageStrategySettings
 {
     [Menu("Rare Monsters Drop X",
-        "Lock Pelagic Abyss on Divine/Annul/Ancient orb tiles (save unused Pelagic otherwise). " +
-        "Divine neighbors: boxes then starfish/rare combo; Annul/Ancient: strongbox ranks 4–6 (second set of 3) then starfish/rare. " +
-        "With a Divine orb, fill remaining free tiles with voyage rares. " +
-        "Holds unused charts with shared budget strongbox > starfish > adjacent rare T2+, plus voyage rares. " +
-        "A Divine rare-drop border always forces this strategy on, even when this toggle is off.")]
+        "Pelagic on orb tiles; boxes/starfish/rares nearby. Divine border forces this on.")]
     public ToggleNode RareMonstersDrop { get; set; } = new ToggleNode(true);
 
     [Menu("No-consume farm",
-        "Lock Soul Eater, then Anchorfield (or Clams) on strong no-consume tiles when no higher strategy applies, " +
-        "and hold unused Anchorfield charts for later. " +
-        "Save Soul Eater holds them out instead of placing them.")]
+        "Soul Eater → Anchorfield → Clam on strong no-consume tiles. Saves leftover Anchorfield.")]
     public ToggleNode NoConsumeAnchorfield { get; set; } = new ToggleNode(true);
 
     [Menu("Center specialty",
-        "Prefer Operative box, Lost Message, Unique Amulet1, Unique Belt, or Unique Ring on the free center tile, " +
-        "and hold unused Operative/Lost Message charts for later. " +
-        "Unique Amulet2/Belt/Ring are always center-only in the solver.")]
+        "Prefer Operative/Lost Message/Amulet1/Belt/Ring on free center. Amulet2/Belt/Ring stay center-only.")]
     public ToggleNode CenterSpecialty { get; set; } = new ToggleNode(true);
 
-    [Menu("Treasure Anchors",
-        "Alert-only: when the board has strong Treasure Anchors, highlight those borders. " +
-        "Does not lock cells or save charts. Default on.")]
+    [Menu("Treasure Anchors", "Highlight strong Treasure Anchor borders only. Default on.")]
     public ToggleNode TreasureAnchors { get; set; } = new ToggleNode(true);
 
-    [Menu("Infinite Lanterns",
-        "Alert-only: when the board has at least two Infinite Lanterns borders, highlight them (like treasure anchors). " +
-        "Does not lock cells or save charts. Default off.")]
+    [Menu("Infinite Lanterns", "Highlight boards with 2+ Infinite Lantern borders. Default off.")]
     public ToggleNode InfiniteLanterns { get; set; } = new ToggleNode(false);
 
-    [Menu("Save Kishara",
-        "Max Kishara's Rest charts held out of the solver (0 = place at most one boss in the voyage).")]
+    [Menu("Save Kishara", "Hold count (0 = place at most one).")]
     public RangeNode<int> SaveKishara { get; set; } =
         new RangeNode<int>(ChartIds.MaxSavedKishara, 0, ChartIds.MaxSaveCap);
 
-    [Menu("Save No Equipment",
-        "Max No Equipment Drops charts held out of the solver (0 = off).")]
+    [Menu("Save No Equipment", "Hold count (0 = off).")]
     public RangeNode<int> SaveNoEquipment { get; set; } =
         new RangeNode<int>(ChartIds.MaxSavedNoEquipment, 0, ChartIds.MaxSaveCap);
 
-    [Menu("Save Fractured",
-        "Max Fractured-item charts held out of the solver (0 = off).")]
+    [Menu("Save Fractured", "Hold count (0 = off).")]
     public RangeNode<int> SaveFractured { get; set; } =
         new RangeNode<int>(ChartIds.MaxSavedFractured, 0, ChartIds.MaxSaveCap);
 
-    [Menu("Save Golden Lanterns",
-        "Max Adjacent Golden Lanterns charts held out of the solver (0 = off). Prefers Tee (3 connections) over dead end, long, and cross.")]
+    [Menu("Save Golden Lanterns", "Hold count (0 = off). Prefers Tee shapes.")]
     public RangeNode<int> SaveGoldenLanterns { get; set; } =
         new RangeNode<int>(ChartIds.MaxSavedGoldenLanterns, 0, ChartIds.MaxSaveCap);
 
-    [Menu("Save Pantheon", "Max Pantheon charts held out of the solver (0 = off).")]
+    [Menu("Save Pantheon", "Hold count (0 = off).")]
     public RangeNode<int> SavePantheon { get; set; } =
         new RangeNode<int>(ChartIds.MaxSavedPantheon, 0, ChartIds.MaxSaveCap);
 
-    [Menu("Save Soul Eater", "Max Soul Eater charts held out of the solver (0 = off).")]
+    [Menu("Save Soul Eater", "Hold count (0 = off).")]
     public RangeNode<int> SaveSoulEater { get; set; } =
         new RangeNode<int>(ChartIds.MaxSavedSoulEater, 0, ChartIds.MaxSaveCap);
 
-    [Menu("Save Rare Fracture",
-        "Max Rare Fracture charts held out of the solver (0 = off).")]
+    [Menu("Save Rare Fracture", "Hold count (0 = off).")]
     public RangeNode<int> SaveRareFracture { get; set; } =
         new RangeNode<int>(ChartIds.MaxSavedRareFracture, 0, ChartIds.MaxSaveCap);
 
-    [Menu("Save Rare Possessed",
-        "Max Possessed-monster charts held out of the solver (0 = off).")]
+    [Menu("Save Rare Possessed", "Hold count (0 = off).")]
     public RangeNode<int> SaveRarePossessed { get; set; } =
         new RangeNode<int>(ChartIds.MaxSavedRarePossessed, 0, ChartIds.MaxSaveCap);
 
-    [Menu("Save Starfish",
-        "Max Starfish charts held out of the solver (0 = off). " +
-        "Lowest-priority save: runs after Rare Monsters residual (boxes > starfish > rare T2), " +
-        "so it only keeps starfish that stronger rules left behind. Default 2.")]
+    [Menu("Save Starfish", "Hold count (0 = off). Lowest priority; default 2.")]
     public RangeNode<int> SaveStarfish { get; set; } =
         new RangeNode<int>(ChartIds.MaxSavedStarfish, 0, ChartIds.MaxSaveCap);
 
-    [Menu("Save Unique Amulet 2",
-        "Max Unique Amulet2 charts held out of the solver (0 = off). " +
-        "Runs after Save Starfish. Default 0.")]
+    [Menu("Save Unique Amulet 2", "Hold count (0 = off). Default 0.")]
     public RangeNode<int> SaveUniqueAmulet2 { get; set; } =
         new RangeNode<int>(ChartIds.MaxSavedUniqueAmulet2, 0, ChartIds.MaxSaveCap);
 
-    [Menu("Save Unique Amulet 1",
-        "Max Unique Amulet1 charts held out of the solver (0 = off). " +
-        "Runs after Save Unique Amulet 2. Default 0.")]
+    [Menu("Save Unique Amulet 1", "Hold count (0 = off). Default 0.")]
     public RangeNode<int> SaveUniqueAmulet1 { get; set; } =
         new RangeNode<int>(ChartIds.MaxSavedUniqueAmulet1, 0, ChartIds.MaxSaveCap);
 
@@ -798,19 +749,16 @@ public class VoyageBorderModifier
     public TextNode Id { get; set; } = new TextNode("");    
     public TextNode Abbreviation { get; set; } = new TextNode("");
 
-    [Menu(null, "For per-connection borders this is the multiplier per single connection: effective = 1 + (multiplier - 1) x connections")]
+    [Menu(null, "Per-connection: effective = 1 + (mult - 1) × connections.")]
     public RangeNode<float> ValueMultiplier { get; set; } = new RangeNode<float>(1, 0, 10);
 
-    [Menu(null, "Comma-separated reward categories this border boosts (e.g. 'Monsters, RareMonsters'). " +
-                "'All' matches every chart modifier, 'None' makes the border inert for scoring (flat value). " +
-                "Empty = All (legacy behavior). Categories: Monsters, MagicMonsters, RareMonsters, Essences, Strongboxes, " +
-                "Uniques, Currency, Scarabs, Gold, Equipment, Experience, Resources, Lanterns, Rarity")]
+    [Menu(null, "Comma-separated tags this border boosts. All / None / empty=All.")]
     public TextNode Tags { get; set; } = new TextNode("");
 
-    [Menu("Per connection", "Multiplier scales with the connection count of the chart placed on the affected tile ('... per Chart connection' borders)")]
+    [Menu("Per connection", "Scale with the chart's connection count on that tile.")]
     public ToggleNode PerConnection { get; set; } = new ToggleNode(false);
 
-    [Menu("Affects placed chart", "Multiplies the modifiers of the chart placed on the adjacent tile (e.g. 'increased effect of adjacent Charts', chart refunds) instead of rewards landing on that tile")]
+    [Menu("Affects placed chart", "Multiply the chart on the tile, not loot landing there.")]
     public ToggleNode AffectsPlacedChart { get; set; } = new ToggleNode(false);
 
     public ColorNode HighlightColor { get; set; } = Color.Cyan;
@@ -830,9 +778,7 @@ public class VoyageChartModifier
     public RangeNode<float> Weight { get; set; } = new RangeNode<float>(0, 0, 100);
     public ToggleNode IsGlobal { get; set; } = new ToggleNode(false);
 
-    [Menu(null, "Comma-separated reward categories this modifier's reward belongs to. Empty/'None' = " +
-                "not boosted by any category-specific border (only by 'All' borders). Categories: Monsters, MagicMonsters, " +
-                "RareMonsters, Essences, Strongboxes, Uniques, Currency, Scarabs, Gold, Equipment, Experience, Resources, Lanterns, Rarity")]
+    [Menu(null, "Comma-separated tags for this chart reward. Empty/None = only All borders boost it.")]
     public TextNode Tags { get; set; } = new TextNode("");
 
     public ColorNode HighlightColor { get; set; } = Color.Violet;

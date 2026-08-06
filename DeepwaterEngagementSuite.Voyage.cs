@@ -517,7 +517,7 @@ public partial class DeepwaterEngagementSuite
                     continue;
 
                 var matchingSetting = FindBorderSetting(borderMod.Id, borderMod.DisplayText);
-                var text = FormatBorderOverlayLabel(borderMod, matchingSetting);
+                var text = FormatBorderOverlayLabel(borderMod);
                 var color = ChartPredicates.BorderIdOrDisplayMatches(
                         borderMod.Id, ChartIds.RareDivine, ChartIds.RareDivineDisplayHint)
                     ? Color.HotPink
@@ -695,24 +695,11 @@ public partial class DeepwaterEngagementSuite
         border.Source.StartsWith("UI", StringComparison.OrdinalIgnoreCase);
 
     
-    private static string FormatBorderOverlayLabel(
-        BorderModRef border,
-        VoyageBorderModifier matchingSetting)
+    private static string FormatBorderOverlayLabel(BorderModRef border)
     {
-        string text;
-        if (matchingSetting?.Abbreviation.Value is { Length: > 0 } abbv)
-            text = abbv;
-        else if (!string.IsNullOrEmpty(border.Id) &&
-                 border.Id.StartsWith("DeepwaterBorder", StringComparison.Ordinal))
-            text = border.Id["DeepwaterBorder".Length..];
-        else if (!string.IsNullOrEmpty(border.Id))
-            text = border.Id;
-        else
-            text = border.Label;
-
+        var text = !string.IsNullOrEmpty(border?.Id) ? border.Id : border?.Label ?? "";
         if (IsUiBorderSource(border))
             text = $"T!{text}!!";
-
         return text;
     }
 

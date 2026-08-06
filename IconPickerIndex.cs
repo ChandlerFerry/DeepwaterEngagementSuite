@@ -28,6 +28,7 @@ public enum IconPickerIndex
     AltarOctopus,
     AltarPufferFish,
     AltarCoral,
+    AltarFish,
     AltarUnknown,
     TormentedSpiritEncounter,
     LanternReplenishEncounter,

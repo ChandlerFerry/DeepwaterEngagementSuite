@@ -160,6 +160,7 @@ public partial class DeepwaterEngagementSuite
         IconPickerIndex.AltarOctopus or
         IconPickerIndex.AltarPufferFish or
         IconPickerIndex.AltarCoral or
+        IconPickerIndex.AltarFish or
         IconPickerIndex.AltarUnknown or
         IconPickerIndex.TormentedSpiritEncounter or
         IconPickerIndex.LanternReplenishEncounter or

@@ -231,6 +231,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
             var p when p.Contains("DeepwaterAltarOctopus", StringComparison.Ordinal) => IconPickerIndex.AltarOctopus,
             var p when p.Contains("DeepwaterAltarPufferFish", StringComparison.Ordinal) => IconPickerIndex.AltarPufferFish,
             var p when p.Contains("DeepwaterAltarCoral", StringComparison.Ordinal) => IconPickerIndex.AltarCoral,
+            var p when p.Contains("DeepwaterAltarFish", StringComparison.Ordinal) => IconPickerIndex.AltarFish,
             var p when p.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterAltar", StringComparison.Ordinal) => IconPickerIndex.AltarUnknown,
             var p when p.Contains("DeepwaterTormentedSpiritEncounter", StringComparison.Ordinal) => IconPickerIndex.TormentedSpiritEncounter,
             var p when p.Contains("DeepwaterLanternReplenishEncounter", StringComparison.Ordinal) => IconPickerIndex.LanternReplenishEncounter,
@@ -1263,6 +1264,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
         IconPickerIndex.AltarOctopus => "Altar (Octopus)",
         IconPickerIndex.AltarPufferFish => "Altar (Puffer Fish)",
         IconPickerIndex.AltarCoral => "Altar (Coral)",
+        IconPickerIndex.AltarFish => "Altar (Fish)",
         IconPickerIndex.AltarUnknown => "Altar (Unknown)",
         IconPickerIndex.TormentedSpiritEncounter => "Tormented Spirit",
         IconPickerIndex.LanternReplenishEncounter => "Lantern Replenish",
@@ -1296,6 +1298,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
                 IconPickerIndex.AltarCrab or
                 IconPickerIndex.AltarPufferFish or
                 IconPickerIndex.AltarCoral or
+                IconPickerIndex.AltarFish or
                 IconPickerIndex.AltarUnknown or
                 IconPickerIndex.DeadMansSulphurSmall or
                 IconPickerIndex.DeadMansSulphurBase or

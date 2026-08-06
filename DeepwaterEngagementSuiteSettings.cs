@@ -44,11 +44,13 @@ public class DeepwaterEngagementSuiteSettings : ISettings
     public const MapIconsIndex DefaultAltarOctopusIcon = DefaultAltarIcon;
     public const MapIconsIndex DefaultAltarPufferFishIcon = DefaultAltarIcon;
     public const MapIconsIndex DefaultAltarCoralIcon = DefaultAltarIcon;
+    public const MapIconsIndex DefaultAltarFishIcon = DefaultAltarIcon;
     public const MapIconsIndex DefaultAltarUnknownIcon = DefaultAltarIcon;
     public static readonly Color AltarCrabTint = new Color(255, 255, 255);
     public static readonly Color AltarPufferFishTint = new Color(255, 20, 180);
     public static readonly Color AltarOctopusTint = new Color(160, 100, 50);
     public static readonly Color AltarCoralTint = new Color(60, 140, 255);
+    public static readonly Color AltarFishTint = new Color(255, 220, 40);
     public static readonly Color UnknownAltarTint = new Color(80, 220, 100);
     public const MapIconsIndex DefaultTormentedSpiritEncounterIcon = MapIconsIndex.LootFilterSmallGreenCircle;
     public const MapIconsIndex DefaultLanternReplenishEncounterIcon = MapIconsIndex.BlightPortalFire;
@@ -118,6 +120,7 @@ public class DeepwaterEngagementSuiteSettings : ISettings
         IconPickerIndex.AltarOctopus => DefaultAltarOctopusIcon,
         IconPickerIndex.AltarPufferFish => DefaultAltarPufferFishIcon,
         IconPickerIndex.AltarCoral => DefaultAltarCoralIcon,
+        IconPickerIndex.AltarFish => DefaultAltarFishIcon,
         IconPickerIndex.AltarUnknown => DefaultAltarUnknownIcon,
         IconPickerIndex.TormentedSpiritEncounter => DefaultTormentedSpiritEncounterIcon,
         IconPickerIndex.LanternReplenishEncounter => DefaultLanternReplenishEncounterIcon,
@@ -141,6 +144,7 @@ public class DeepwaterEngagementSuiteSettings : ISettings
         IconPickerIndex.AltarPufferFish => AltarPufferFishTint,
         IconPickerIndex.AltarOctopus => AltarOctopusTint,
         IconPickerIndex.AltarCoral => AltarCoralTint,
+        IconPickerIndex.AltarFish => AltarFishTint,
         IconPickerIndex.AltarUnknown => UnknownAltarTint,
         IconPickerIndex.PointerTarget => Color.White,
         _ => null,
@@ -150,7 +154,7 @@ public class DeepwaterEngagementSuiteSettings : ISettings
     {
         IconPickerIndex.CurrencyTreasureChestOpulent => 2.0f,
         IconPickerIndex.InfusedCoralEncounter => 2.5f,
-        IconPickerIndex.AltarCrab or IconPickerIndex.AltarOctopus or IconPickerIndex.AltarPufferFish or IconPickerIndex.AltarCoral or IconPickerIndex.AltarUnknown => 3.0f,
+        IconPickerIndex.AltarCrab or IconPickerIndex.AltarOctopus or IconPickerIndex.AltarPufferFish or IconPickerIndex.AltarCoral or IconPickerIndex.AltarFish or IconPickerIndex.AltarUnknown => 3.0f,
         IconPickerIndex.DeadMansSulphurSmall => 0.5f,
         _ => 1f,
     };
@@ -241,6 +245,9 @@ public class IconSettings
     [Menu("Show Altar (Coral) icons")]
     public ToggleNode ShowAltarCoralIcons { get; set; } = new ToggleNode(true);
 
+    [Menu("Show Altar (Fish) icons")]
+    public ToggleNode ShowAltarFishIcons { get; set; } = new ToggleNode(true);
+
     [Menu("Show unknown Altar icons", "Any DeepwaterAltar* path not listed by name above.")]
     public ToggleNode ShowAltarUnknownIcons { get; set; } = new ToggleNode(true);
 
@@ -300,6 +307,7 @@ public class IconSettings
         IconPickerIndex.AltarOctopus => ShowAltarOctopusIcons.Value,
         IconPickerIndex.AltarPufferFish => ShowAltarPufferFishIcons.Value,
         IconPickerIndex.AltarCoral => ShowAltarCoralIcons.Value,
+        IconPickerIndex.AltarFish => ShowAltarFishIcons.Value,
         IconPickerIndex.AltarUnknown => ShowAltarUnknownIcons.Value,
         IconPickerIndex.TormentedSpiritEncounter => ShowTormentedSpiritIcons.Value,
         IconPickerIndex.LanternReplenishEncounter => ShowLanternReplenishIcons.Value,
@@ -386,6 +394,8 @@ public class TrailColorSettings
     public ColorNode AltarPufferFish { get; set; } = new Color(255, 20, 180, 255);
     public ToggleNode ShowAltarCoral { get; set; } = new ToggleNode(true);
     public ColorNode AltarCoral { get; set; } = new Color(60, 140, 255, 255);
+    public ToggleNode ShowAltarFish { get; set; } = new ToggleNode(true);
+    public ColorNode AltarFish { get; set; } = new Color(255, 220, 40, 255);
     public ToggleNode ShowAltarUnknown { get; set; } = new ToggleNode(true);
     public ColorNode AltarUnknown { get; set; } = new Color(80, 220, 100, 255);
     public ToggleNode ShowTormentedSpirit { get; set; } = new ToggleNode(true);
@@ -421,6 +431,7 @@ public class TrailColorSettings
         IconPickerIndex.AltarOctopus => ShowAltarOctopus.Value,
         IconPickerIndex.AltarPufferFish => ShowAltarPufferFish.Value,
         IconPickerIndex.AltarCoral => ShowAltarCoral.Value,
+        IconPickerIndex.AltarFish => ShowAltarFish.Value,
         IconPickerIndex.AltarUnknown => ShowAltarUnknown.Value,
         IconPickerIndex.TormentedSpiritEncounter => ShowTormentedSpirit.Value,
         IconPickerIndex.LanternReplenishEncounter => ShowLanternReplenish.Value,
@@ -452,6 +463,7 @@ public class TrailColorSettings
         IconPickerIndex.AltarOctopus => AltarOctopus.Value,
         IconPickerIndex.AltarPufferFish => AltarPufferFish.Value,
         IconPickerIndex.AltarCoral => AltarCoral.Value,
+        IconPickerIndex.AltarFish => AltarFish.Value,
         IconPickerIndex.AltarUnknown => AltarUnknown.Value,
         IconPickerIndex.TormentedSpiritEncounter => TormentedSpirit.Value,
         IconPickerIndex.LanternReplenishEncounter => LanternReplenish.Value,

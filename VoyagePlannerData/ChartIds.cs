@@ -42,8 +42,6 @@ public static class ChartIds
     public const int MaxSavedStarfish = 2;
     public const int MaxSavedRareVoyage = 5;
     public const int MaxSavedPelagic = 2;
-    public const int MaxSavedUniqueAmulet2 = 1;
-    public const int MaxSavedClamsForAmulet = 3;
     
     public const int MaxSaveCap = 60;
     
@@ -58,13 +56,13 @@ public static class ChartIds
     public const int MaxSavedSoulEater = 0;
     public const int MaxSavedRareFracture = MaxSavedDefault;
     public const int MaxSavedRarePossessed = MaxSavedDefault;
+    public const int MaxSavedUniqueAmulet2 = 0;
+    public const int MaxSavedUniqueAmulet1 = 0;
 
     public const string PelagicRoomName = "Pelagic Abyss";
     public const string ClamRoomName = "Clam-infested Shelf";
     public const string AnchorfieldRoomName = "Anchorfield";
     public const string KisharaRoomName = "Kishara's Rest";
-
-    public const double ClamAdjacentToAmuletMultiplier = 1_000_000d;
 
     public static readonly (int Row, int Col)[] SacrificeCorners = [(2, 0), (2, 2), (0, 2)];
     public static readonly (int Dr, int Dc)[] Ortho = [(1, 0), (-1, 0), (0, 1), (0, -1)];

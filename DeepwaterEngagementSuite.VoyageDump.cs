@@ -235,8 +235,6 @@ public partial class DeepwaterEngagementSuite
             .ToDictionary(g => g.Key, g => g.First());
         var result = new VoyageStateDump.PlacementDump
         {
-            AmuletClamHubActive = placement.AmuletClamHubActive,
-            PreferClamsAdjacentToAmulet = placement.PreferClamsAdjacentToAmulet,
             NoConsumeActive = placement.NoConsumeActive,
             ActiveStrategies = placement.ActiveStrategies?.ToList() ?? new List<string>(),
             RemainingPieceIds = placement.Pieces.Select(p => p.Id).ToList(),

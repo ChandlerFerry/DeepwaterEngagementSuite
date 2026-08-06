@@ -584,20 +584,29 @@ public partial class DeepwaterEngagementSuite
         if (names.Count == 0)
             return;
 
-        var clear = tree.ClearButton;
-        if (clear == null)
+        Element target;
+        try
+        {
+            target = tree.GetChildFromIndices(3, 7);
+        }
+        catch
+        {
+            return;
+        }
+
+        if (target is not { IsValid: true })
             return;
 
-        var rect = clear.GetClientRectCache;
+        var rect = target.GetClientRectCache;
         if (rect.Width <= 0 || rect.Height <= 0)
             return;
 
-        var pos = new Vector2(rect.Center.X, rect.Top);
+        var pos = rect.Center.ToVector2Num();
         foreach (var name in names)
         {
-            var size = Graphics.MeasureText(name);
-            pos.Y -= size.Y;
-            Graphics.DrawTextWithBackground(name, pos, StrategyDisplayColor(name), FontAlign.Center, Color.Black);
+            var size = Graphics.DrawTextWithBackground(
+                name, pos, StrategyDisplayColor(name), FontAlign.Center, Color.Black);
+            pos.Y += size.Y;
         }
     }
 
@@ -1339,14 +1348,14 @@ public partial class DeepwaterEngagementSuite
             savedBits.Add($"{placement.SavedPelagicCount} Pelagic");
         if (placement.SavedFarmCount > 0)
             savedBits.Add($"{placement.SavedFarmCount} Anchorfield");
-        if (placement.SavedClamCount > 0)
-            savedBits.Add($"{placement.SavedClamCount} Clam");
-        if (placement.SavedUniqueAmuletCount > 0)
-            savedBits.Add($"{placement.SavedUniqueAmuletCount} Unique Amulet2");
         if (placement.SavedUniqueBeltCount > 0)
             savedBits.Add($"{placement.SavedUniqueBeltCount} Unique Belt");
         if (placement.SavedUniqueRingCount > 0)
             savedBits.Add($"{placement.SavedUniqueRingCount} Unique Ring");
+        if (placement.SavedUniqueAmulet2Count > 0)
+            savedBits.Add($"{placement.SavedUniqueAmulet2Count} Unique Amulet2");
+        if (placement.SavedUniqueAmulet1Count > 0)
+            savedBits.Add($"{placement.SavedUniqueAmulet1Count} Unique Amulet1");
         if (placement.SavedStrongboxCount > 0)
             savedBits.Add($"{placement.SavedStrongboxCount} boxes");
         if (placement.SavedOperativeBoxCount > 0)

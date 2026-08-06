@@ -38,9 +38,7 @@ public sealed class VoyageSolve
             Puzzle = new VoyagePuzzle(
                 Placement.Pieces,
                 tileBorders,
-                locks,
-                AllowSacrificeCornerBorderDeadEnds: Placement.AmuletClamHubActive,
-                PreferClamsAdjacentToAmulet: Placement.PreferClamsAdjacentToAmulet);
+                locks);
             Scorer = new VoyageScorer(Puzzle);
 
             VoyageSolutionResult last = null;

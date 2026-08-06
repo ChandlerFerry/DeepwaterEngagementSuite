@@ -625,13 +625,6 @@ public class VoyageSettings
 [Submenu(CollapsedByDefault = true)]
 public class VoyageStrategySettings
 {
-    [Menu("Amulet + Clams hub",
-        "On: hard-lock Clams on orthogonal neighbors of center Unique Amulet2 " +
-        "(2 when the amulet has 1–2 connections, 3 when 3–4) and hold spare amulet/clams for the combo. " +
-        "Skipped when strong treasure or orbs are present. " +
-        "Off: still put Unique Amulet2 on center only and soft-prioritize Clams on its neighbors.")]
-    public ToggleNode UniqueAmuletClamCross { get; set; } = new ToggleNode(true);
-
     [Menu("Rare Monsters Drop X",
         "Lock Pelagic Abyss on Divine/Annul/Ancient orb tiles (save unused Pelagic otherwise). " +
         "Divine neighbors: boxes then starfish/rare combo; Annul/Ancient: strongbox ranks 4–6 (second set of 3) then starfish/rare. " +
@@ -641,7 +634,7 @@ public class VoyageStrategySettings
     public ToggleNode RareMonstersDrop { get; set; } = new ToggleNode(true);
 
     [Menu("No-consume farm",
-        "Lock Soul Eater, then Anchorfield (or surplus Clams) on strong no-consume tiles when no higher strategy applies, " +
+        "Lock Soul Eater, then Anchorfield (or Clams) on strong no-consume tiles when no higher strategy applies, " +
         "and hold unused Anchorfield charts for later. " +
         "Save Soul Eater holds them out instead of placing them.")]
     public ToggleNode NoConsumeAnchorfield { get; set; } = new ToggleNode(true);
@@ -707,8 +700,19 @@ public class VoyageStrategySettings
     public RangeNode<int> SaveStarfish { get; set; } =
         new RangeNode<int>(ChartIds.MaxSavedStarfish, 0, ChartIds.MaxSaveCap);
 
+    [Menu("Save Unique Amulet 2",
+        "Max Unique Amulet2 charts held out of the solver (0 = off). " +
+        "Runs after Save Starfish. Default 0.")]
+    public RangeNode<int> SaveUniqueAmulet2 { get; set; } =
+        new RangeNode<int>(ChartIds.MaxSavedUniqueAmulet2, 0, ChartIds.MaxSaveCap);
+
+    [Menu("Save Unique Amulet 1",
+        "Max Unique Amulet1 charts held out of the solver (0 = off). " +
+        "Runs after Save Unique Amulet 2. Default 0.")]
+    public RangeNode<int> SaveUniqueAmulet1 { get; set; } =
+        new RangeNode<int>(ChartIds.MaxSavedUniqueAmulet1, 0, ChartIds.MaxSaveCap);
+
     public VoyageStrategyOptions ToOptions() => new(
-        UniqueAmuletClamCross: UniqueAmuletClamCross.Value,
         RareMonstersDrop: RareMonstersDrop.Value,
         NoConsumeAnchorfield: NoConsumeAnchorfield.Value,
         CenterSpecialty: CenterSpecialty.Value,
@@ -722,7 +726,9 @@ public class VoyageStrategySettings
         SaveSoulEater: SaveSoulEater.Value,
         SaveRareFracture: SaveRareFracture.Value,
         SaveRarePossessed: SaveRarePossessed.Value,
-        SaveStarfish: SaveStarfish.Value);
+        SaveStarfish: SaveStarfish.Value,
+        SaveUniqueAmulet2: SaveUniqueAmulet2.Value,
+        SaveUniqueAmulet1: SaveUniqueAmulet1.Value);
 }
 
 [Submenu(CollapsedByDefault = true)]

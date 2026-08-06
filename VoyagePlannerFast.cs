@@ -269,9 +269,6 @@ public class VoyagePlannerFast
             }
         }
 
-        if (puzzle.PreferClamsAdjacentToAmulet)
-            ApplyClamAdjacentToAmuletPreference(pieces, weight);
-
         ApplyLocks(puzzle, pieces, weight, eligible, rotation);
 
         if (puzzle.AllowSacrificeCornerBorderDeadEnds)
@@ -465,32 +462,6 @@ public class VoyagePlannerFast
                         rotation[i][slot] = (byte)rot;
                     eligible[i][cell] |= 1;
                 }
-            }
-        }
-    }
-
-    private static void ApplyClamAdjacentToAmuletPreference(List<MapPiece> pieces, double[][] weight)
-    {
-        var mult = VoyagePlacementRules.ClamAdjacentToAmuletMultiplier;
-        var adj = new bool[Cells];
-        foreach (var (_, dr, dc) in Dirs)
-        {
-            var nr = VoyagePlacementRules.CenterRow + dr;
-            var nc = VoyagePlacementRules.CenterCol + dc;
-            if (nr is < 0 or >= GridSize || nc is < 0 or >= GridSize)
-                continue;
-            adj[nr * GridSize + nc] = true;
-        }
-
-        for (var i = 0; i < pieces.Count; i++)
-        {
-            if (!VoyagePlacementRules.IsClamChart(pieces[i]))
-                continue;
-            for (var cell = 0; cell < Cells; cell++)
-            {
-                if (!adj[cell] || double.IsNegativeInfinity(weight[i][cell]))
-                    continue;
-                weight[i][cell] = (Math.Max(0, weight[i][cell]) + 1.0) * mult;
             }
         }
     }

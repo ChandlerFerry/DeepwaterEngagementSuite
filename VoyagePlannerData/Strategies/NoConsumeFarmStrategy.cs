@@ -11,7 +11,7 @@ public sealed class NoConsumeFarmLockStrategy : IVoyageStrategy
 
     public void Apply(PlacementContext ctx)
     {
-        if (ctx.StrongTreasure || ctx.HasOrbs || ctx.AmuletCrossLocked)
+        if (ctx.StrongTreasure || ctx.HasOrbs)
             return;
 
         foreach (var cell in ChartPredicates.EnumerateCells().Where(c =>
@@ -19,9 +19,8 @@ public sealed class NoConsumeFarmLockStrategy : IVoyageStrategy
                      ChartPredicates.IsStrongNoConsume(ctx.BordersAt(c.Row, c.Col))))
         {
             var farm = ctx.TakeBest(ChartPredicates.IsSoulEaterChart, ChartPredicates.SoulEaterScore)
-                       ?? ctx.TakeBest(ChartPredicates.IsAnchorfieldChart, ChartPredicates.FarmPriority);
-            if (farm == null && ctx.SurplusClams)
-                farm = ctx.TakeBest(ChartPredicates.IsClamChart, ChartPredicates.ClamScore);
+                       ?? ctx.TakeBest(ChartPredicates.IsAnchorfieldChart, ChartPredicates.FarmPriority)
+                       ?? ctx.TakeBest(ChartPredicates.IsClamChart, ChartPredicates.ClamScore);
             if (farm == null)
                 break;
             ctx.LockCell(cell.Row, cell.Col, farm,

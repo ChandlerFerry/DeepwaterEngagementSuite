@@ -22,12 +22,6 @@ public sealed class ActiveStrategyLabelsStrategy : IVoyageStrategy
 
         if (ctx.PelagicLocked)
             ctx.ActiveStrategies.Add("Pelagic");
-        if (ctx.AmuletCrossLocked)
-            ctx.ActiveStrategies.Add("Amulet Hub");
-        else if (ctx.PreferClamsAdjacentToAmulet)
-            ctx.ActiveStrategies.Add("Amulet Soft");
-        else if (ctx.AmuletCenterLocked)
-            ctx.ActiveStrategies.Add("Amulet");
         if (ctx.NoConsumeActive)
             ctx.ActiveStrategies.Add("No-consume");
     }

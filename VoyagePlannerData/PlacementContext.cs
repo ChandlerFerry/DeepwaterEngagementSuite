@@ -42,8 +42,6 @@ public sealed class PlacementContext
             .OrderByDescending(x => x.Priority)
             .ToList();
 
-        ClamCountAtStart = Working.Count(p => !UsedPieceIds.Contains(p.Id) && ChartPredicates.IsClamChart(p));
-        SurplusClams = ClamCountAtStart > ChartIds.MaxSavedClamsForAmulet;
         HasOrbs = OrbCenters.Count > 0;
         StrongTreasure = ChartPredicates.BoardHasStrongTreasureAnchors(tileBorders);
     }
@@ -63,14 +61,9 @@ public sealed class PlacementContext
     public List<(int Row, int Col)> AncientCenters { get; }
     public List<(int Row, int Col, int Priority)> OrbCenters { get; }
 
-    public int ClamCountAtStart { get; }
-    public bool SurplusClams { get; }
     public bool HasOrbs { get; }
     public bool StrongTreasure { get; }
 
-    public bool AmuletCrossLocked { get; set; }
-    public bool PreferClamsAdjacentToAmulet { get; set; }
-    public bool AmuletCenterLocked { get; set; }
     public bool PelagicLocked { get; set; }
     public bool NoConsumeActive { get; set; }
 

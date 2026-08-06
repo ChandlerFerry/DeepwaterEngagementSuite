@@ -2,7 +2,6 @@ namespace DeepwaterEngagementSuite.VoyagePlannerData;
 
 
 public sealed record VoyageStrategyOptions(
-    bool UniqueAmuletClamCross = true,
     bool RareMonstersDrop = true,
     bool NoConsumeAnchorfield = true,
     bool CenterSpecialty = true,
@@ -16,9 +15,9 @@ public sealed record VoyageStrategyOptions(
     int SaveSoulEater = ChartIds.MaxSavedSoulEater,
     int SaveRareFracture = ChartIds.MaxSavedRareFracture,
     int SaveRarePossessed = ChartIds.MaxSavedRarePossessed,
-    
-    
-    int SaveStarfish = ChartIds.MaxSavedStarfish)
+    int SaveStarfish = ChartIds.MaxSavedStarfish,
+    int SaveUniqueAmulet2 = ChartIds.MaxSavedUniqueAmulet2,
+    int SaveUniqueAmulet1 = ChartIds.MaxSavedUniqueAmulet1)
 {
     public static VoyageStrategyOptions AllEnabled { get; } = new();
 }

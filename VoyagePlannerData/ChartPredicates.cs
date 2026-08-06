@@ -306,16 +306,6 @@ public static class ChartPredicates
         return best;
     }
 
-    public static int ClamHubCountForAmulet(MapPiece amulet2)
-    {
-        var connections = amulet2.BaseConnections.CountConnections();
-        if (connections <= 0)
-            return 0;
-        if (connections <= 2)
-            return 2;
-        return ChartIds.MaxSavedClamsForAmulet;
-    }
-
     public static bool TrySpecialtyRoomLabel(string roomName, out string label)
     {
         label = null;

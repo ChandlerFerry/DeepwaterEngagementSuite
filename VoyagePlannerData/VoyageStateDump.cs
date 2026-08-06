@@ -122,7 +122,6 @@ public sealed class VoyageStateDump
 
     public sealed class StrategyOptionsDump
     {
-        public bool UniqueAmuletClamCross { get; set; } = true;
         public bool RareMonstersDrop { get; set; } = true;
         public bool NoConsumeAnchorfield { get; set; } = true;
         public bool CenterSpecialty { get; set; } = true;
@@ -137,13 +136,14 @@ public sealed class VoyageStateDump
         public int SaveRareFracture { get; set; } = ChartIds.MaxSavedRareFracture;
         public int SaveRarePossessed { get; set; } = ChartIds.MaxSavedRarePossessed;
         public int SaveStarfish { get; set; } = ChartIds.MaxSavedStarfish;
+        public int SaveUniqueAmulet2 { get; set; } = ChartIds.MaxSavedUniqueAmulet2;
+        public int SaveUniqueAmulet1 { get; set; } = ChartIds.MaxSavedUniqueAmulet1;
 
         public static StrategyOptionsDump From(VoyageStrategyOptions o)
         {
             o ??= VoyageStrategyOptions.AllEnabled;
             return new StrategyOptionsDump
             {
-                UniqueAmuletClamCross = o.UniqueAmuletClamCross,
                 RareMonstersDrop = o.RareMonstersDrop,
                 NoConsumeAnchorfield = o.NoConsumeAnchorfield,
                 CenterSpecialty = o.CenterSpecialty,
@@ -158,11 +158,12 @@ public sealed class VoyageStateDump
                 SaveRareFracture = o.SaveRareFracture,
                 SaveRarePossessed = o.SaveRarePossessed,
                 SaveStarfish = o.SaveStarfish,
+                SaveUniqueAmulet2 = o.SaveUniqueAmulet2,
+                SaveUniqueAmulet1 = o.SaveUniqueAmulet1,
             };
         }
 
         public VoyageStrategyOptions ToOptions() => new(
-            UniqueAmuletClamCross,
             RareMonstersDrop,
             NoConsumeAnchorfield,
             CenterSpecialty,
@@ -176,7 +177,9 @@ public sealed class VoyageStateDump
             SaveSoulEater,
             SaveRareFracture,
             SaveRarePossessed,
-            SaveStarfish);
+            SaveStarfish,
+            SaveUniqueAmulet2,
+            SaveUniqueAmulet1);
     }
 
     public sealed class SolverSettingsDump
@@ -206,8 +209,6 @@ public sealed class VoyageStateDump
         public List<int> RemainingPieceIds { get; set; } = [];
         public List<string> ActiveStrategies { get; set; } = [];
         public Dictionary<string, int> SavedCounts { get; set; } = new();
-        public bool AmuletClamHubActive { get; set; }
-        public bool PreferClamsAdjacentToAmulet { get; set; }
         public bool NoConsumeActive { get; set; }
 
         

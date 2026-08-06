@@ -18,8 +18,9 @@ public static class PlacementPipeline
         
         
         new SaveStarfishStrategy(),
+        new SaveUniqueAmulet2Strategy(),
+        new SaveUniqueAmulet1Strategy(),
 
-        new AmuletClamHubStrategy(),
         new RareMonstersDropLockStrategy(),
         new CenterSpecialtyLockStrategy(),
         new NoConsumeFarmLockStrategy(),
@@ -27,7 +28,6 @@ public static class PlacementPipeline
         new NoConsumeFarmSaveStrategy(),
         new RareMonstersDropSaveStrategy(),
         new CenterSpecialtySaveStrategy(),
-        new AmuletClamSaveStrategy(),
         new CenterOnlyJewelrySaveStrategy(),
 
         new ActiveStrategyLabelsStrategy(),

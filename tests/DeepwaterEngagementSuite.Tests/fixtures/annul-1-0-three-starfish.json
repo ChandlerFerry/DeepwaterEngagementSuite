@@ -1645,7 +1645,6 @@
     }
   ],
   "StrategyOptions": {
-    "UniqueAmuletClamCross": true,
     "RareMonstersDrop": true,
     "NoConsumeAnchorfield": true,
     "CenterSpecialty": true,
@@ -1773,8 +1772,6 @@
       "adj. rare T2": 3,
       "voyage rares": 5
     },
-    "AmuletClamHubActive": false,
-    "PreferClamsAdjacentToAmulet": false,
     "NoConsumeActive": false
   },
   "Solution": null

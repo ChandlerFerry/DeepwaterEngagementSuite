@@ -35,26 +35,10 @@ public class VoyageScorer
     private readonly List<double> _globalsScratch = [];
     private readonly Dictionary<ModifierTag, int> _maskIndex;
     private readonly IReadOnlyList<BorderEffect>[] _bordersByCell = new IReadOnlyList<BorderEffect>[CellCount];
-    private readonly bool _preferClamsAdjacentToAmulet;
-    private readonly bool[] _isClamPiece;
-    private readonly bool[] _isUniqueAmulet2Piece;
-    private readonly double _clamAdjacentBonus;
 
     public VoyageScorer(VoyagePuzzle puzzle)
     {
         var pieces = puzzle.AvailablePieces;
-        _preferClamsAdjacentToAmulet = puzzle.PreferClamsAdjacentToAmulet;
-        _isClamPiece = new bool[pieces.Count];
-        _isUniqueAmulet2Piece = new bool[pieces.Count];
-        for (var i = 0; i < pieces.Count; i++)
-        {
-            _isClamPiece[i] = VoyagePlacementRules.IsClamChart(pieces[i]);
-            _isUniqueAmulet2Piece[i] = VoyagePlacementRules.IsUniqueAmulet2Chart(pieces[i]);
-        }
-
-        _clamAdjacentBonus = _preferClamsAdjacentToAmulet
-            ? VoyagePlacementRules.ClamAdjacentToAmuletMultiplier
-            : 0;
 
         var maskIndex = new Dictionary<ModifierTag, int>();
         foreach (var mod in pieces.SelectMany(p => p.Modifiers))
@@ -240,22 +224,6 @@ public class VoyageScorer
                 cellScore += e.Weight * _chartMult[cell][e.MaskIdx][conn[cell]] * s[e.MaskIdx];
             }
 
-            if (_clamAdjacentBonus > 0 && _isClamPiece[piSelf])
-            {
-                foreach (var (dr, dc) in NeighborOffsets)
-                {
-                    var nr = r + dr;
-                    var nc = c + dc;
-                    if (nr < 0 || nr >= GridSize || nc < 0 || nc >= GridSize)
-                        continue;
-                    var neighborPi = _pieceIndex[grid[nr, nc].Piece];
-                    if (!_isUniqueAmulet2Piece[neighborPi])
-                        continue;
-                    cellScore += _clamAdjacentBonus;
-                    break;
-                }
-            }
-
             score += cellScore;
             if (cellsOut != null)
                 cellsOut[r, c] = cellScore;
@@ -325,35 +293,6 @@ public class VoyageScorer
                 {
                     score += e.Weight * _chartMult[cell][e.MaskIdx][conn[cell]] * s[e.MaskIdx];
                 }
-
-                if (_clamAdjacentBonus > 0 && _isClamPiece[pi])
-                {
-                    var hasAmuletNeighbor = false;
-                    var unknownNeighbor = false;
-                    foreach (var (dr, dc) in NeighborOffsets)
-                    {
-                        var nr = r + dr;
-                        var nc = c + dc;
-                        if (nr < 0 || nr >= GridSize || nc < 0 || nc >= GridSize)
-                            continue;
-                        var nCell = nr * GridSize + nc;
-                        if (conn[nCell] < 0)
-                        {
-                            unknownNeighbor = true;
-                            continue;
-                        }
-
-                        var nPi = _pieceIndex[grid[nr, nc].Piece];
-                        if (_isUniqueAmulet2Piece[nPi])
-                        {
-                            hasAmuletNeighbor = true;
-                            break;
-                        }
-                    }
-
-                    if (hasAmuletNeighbor || unknownNeighbor)
-                        score += _clamAdjacentBonus;
-                }
             }
         }
 
@@ -371,19 +310,6 @@ public class VoyageScorer
             var take = Math.Min(remaining, _globalsScratch.Count);
             for (var i = 0; i < take; i++)
                 score += _globalsScratch[i];
-        }
-
-        if (_clamAdjacentBonus > 0 && remaining > 0)
-        {
-            var unusedClams = 0;
-            for (var i = 0; i < pieceUsed.Length; i++)
-            {
-                if (!pieceUsed[i] && _isClamPiece[i])
-                    unusedClams++;
-            }
-
-            var maxClamBonusSlots = Math.Min(4, remaining);
-            score += _clamAdjacentBonus * Math.Min(unusedClams, maxClamBonusSlots);
         }
 
         return score;

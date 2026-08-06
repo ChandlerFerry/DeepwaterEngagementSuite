@@ -18,8 +18,8 @@ public static class SaveCountKeys
     public const string SoulEater = "SoulEater";
     public const string RareFracture = "RareFracture";
     public const string RarePossessed = "RarePossessed";
-    public const string Clam = "Clam";
-    public const string UniqueAmulet = "UniqueAmulet";
     public const string UniqueBelt = "UniqueBelt";
     public const string UniqueRing = "UniqueRing";
+    public const string UniqueAmulet2 = "UniqueAmulet2";
+    public const string UniqueAmulet1 = "UniqueAmulet1";
 }

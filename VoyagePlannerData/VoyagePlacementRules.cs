@@ -43,8 +43,6 @@ public static class VoyagePlacementRules
     public const int MaxSavedStarfish = ChartIds.MaxSavedStarfish;
     public const int MaxSavedRareVoyage = ChartIds.MaxSavedRareVoyage;
     public const int MaxSavedPelagic = ChartIds.MaxSavedPelagic;
-    public const int MaxSavedUniqueAmulet2 = ChartIds.MaxSavedUniqueAmulet2;
-    public const int MaxSavedClamsForAmulet = ChartIds.MaxSavedClamsForAmulet;
     public const int MaxSaveCap = ChartIds.MaxSaveCap;
     public const int MaxSavedDefault = ChartIds.MaxSavedDefault;
     public const int MaxSavedKishara = ChartIds.MaxSavedKishara;
@@ -56,13 +54,13 @@ public static class VoyagePlacementRules
     public const int MaxSavedSoulEater = ChartIds.MaxSavedSoulEater;
     public const int MaxSavedRareFracture = ChartIds.MaxSavedRareFracture;
     public const int MaxSavedRarePossessed = ChartIds.MaxSavedRarePossessed;
+    public const int MaxSavedUniqueAmulet2 = ChartIds.MaxSavedUniqueAmulet2;
+    public const int MaxSavedUniqueAmulet1 = ChartIds.MaxSavedUniqueAmulet1;
 
     public const string PelagicRoomName = ChartIds.PelagicRoomName;
     public const string ClamRoomName = ChartIds.ClamRoomName;
     public const string AnchorfieldRoomName = ChartIds.AnchorfieldRoomName;
     public const string KisharaRoomName = ChartIds.KisharaRoomName;
-
-    public const double ClamAdjacentToAmuletMultiplier = ChartIds.ClamAdjacentToAmuletMultiplier;
 
     public static readonly (int Row, int Col)[] SacrificeCorners = ChartIds.SacrificeCorners;
 
@@ -85,12 +83,10 @@ public static class VoyagePlacementRules
         int SavedSoulEaterCount,
         int SavedRareFractureCount,
         int SavedRarePossessedCount,
-        int SavedClamCount,
-        int SavedUniqueAmuletCount,
         int SavedUniqueBeltCount,
         int SavedUniqueRingCount,
-        bool AmuletClamHubActive = false,
-        bool PreferClamsAdjacentToAmulet = false,
+        int SavedUniqueAmulet2Count,
+        int SavedUniqueAmulet1Count,
         bool NoConsumeActive = false,
         IReadOnlyList<string> ActiveStrategies = null);
 
@@ -126,17 +122,12 @@ public static class VoyagePlacementRules
             ctx.GetSaved(SaveCountKeys.SoulEater),
             ctx.GetSaved(SaveCountKeys.RareFracture),
             ctx.GetSaved(SaveCountKeys.RarePossessed),
-            ctx.GetSaved(SaveCountKeys.Clam),
-            ctx.GetSaved(SaveCountKeys.UniqueAmulet),
             ctx.GetSaved(SaveCountKeys.UniqueBelt),
             ctx.GetSaved(SaveCountKeys.UniqueRing),
-            AmuletClamHubActive: ctx.AmuletCrossLocked,
-            PreferClamsAdjacentToAmulet: ctx.PreferClamsAdjacentToAmulet,
+            ctx.GetSaved(SaveCountKeys.UniqueAmulet2),
+            ctx.GetSaved(SaveCountKeys.UniqueAmulet1),
             NoConsumeActive: ctx.NoConsumeActive,
             ActiveStrategies: ctx.ActiveStrategies);
-
-    public static int ClamHubCountForAmulet(MapPiece amulet2) =>
-        ChartPredicates.ClamHubCountForAmulet(amulet2);
 
     public static bool IsClamChart(MapPiece piece) => ChartPredicates.IsClamChart(piece);
     public static bool IsAnchorfieldChart(MapPiece piece) => ChartPredicates.IsAnchorfieldChart(piece);

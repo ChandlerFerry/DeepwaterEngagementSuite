@@ -447,9 +447,6 @@ public partial class DeepwaterEngagementSuite
         var boardStrongInfiniteLanterns = Settings.VoyageSettings.Strategies.InfiniteLanterns.Value
             && VoyagePlacementRules.IsStrongInfiniteLanterns(allBorderNames);
 
-        if (Settings.VoyageSettings.ShowAllBorderModifiers)
-            DrawBorderModDiagnostics(tree, modsPerTileIndex);
-
         for (var index = 0; index < tiles.Count; index++)
         {
             var tile = tiles[index];
@@ -520,10 +517,7 @@ public partial class DeepwaterEngagementSuite
                     continue;
 
                 var matchingSetting = FindBorderSetting(borderMod.Id, borderMod.DisplayText);
-                var text = FormatBorderOverlayLabel(
-                    borderMod,
-                    matchingSetting,
-                    preferUiDisplayText: Settings.VoyageSettings.ShowAllBorderModifiers);
+                var text = FormatBorderOverlayLabel(borderMod, matchingSetting);
                 var color = ChartPredicates.BorderIdOrDisplayMatches(
                         borderMod.Id, ChartIds.RareDivine, ChartIds.RareDivineDisplayHint)
                     ? Color.HotPink
@@ -668,42 +662,6 @@ public partial class DeepwaterEngagementSuite
         return texts;
     }
 
-    private void DrawBorderModDiagnostics(
-        VoyageWindow tree,
-        Dictionary<int, List<BorderModRef>> modsPerTileIndex)
-    {
-        var fromData = ReadBorderModRawNames(tree);
-        var fromUi = ReadBorderModUiTexts(tree);
-        var uiRoot = GetBorderModsUiRoot(tree);
-        var mapped = modsPerTileIndex.Values.Sum(v => v.Count);
-        var dataFilled = fromData.Count(s => !string.IsNullOrWhiteSpace(s));
-        var uiFilled = fromUi.Count(s => !string.IsNullOrWhiteSpace(s));
-
-        var line1 =
-            $"Borders diag: data={dataFilled}/{fromData.Count} ui={uiFilled}/{fromUi.Count} " +
-            $"mapped={mapped} uiRoot={(uiRoot is { IsValid: true } ? $"ok kids={uiRoot.ChildCount}" : "NULL")}";
-        var samples = fromUi
-            .Select((t, i) => (i, t))
-            .Where(x => !string.IsNullOrWhiteSpace(x.t))
-            .Take(3)
-            .Select(x => $"[{x.i}]{TruncateForDiag(x.t, 40)}");
-        var line2 = samples.Any()
-            ? "UI samples: " + string.Join(" | ", samples)
-            : "UI samples: (none — path 3->10->i.Tooltip.TextNoTags empty or wrong)";
-
-        var anchor = tree.Tiles is { Count: > 0 } t0
-            ? t0[0].GetClientRectCache.TopLeft.ToVector2Num()
-            : tree.GetClientRectCache.TopLeft.ToVector2Num();
-        Graphics.DrawTextWithBackground(line1, anchor, Color.Yellow, Color.Black);
-        Graphics.DrawTextWithBackground(line2, anchor + new Vector2(0, 16), Color.Yellow, Color.Black);
-    }
-
-    private static string TruncateForDiag(string text, int max)
-    {
-        if (string.IsNullOrEmpty(text) || text.Length <= max)
-            return text ?? "";
-        return text[..max] + "…";
-    }
 
     private static string NormalizeBorderUiText(string text)
     {
@@ -739,23 +697,16 @@ public partial class DeepwaterEngagementSuite
     
     private static string FormatBorderOverlayLabel(
         BorderModRef border,
-        VoyageBorderModifier matchingSetting,
-        bool preferUiDisplayText = false)
+        VoyageBorderModifier matchingSetting)
     {
         string text;
-        if (preferUiDisplayText &&
-            IsUiBorderSource(border) &&
-            !string.IsNullOrWhiteSpace(border.DisplayText))
-        {
-            text = border.DisplayText;
-        }
-        else if (matchingSetting?.Abbreviation.Value is { Length: > 0 } abbv)
+        if (matchingSetting?.Abbreviation.Value is { Length: > 0 } abbv)
             text = abbv;
         else if (!string.IsNullOrEmpty(border.Id) &&
                  border.Id.StartsWith("DeepwaterBorder", StringComparison.Ordinal))
             text = border.Id["DeepwaterBorder".Length..];
-        else if (!string.IsNullOrWhiteSpace(border.DisplayText))
-            text = border.DisplayText;
+        else if (!string.IsNullOrEmpty(border.Id))
+            text = border.Id;
         else
             text = border.Label;
 

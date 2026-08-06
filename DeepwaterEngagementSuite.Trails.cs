@@ -158,6 +158,9 @@ public partial class DeepwaterEngagementSuite
         IconPickerIndex.IzaroObject or
         IconPickerIndex.AltarCrab or
         IconPickerIndex.AltarOctopus or
+        IconPickerIndex.AltarPufferFish or
+        IconPickerIndex.AltarCoral or
+        IconPickerIndex.AltarUnknown or
         IconPickerIndex.TormentedSpiritEncounter or
         IconPickerIndex.LanternReplenishEncounter or
         IconPickerIndex.GoldenLanternEncounter or

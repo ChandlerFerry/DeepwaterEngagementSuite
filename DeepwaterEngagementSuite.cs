@@ -187,8 +187,7 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
             "Metadata/Chests/StrongBoxes/Arcanist" => ExpeditionEntityType.Marker,
             var a when a.StartsWith("Metadata/Chests/LeagueDeepwater/", StringComparison.Ordinal) => ExpeditionEntityType.Marker,
             var a when a.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterIzaroObject", StringComparison.Ordinal) => ExpeditionEntityType.Marker,
-            var a when a.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterAltarCrab", StringComparison.Ordinal) => ExpeditionEntityType.Marker,
-            var a when a.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterAltarOctopus", StringComparison.Ordinal) => ExpeditionEntityType.Marker,
+            var a when a.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterAltar", StringComparison.Ordinal) => ExpeditionEntityType.Marker,
             var a when a.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterTormentedSpiritEncounter", StringComparison.Ordinal) => ExpeditionEntityType.Marker,
             var a when a.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterCursedDucatDrop", StringComparison.Ordinal) => ExpeditionEntityType.Marker,
             var a when a.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterLanternReplenishEncounter", StringComparison.Ordinal) => ExpeditionEntityType.Marker,
@@ -230,6 +229,9 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
             var p when p.Contains("DeepwaterIzaroObject", StringComparison.Ordinal) => IconPickerIndex.IzaroObject,
             var p when p.Contains("DeepwaterAltarCrab", StringComparison.Ordinal) => IconPickerIndex.AltarCrab,
             var p when p.Contains("DeepwaterAltarOctopus", StringComparison.Ordinal) => IconPickerIndex.AltarOctopus,
+            var p when p.Contains("DeepwaterAltarPufferFish", StringComparison.Ordinal) => IconPickerIndex.AltarPufferFish,
+            var p when p.Contains("DeepwaterAltarCoral", StringComparison.Ordinal) => IconPickerIndex.AltarCoral,
+            var p when p.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterAltar", StringComparison.Ordinal) => IconPickerIndex.AltarUnknown,
             var p when p.Contains("DeepwaterTormentedSpiritEncounter", StringComparison.Ordinal) => IconPickerIndex.TormentedSpiritEncounter,
             var p when p.Contains("DeepwaterLanternReplenishEncounter", StringComparison.Ordinal) => IconPickerIndex.LanternReplenishEncounter,
             var p when p.StartsWith("Metadata/Terrain/Leagues/Deepwater/Objects/DeepwaterGoldenLantern", StringComparison.Ordinal) => IconPickerIndex.GoldenLanternEncounter,
@@ -1259,6 +1261,9 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
         IconPickerIndex.IzaroObject => "Izaro",
         IconPickerIndex.AltarCrab => "Altar (Crab)",
         IconPickerIndex.AltarOctopus => "Altar (Octopus)",
+        IconPickerIndex.AltarPufferFish => "Altar (Puffer Fish)",
+        IconPickerIndex.AltarCoral => "Altar (Coral)",
+        IconPickerIndex.AltarUnknown => "Altar (Unknown)",
         IconPickerIndex.TormentedSpiritEncounter => "Tormented Spirit",
         IconPickerIndex.LanternReplenishEncounter => "Lantern Replenish",
         IconPickerIndex.GoldenLanternEncounter => "Golden Lantern",
@@ -1289,6 +1294,9 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
                 IconPickerIndex.InfusedCoralEncounter or
                 IconPickerIndex.AltarOctopus or
                 IconPickerIndex.AltarCrab or
+                IconPickerIndex.AltarPufferFish or
+                IconPickerIndex.AltarCoral or
+                IconPickerIndex.AltarUnknown or
                 IconPickerIndex.DeadMansSulphurSmall or
                 IconPickerIndex.DeadMansSulphurBase or
                 IconPickerIndex.DeadMansSulphurLarge or

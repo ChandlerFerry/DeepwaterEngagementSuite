@@ -698,6 +698,8 @@ public partial class DeepwaterEngagementSuite
     private static string FormatBorderOverlayLabel(BorderModRef border)
     {
         var text = !string.IsNullOrEmpty(border?.Id) ? border.Id : border?.Label ?? "";
+        if (text.StartsWith("DeepwaterBorder", StringComparison.OrdinalIgnoreCase))
+            text = text["DeepwaterBorder".Length..];
         if (IsUiBorderSource(border))
             text = $"T!{text}!!";
         return text;

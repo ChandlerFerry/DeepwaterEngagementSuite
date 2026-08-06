@@ -11,6 +11,17 @@ public static class ChartIds
     public const string TreasureAnchors2 = "DeepwaterBorderTreasureAnchors2";
     public const string InfiniteLanterns = "DeepwaterBorderInfiniteLanterns";
 
+    
+    public const string InfiniteLanternsDisplayHint =
+        "does not reduce your Lantern count";
+    public const string NotConsumeDisplayHint =
+        "not consume";
+    public const string TreasureAnchorsDisplayHint =
+        "Treasure Anchor";
+    public const string RareDivineDisplayHint = "Divine";
+    public const string RareAnnulDisplayHint = "Annulment";
+    public const string RareAncientDisplayHint = "Ancient";
+
     public const string VoyageIncreasedRareMonsters = "MapDeepwaterChartVoyageIncreasedRareMonsters";
     public const string VoyageNoEquipmentDrops = "MapDeepwaterChartVoyageNoEquipmentDrops";
     public const string VoyageSoulEater = "MapDeepwaterChartVoyageSoulEater";
@@ -43,7 +54,7 @@ public static class ChartIds
     public const int MaxSavedRareVoyage = 5;
     public const int MaxSavedPelagic = 2;
     
-    public const int MaxSaveCap = 60;
+    public const int MaxSaveCap = 120;
     
     public const int MaxSavedDefault = MaxSaveCap;
     public const int MaxSavedKishara = MaxSavedDefault;

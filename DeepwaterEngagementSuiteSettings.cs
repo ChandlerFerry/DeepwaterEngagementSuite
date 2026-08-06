@@ -38,8 +38,9 @@ public class DeepwaterEngagementSuiteSettings : ISettings
     public const MapIconsIndex DefaultAllflameEmbersChestIcon = MapIconsIndex.SanctumGoldConvert;
     public const MapIconsIndex DefaultCursedDucatDropIcon = MapIconsIndex.RewardPerandus;
     public const MapIconsIndex DefaultIzaroObjectIcon = MapIconsIndex.RewardLabyrinth;
-    public const MapIconsIndex DefaultAltarCrabIcon = MapIconsIndex.LootFilterLargeYellowStar;
-    public const MapIconsIndex DefaultAltarOctopusIcon = MapIconsIndex.RewardBreach;
+    public const MapIconsIndex DefaultAltarIcon = MapIconsIndex.UltimatumAltar;
+    public const MapIconsIndex DefaultAltarCrabIcon = DefaultAltarIcon;
+    public const MapIconsIndex DefaultAltarOctopusIcon = DefaultAltarIcon;
     public const MapIconsIndex DefaultTormentedSpiritEncounterIcon = MapIconsIndex.LootFilterSmallGreenCircle;
     public const MapIconsIndex DefaultLanternReplenishEncounterIcon = MapIconsIndex.BlightPortalFire;
     public const MapIconsIndex DefaultDeadmansSulphurSmallIcon = MapIconsIndex.LootFilterSmallGreenRaindrop;
@@ -132,6 +133,7 @@ public class DeepwaterEngagementSuiteSettings : ISettings
     {
         IconPickerIndex.CurrencyTreasureChestOpulent => 2.0f,
         IconPickerIndex.InfusedCoralEncounter => 2.5f,
+        IconPickerIndex.AltarCrab or IconPickerIndex.AltarOctopus => 3.0f,
         IconPickerIndex.DeadMansSulphurSmall => 0.5f,
         _ => 1f,
     };
@@ -225,9 +227,6 @@ public class IconSettings
     [Menu("Show other chest icons")]
     public ToggleNode ShowOtherChestIcons { get; set; } = new ToggleNode(true);
 
-    [Menu("Show pointer stand-in icons", "Undiscovered large-map pointer targets.")]
-    public ToggleNode ShowPointerTargetIcons { get; set; } = new ToggleNode(true);
-
     [Menu("Show Ducat icons", "Ducat drops/chests/hazard boats. Off by default.")]
     public ToggleNode ShowDucatIcons { get; set; } = new ToggleNode(false);
 
@@ -280,7 +279,8 @@ public class IconSettings
         IconPickerIndex.StrongboxDivination => ShowDivinerStrongboxIcons.Value,
         IconPickerIndex.StrongboxScarab => ShowScarabStrongboxIcons.Value,
         IconPickerIndex.StrongboxArcanist => ShowArcanistStrongboxIcons.Value,
-        IconPickerIndex.PointerTarget => ShowPointerTargetIcons.Value,
+        // Pointers stand in for undiscovered far targets; hide them when sleeping entities are parsed.
+        IconPickerIndex.PointerTarget => !ParseSleepingEntities.Value,
         IconPickerIndex.DeadMansSulphurSmall => ShowDeadmansSulphurSmallIcons.Value,
         IconPickerIndex.DeadMansSulphurBase => ShowDeadmansSulphurIcons.Value,
         IconPickerIndex.DeadMansSulphurLarge => ShowDeadmansSulphurIcons.Value,

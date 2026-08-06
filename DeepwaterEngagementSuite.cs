@@ -549,6 +549,9 @@ public partial class DeepwaterEngagementSuite : BaseSettingsPlugin<DeepwaterEnga
 
     private IEnumerable<Vector2i> GetUnknownPointerTargets()
     {
+        if (!Settings.IconSettings.IsIconEnabled(IconPickerIndex.PointerTarget))
+            yield break;
+
         var knownEntityPositions = _cachedEntities.Values.Where(x => !x.IsOpened).Select(x => x.GridPos).ToList();
         foreach (var e in ExpeditionSourceEntities(EntityType.Terrain)
                      .Where(x => x.Path == "Metadata/Terrain/Leagues/Deepwater/Objects/Pointer"))

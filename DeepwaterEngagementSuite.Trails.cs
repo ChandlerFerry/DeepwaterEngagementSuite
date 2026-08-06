@@ -253,7 +253,8 @@ public partial class DeepwaterEngagementSuite
     private bool IsTrailTypeEnabled(IconPickerIndex type)
     {
         return type == IconPickerIndex.PointerTarget
-            ? Settings.TrailSettings.ShowUndiscoveredTargets.Value
+            ? Settings.TrailSettings.ShowUndiscoveredTargets.Value &&
+              Settings.IconSettings.IsIconEnabled(IconPickerIndex.PointerTarget)
             : Settings.TrailSettings.Colors.IsEnabled(type);
     }
 }

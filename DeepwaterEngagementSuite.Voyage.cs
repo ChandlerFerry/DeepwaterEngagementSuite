@@ -35,6 +35,7 @@ public partial class DeepwaterEngagementSuite
     private bool _voyageTimedOut;
     private bool _voyageWindowWasOpen;
     private bool _voyageAutoSolvePending;
+    private bool _voyageInventoryPrimePending;
     private int _voyageLastReadyChartCount = -1;
     private int _voyageReadyChartStableFrames;
     private long _voyageNodesExplored;
@@ -94,6 +95,55 @@ public partial class DeepwaterEngagementSuite
     private static Element GetVoyageChartInventoryInactiveTab(VoyageWindow tree) =>
         tree?.GetChildFromIndices(3, 11, 0, 0);
 
+    private async SyncTask<bool> ClickVoyageChartInventoryInactiveTab(VoyageWindow tree, bool needsFocusWiggle)
+    {
+        var inactiveTab = GetVoyageChartInventoryInactiveTab(tree)
+            ?? throw new InvalidOperationException(
+                "Voyage chart inventory inactive tab not found at (VoyageWindow)3->11->0->0");
+
+        var winOrigin = GameController.Window.GetWindowRectangleTimeCache.TopLeft.ToVector2Num();
+        var tabPos = winOrigin + inactiveTab.GetClientRectCache.Center.ToVector2Num();
+        Input.SetCursorPos(tabPos);
+        if (needsFocusWiggle)
+            await WiggleCursorToFocus(tabPos);
+
+        await TaskUtils.NextFrame();
+        Input.LeftDown();
+        await TaskUtils.NextFrame();
+        Input.LeftUp();
+        return true;
+    }
+
+    private async SyncTask<bool> PrimeVoyageChartInventory(VoyageWindow tree)
+    {
+        try
+        {
+            var inactiveTab = GetVoyageChartInventoryInactiveTab(tree);
+            if (inactiveTab is not { IsValid: true })
+                return true;
+
+            var rect = inactiveTab.GetClientRectCache;
+            if (rect.Width <= 1 || rect.Height <= 1)
+                return true;
+
+            await ClickVoyageChartInventoryInactiveTab(tree, needsFocusWiggle: true);
+            await TaskUtils.NextFrame();
+            await TaskUtils.NextFrame();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            DebugWindow.LogError($"Voyage inventory prime failed: {ex.Message}");
+            return false;
+        }
+        finally
+        {
+            _voyageInventoryPrimePending = false;
+            _voyageLastReadyChartCount = -1;
+            _voyageReadyChartStableFrames = 0;
+        }
+    }
+
     private static bool IsChartItemInteractable(NormalInventoryItem item) =>
         item is { IsValid: true, IsVisible: true } &&
         item.GetClientRectCache is { Width: > 1, Height: > 1 };
@@ -118,22 +168,8 @@ public partial class DeepwaterEngagementSuite
             return (pieceElem, needsFocusWiggle);
 
         var identity = GetChartIdentity(pieceElem);
-        var inactiveTab = GetVoyageChartInventoryInactiveTab(tree)
-            ?? throw new InvalidOperationException(
-                "Voyage chart inventory inactive tab not found at (VoyageWindow)3->11->0->0");
-
-        var tabPos = winOrigin + inactiveTab.GetClientRectCache.Center.ToVector2Num();
-        Input.SetCursorPos(tabPos);
-        if (needsFocusWiggle)
-        {
-            await WiggleCursorToFocus(tabPos);
-            needsFocusWiggle = false;
-        }
-
-        await TaskUtils.NextFrame();
-        Input.LeftDown();
-        await TaskUtils.NextFrame();
-        Input.LeftUp();
+        await ClickVoyageChartInventoryInactiveTab(tree, needsFocusWiggle);
+        needsFocusWiggle = false;
 
         await TaskUtils.CheckEveryFrameWithThrow(
             () =>
@@ -411,6 +447,7 @@ public partial class DeepwaterEngagementSuite
             _voyagePlaceTask = null;
             _voyageWindowWasOpen = false;
             _voyageAutoSolvePending = false;
+            _voyageInventoryPrimePending = false;
             _voyageLastReadyChartCount = -1;
             _voyageReadyChartStableFrames = 0;
             _voyageBoardFingerprint = null;
@@ -418,19 +455,23 @@ public partial class DeepwaterEngagementSuite
             return;
         }
 
-        TaskUtils.RunOrRestart(ref _voyagePlaceTask, () => null);
-
-        if (Settings.VoyageSettings.DumpVoyageStateHotkey.PressedOnce())
-            DumpVoyageStateToFile(tree, "hotkey dump");
-
         if (!_voyageWindowWasOpen)
         {
             _voyageWindowWasOpen = true;
             _voyageAutoSolvePending = true;
+            _voyageInventoryPrimePending = true;
             _voyageLastReadyChartCount = -1;
             _voyageReadyChartStableFrames = 0;
             _voyageBoardFingerprint = null;
         }
+
+        if (_voyageInventoryPrimePending && _voyagePlaceTask == null)
+            _voyagePlaceTask = PrimeVoyageChartInventory(tree);
+
+        TaskUtils.RunOrRestart(ref _voyagePlaceTask, () => null);
+
+        if (Settings.VoyageSettings.DumpVoyageStateHotkey.PressedOnce())
+            DumpVoyageStateToFile(tree, "hotkey dump");
 
         var boardFingerprint = BuildVoyageBoardFingerprint(tree);
         if (!string.Equals(boardFingerprint, _voyageBoardFingerprint, StringComparison.Ordinal))
@@ -442,7 +483,9 @@ public partial class DeepwaterEngagementSuite
             _voyageReadyChartStableFrames = 0;
         }
 
-        if (_voyageAutoSolvePending && _run is not { IsCompleted: false })
+        if (!_voyageInventoryPrimePending &&
+            _voyageAutoSolvePending &&
+            _run is not { IsCompleted: false })
             TryStartAutoVoyageSolve(tree);
 
         var modsPerTileIndex = GetTileMods(tree);
@@ -573,7 +616,7 @@ public partial class DeepwaterEngagementSuite
             }
         }
 
-        DrawStrategyOnCompass(tree);
+        DrawActiveStrategyLabels(tree);
 
         if (settings.ShowOptimizerWindow.Value)
         {
@@ -581,7 +624,7 @@ public partial class DeepwaterEngagementSuite
         }
     }
 
-    private void DrawStrategyOnCompass(VoyageWindow tree)
+    private void DrawActiveStrategyLabels(VoyageWindow tree)
     {
         var placement = _lastPlacement ?? _voyageSolve?.Placement;
         if (placement == null)
@@ -591,6 +634,12 @@ public partial class DeepwaterEngagementSuite
         if (names.Count == 0)
             return;
 
+        DrawStrategyLabelsOnCompass(tree, names);
+        DrawStrategyLabelsAboveClear(tree, names);
+    }
+
+    private void DrawStrategyLabelsOnCompass(VoyageWindow tree, IReadOnlyList<string> names)
+    {
         Element target;
         try
         {
@@ -614,6 +663,26 @@ public partial class DeepwaterEngagementSuite
             var size = Graphics.DrawTextWithBackground(
                 name, pos, StrategyDisplayColor(name), FontAlign.Center, Color.Black);
             pos.Y += size.Y;
+        }
+    }
+
+    private void DrawStrategyLabelsAboveClear(VoyageWindow tree, IReadOnlyList<string> names)
+    {
+        var clear = tree.ClearButton;
+        if (clear == null)
+            return;
+
+        var rect = clear.GetClientRectCache;
+        if (rect.Width <= 0 || rect.Height <= 0)
+            return;
+
+        var pos = new Vector2(rect.Center.X, rect.Top);
+        foreach (var name in names)
+        {
+            var size = Graphics.MeasureText(name);
+            pos.Y -= size.Y;
+            Graphics.DrawTextWithBackground(
+                name, pos, StrategyDisplayColor(name), FontAlign.Center, Color.Black);
         }
     }
 
@@ -866,6 +935,14 @@ public partial class DeepwaterEngagementSuite
     {
         if (tree is not { IsValid: true, IsVisible: true })
             return;
+        if (_voyageInventoryPrimePending)
+        {
+            _voyageAutoSolvePending = true;
+            if (_voyagePlaceTask == null)
+                _voyagePlaceTask = PrimeVoyageChartInventory(tree);
+            return;
+        }
+
         if (_run is { IsCompleted: false })
         {
             _voyageSolve?.Cancel();
@@ -1070,7 +1147,12 @@ public partial class DeepwaterEngagementSuite
 
         if (_result == null || _result.Solutions.Count == 0)
         {
-            if (_voyageAutoSolvePending)
+            if (_voyageInventoryPrimePending)
+            {
+                ImGui.TextColored(Color.Yellow.ToImguiVec4(),
+                    "Loading chart inventory tabs...");
+            }
+            else if (_voyageAutoSolvePending)
             {
                 var ready = CountReadyCharts(tree);
                 var total = tree.AvailableCharts?.Count ?? 0;

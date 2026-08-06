@@ -301,7 +301,18 @@ public partial class DeepwaterEngagementSuite
         return true;
     }
 
-    
+    private async SyncTask<bool> WaitChartPlacementDelay()
+    {
+        var ms = Settings.VoyageSettings.ChartPlacementDelayMs.Value;
+        if (ms <= 0)
+            return true;
+
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        while (sw.ElapsedMilliseconds < ms)
+            await TaskUtils.NextFrame();
+        return true;
+    }
+
     private async SyncTask<bool> RotateTileToMatch(
         VoyageTileElement tile,
         MapPiecePlacement expected,
@@ -337,6 +348,7 @@ public partial class DeepwaterEngagementSuite
             Input.RightDown();
             await TaskUtils.NextFrame();
             Input.RightUp();
+            await WaitChartPlacementDelay();
             await TaskUtils.CheckEveryFrameWithThrow(
                 () =>
                 {
@@ -425,6 +437,7 @@ public partial class DeepwaterEngagementSuite
                 Input.LeftDown();
                 await TaskUtils.NextFrame();
                 Input.LeftUp();
+                await WaitChartPlacementDelay();
                 await TaskUtils.CheckEveryFrameWithThrow(
                     () => BoardIsClear(tree),
                     () => "Board still has charts after Clear",
@@ -465,6 +478,7 @@ public partial class DeepwaterEngagementSuite
                 Input.LeftDown();
                 await TaskUtils.NextFrame();
                 Input.LeftUp();
+                await WaitChartPlacementDelay();
                 await TaskUtils.CheckEveryFrameWithThrow(
                     () => GameController.IngameState.IngameUi.Cursor.Action == MouseActionType.HoldItemForSell,
                     TimeSpan.FromSeconds(1));
@@ -476,6 +490,7 @@ public partial class DeepwaterEngagementSuite
                 Input.LeftDown();
                 await TaskUtils.NextFrame();
                 Input.LeftUp();
+                await WaitChartPlacementDelay();
                 await TaskUtils.CheckEveryFrameWithThrow(
                     () => GameController.IngameState.IngameUi.Cursor.Action == MouseActionType.Free &&
                           TileHasChart(tile),

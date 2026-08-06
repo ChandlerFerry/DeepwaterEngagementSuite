@@ -610,6 +610,10 @@ public class VoyageSettings
     [Menu("Solver time limit (seconds)", "Stop after this many seconds and keep the best result. 0 = no limit.")]
     public RangeNode<int> SolverTimeLimitSeconds { get; set; } = new RangeNode<int>(5, 1, 120);
 
+    [Menu("Chart placement delay (ms)",
+        "Extra wait after each placement click (pick, place, rotate, clear). 0 = current speed.")]
+    public RangeNode<int> ChartPlacementDelayMs { get; set; } = new RangeNode<int>(0, 0, 500);
+
     [Menu("Dump voyage state hotkey", "Write a board JSON snapshot to ConfigDirectory/voyage-dumps.")]
     public HotkeyNodeV2 DumpVoyageStateHotkey { get; set; } = new HotkeyNodeV2(Keys.None);
 
